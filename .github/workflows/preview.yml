@@ -1,8 +1,11 @@
-name: Vercel Preview Deployment
+name: Vercel Deployment Audit
 
-# IMPORTANT: VERCEL_PROJECT_ID must be set to the Project ID of the
-# "appreforma" project in Vercel, NOT "appchacasanova" or any other project.
-# To find the correct ID: Vercel Dashboard → appreforma project → Settings → General → Project ID
+# This workflow audits which Vercel project is targeted on each push.
+# Actual deployment is handled by Vercel's native GitHub integration.
+#
+# IMPORTANT: If you ever add CLI-based deployment steps back, ensure that
+# VERCEL_PROJECT_ID points to the "appreforma" project, NOT "appchacasanova".
+# Find the correct ID: Vercel Dashboard → appreforma → Settings → General → Project ID
 
 on:
   push:
@@ -11,7 +14,8 @@ on:
       - claude/fix-deployment-url-HnX8f
 
 jobs:
-  deploy-preview:
+  audit:
+    name: deployment-audit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -21,49 +25,10 @@ jobs:
         run: |
           echo "========================================"
           echo "Deployment target audit"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "Org ID (first 8 chars): ${VERCEL_ORG_ID:0:8}..."
-          echo "Project ID (first 8 chars): ${VERCEL_PROJECT_ID:0:8}..."
-          echo "Expected project: appreforma (exclaexcel-appreforma.vercel.app)"
+          echo "Branch  : ${{ github.ref_name }}"
+          echo "Commit  : ${{ github.sha }}"
+          echo "Expected: exclaexcel-appreforma (exclaexcel-appreforma.vercel.app)"
+          echo ""
+          echo "Deployment is handled by Vercel's native GitHub integration."
+          echo "Check the Vercel bot comment on this PR for the preview URL."
           echo "========================================"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Pull Vercel Environment Information
-        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Build Project Artifacts
-        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Deploy to Vercel
-        id: deploy
-        run: |
-          url=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
-          echo "preview_url=$url" >> "$GITHUB_OUTPUT"
-          echo "Deployed to: $url"
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-
-      - name: Comment preview URL on commit
-        if: github.ref_name != 'main'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.repos.createCommitComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: context.sha,
-              body: `Preview deployed to: ${{ steps.deploy.outputs.preview_url }}`
-            })
