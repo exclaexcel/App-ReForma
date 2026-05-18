@@ -84,7 +84,7 @@ export default async function HomePage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   const userName = user.user_metadata?.full_name?.split(" ")[0] ?? "Usuário";
 

@@ -14,14 +14,17 @@ export default async function EditExpensePage({ params }: { params: { id: string
     .from("expenses")
     .select("*, categories(id, name, color_hex)")
     .eq("id", params.id)
-    .single();
+    .maybeSingle();
 
   if (!expense) redirect("/despesas");
 
-  const [{ data: categories }, { data: rooms }] = await Promise.all([
+  const [{ data: categories, error: catError }, { data: rooms, error: roomError }] = await Promise.all([
     supabase.from("categories").select("*").eq("project_id", expense.project_id).order("name"),
     supabase.from("rooms").select("*").eq("project_id", expense.project_id).order("name"),
   ]);
+
+  if (catError) throw catError;
+  if (roomError) throw roomError;
 
   return (
     <ExpenseEditForm

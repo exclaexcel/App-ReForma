@@ -86,33 +86,40 @@ export default function ComprovantesPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (!project) return;
+      if (!project) return;
 
-    const { data } = await supabase
-      .from("expenses")
-      .select("*, categories(id, name, color_hex)")
-      .eq("project_id", project.id)
-      .not("receipt_url", "is", null)
-      .order("expense_date", { ascending: false })
-      .order("created_at", { ascending: false });
+      const { data, error } = await supabase
+        .from("expenses")
+        .select("*, categories(id, name, color_hex)")
+        .eq("project_id", project.id)
+        .not("receipt_url", "is", null)
+        .order("expense_date", { ascending: false })
+        .order("created_at", { ascending: false });
 
-    setExpenses((data ?? []) as Expense[]);
-    setLoading(false);
+      if (error) throw error;
+
+      setExpenses((data ?? []) as Expense[]);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading comprovantes:", error);
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

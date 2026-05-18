@@ -32,15 +32,17 @@ export default async function GraficosPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!project) redirect("/");
 
-  const { data: expenses } = await supabase
+  const { data: expenses, error: expensesError } = await supabase
     .from("expenses")
     .select("*, categories(id, name, color_hex)")
     .eq("project_id", project.id)
     .order("expense_date", { ascending: true });
+
+  if (expensesError) throw expensesError;
 
   const allExpenses = (expenses ?? []) as Expense[];
   const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);

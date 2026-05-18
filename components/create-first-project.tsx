@@ -36,17 +36,23 @@ export function CreateFirstProject({ userId }: { userId: string }) {
         end_date: endDate || null,
       })
       .select()
-      .single();
+      .maybeSingle();
 
-    if (projectError) {
+    if (projectError || !project) {
       setError("Erro ao criar obra. Tente novamente.");
       setLoading(false);
       return;
     }
 
-    await supabase.from("categories").insert(
+    const { error: categoriesError } = await supabase.from("categories").insert(
       DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id }))
     );
+
+    if (categoriesError) {
+      setError("Obra criada, mas erro ao adicionar categorias.");
+      setLoading(false);
+      return;
+    }
 
     router.refresh();
   }

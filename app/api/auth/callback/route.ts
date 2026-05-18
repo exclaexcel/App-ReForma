@@ -24,7 +24,11 @@ export async function GET(request: NextRequest) {
         },
       }
     );
-    await supabase.auth.exchangeCodeForSession(code);
+    try {
+      await supabase.auth.exchangeCodeForSession(code);
+    } catch {
+      return NextResponse.redirect(`${origin}/login`);
+    }
     return response;
   }
 
