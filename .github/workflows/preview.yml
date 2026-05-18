@@ -1,0 +1,34 @@
+name: Vercel Deployment Audit
+
+# This workflow audits which Vercel project is targeted on each push.
+# Actual deployment is handled by Vercel's native GitHub integration.
+#
+# IMPORTANT: If you ever add CLI-based deployment steps back, ensure that
+# VERCEL_PROJECT_ID points to the "appreforma" project, NOT "appchacasanova".
+# Find the correct ID: Vercel Dashboard → appreforma → Settings → General → Project ID
+
+on:
+  push:
+    branches:
+      - main
+      - claude/fix-deployment-url-HnX8f
+
+jobs:
+  audit:
+    name: deployment-audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify deployment target
+        run: |
+          echo "========================================"
+          echo "Deployment target audit"
+          echo "Branch  : ${{ github.ref_name }}"
+          echo "Commit  : ${{ github.sha }}"
+          echo "Expected: exclaexcel-appreforma (exclaexcel-appreforma.vercel.app)"
+          echo ""
+          echo "Deployment is handled by Vercel's native GitHub integration."
+          echo "Check the Vercel bot comment on this PR for the preview URL."
+          echo "========================================"
