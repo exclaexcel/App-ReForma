@@ -1,0 +1,47 @@
+name: Vercel Preview Deploy
+
+on:
+  push:
+    branches:
+      - claude/renovation-expense-app-V3p0T
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      can-deploy: ${{ steps.check.outputs.can-deploy }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "can-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "can-deploy=false" >> $GITHUB_OUTPUT
+            echo "::notice::VERCEL_TOKEN not configured — skipping Vercel deploy. Add secrets to enable."
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  deploy:
+    needs: check-secrets
+    if: needs.check-secrets.outputs.can-deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: >-
+            --build-env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            --build-env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: true
