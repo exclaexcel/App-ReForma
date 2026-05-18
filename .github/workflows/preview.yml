@@ -1,0 +1,58 @@
+name: Vercel Preview Deploy
+
+# IMPORTANTE: O secret VERCEL_PROJECT_ID deve conter o ID do projeto
+# "appreforma" em https://vercel.com (exclaexcel-appreforma.vercel.app).
+# NÃO deve apontar para nenhum outro projeto (ex: appchacasanova).
+# Para verificar: Vercel Dashboard → projeto appreforma → Settings → General → Project ID
+
+on:
+  push:
+    branches:
+      - main
+      - claude/fix-deployment-url-Jr38B
+      - claude/renovation-expense-app-V3p0T
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      can-deploy: ${{ steps.check.outputs.can-deploy }}
+    steps:
+      - id: check
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "can-deploy=true" >> $GITHUB_OUTPUT
+          else
+            echo "can-deploy=false" >> $GITHUB_OUTPUT
+            echo "::notice::VERCEL_TOKEN not configured — skipping Vercel deploy. Add secrets to enable."
+          fi
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+  deploy:
+    needs: check-secrets
+    if: needs.check-secrets.outputs.can-deploy == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify deployment target
+        run: |
+          echo "::notice::Deploying to Vercel project ID: ${{ secrets.VERCEL_PROJECT_ID }}"
+          echo "::notice::Target project must be 'appreforma' (exclaexcel-appreforma.vercel.app)"
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: >-
+            --build-env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            --build-env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            --env NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+            --env NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-comment: true
