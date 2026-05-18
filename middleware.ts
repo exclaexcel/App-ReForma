@@ -29,9 +29,16 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+    user = authUser;
+  } catch (error) {
+    // If getUser fails, let the request proceed
+    // The layout will handle the auth error
+  }
 
   const isLoginOrSignup =
     request.nextUrl.pathname.startsWith("/login") ||

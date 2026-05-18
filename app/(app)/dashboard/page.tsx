@@ -21,18 +21,20 @@ export default async function DashboardPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!project) {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  const { data: expenses } = await supabase
+  const { data: expenses, error: expensesError } = await supabase
     .from("expenses")
     .select("*, categories(id, name, color_hex)")
     .eq("project_id", project.id)
     .order("expense_date", { ascending: false })
     .order("created_at", { ascending: false });
+
+  if (expensesError) throw expensesError;
 
   const allExpenses = (expenses ?? []) as Expense[];
   const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);

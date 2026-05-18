@@ -61,17 +61,23 @@ export default function SignupPage() {
         end_date: endDate || null,
       })
       .select()
-      .single();
+      .maybeSingle();
 
-    if (projectError) {
+    if (projectError || !project) {
       setError("Conta criada, mas erro ao criar projeto.");
       setLoading(false);
       return;
     }
 
-    await supabase.from("categories").insert(
+    const { error: categoriesError } = await supabase.from("categories").insert(
       DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id }))
     );
+
+    if (categoriesError) {
+      setError("Conta criada, mas erro ao configurar categorias. Tente novamente.");
+      setLoading(false);
+      return;
+    }
 
     router.push("/");
     router.refresh();

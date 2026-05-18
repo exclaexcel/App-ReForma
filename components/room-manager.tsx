@@ -30,7 +30,7 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
       .from("rooms")
       .insert({ project_id: projectId, name: newName.trim() })
       .select()
-      .single();
+      .maybeSingle();
 
     if (insertError || !data) {
       setError("Erro ao adicionar cômodo.");

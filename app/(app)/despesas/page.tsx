@@ -19,12 +19,13 @@ export default function DespesasPage() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
     const { data: project } = await supabase
       .from("projects")
@@ -32,11 +33,11 @@ export default function DespesasPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!project) return;
 
-    const [{ data: expData }, { data: catData }] = await Promise.all([
+    const [{ data: expData, error: expError }, { data: catData, error: catError }] = await Promise.all([
       supabase
         .from("expenses")
         .select("*, categories(id, name, color_hex)")
@@ -46,9 +47,16 @@ export default function DespesasPage() {
       supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
     ]);
 
-    setExpenses((expData ?? []) as Expense[]);
-    setCategories(catData ?? []);
-    setLoading(false);
+    if (expError) throw expError;
+    if (catError) throw catError;
+
+      setExpenses((expData ?? []) as Expense[]);
+      setCategories(catData ?? []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error loading despesas:", error);
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

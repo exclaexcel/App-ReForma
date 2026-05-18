@@ -16,14 +16,17 @@ export default async function NovoPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!project) redirect("/");
 
-  const [{ data: categories }, { data: rooms }] = await Promise.all([
+  const [{ data: categories, error: catError }, { data: rooms, error: roomError }] = await Promise.all([
     supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
     supabase.from("rooms").select("*").eq("project_id", project.id).order("name"),
   ]);
+
+  if (catError) throw catError;
+  if (roomError) throw roomError;
 
   return <ExpenseForm projectId={project.id} categories={categories ?? []} rooms={rooms ?? []} />;
 }

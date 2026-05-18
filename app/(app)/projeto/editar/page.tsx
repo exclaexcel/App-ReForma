@@ -18,7 +18,7 @@ export default async function EditProjectPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!project) redirect("/");
 

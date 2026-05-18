@@ -18,15 +18,17 @@ export default async function ComodoosPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (!project) redirect("/");
 
-  const { data: rooms } = await supabase
+  const { data: rooms, error: roomsError } = await supabase
     .from("rooms")
     .select("*")
     .eq("project_id", project.id)
     .order("name");
+
+  if (roomsError) throw roomsError;
 
   return (
     <div className="min-h-dvh bg-zinc-900 pb-8">
