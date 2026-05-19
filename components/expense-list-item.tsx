@@ -15,6 +15,7 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
     "w-full flex items-center gap-3 py-3 text-left hover:bg-zinc-800/50 active:bg-zinc-800 rounded-xl px-2 transition-colors";
 
   const content = (
+    <>
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: `${categoryColor}22`, border: `1.5px solid ${categoryColor}55` }}
