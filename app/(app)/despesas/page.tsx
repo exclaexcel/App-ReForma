@@ -155,7 +155,7 @@ export default function DespesasPage() {
       ) : (
         <div className="divide-y divide-zinc-800">
           {filtered.map((expense) => (
-            <ExpenseListItem key={expense.id} expense={expense} />
+            <ExpenseListItem key={expense.id} expense={expense} href={`/editar/${expense.id}`} />
           ))}
         </div>
       )}

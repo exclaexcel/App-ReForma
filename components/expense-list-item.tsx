@@ -6,16 +6,15 @@ import Link from "next/link";
 
 type ExpenseListItemProps = {
   expense: Expense;
+  href?: string;
 };
 
-export function ExpenseListItem({ expense }: ExpenseListItemProps) {
+export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
   const categoryColor = expense.categories?.color_hex ?? "#C84B31";
+  const sharedClass =
+    "w-full flex items-center gap-3 py-3 text-left hover:bg-zinc-800/50 active:bg-zinc-800 rounded-xl px-2 transition-colors";
 
-  return (
-    <Link
-      href={`/despesas/${expense.id}/editar`}
-      className="w-full flex items-center gap-3 py-3 text-left hover:bg-zinc-800/50 active:bg-zinc-800 rounded-xl px-2 transition-colors"
-    >
+  const content = (
       <div
         className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
         style={{ backgroundColor: `${categoryColor}22`, border: `1.5px solid ${categoryColor}55` }}
@@ -51,6 +50,16 @@ export function ExpenseListItem({ expense }: ExpenseListItemProps) {
           </span>
         </div>
       </div>
-    </Link>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className={sharedClass}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <div className={sharedClass}>{content}</div>;
 }

@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Room, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase } from "@/lib/types";
+import { Category, Expense, PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,33 +15,38 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Camera, Loader2, ArrowLeft } from "lucide-react";
+import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
-  rooms: Room[];
+  initialExpense?: Expense;
 };
 
-export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) {
+export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFormProps) {
   const router = useRouter();
-  const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const isEditing = Boolean(initialExpense);
 
   const today = new Date().toISOString().split("T")[0];
 
-  const [amount, setAmount] = useState("");
-  const [date, setDate] = useState(today);
-  const [description, setDescription] = useState("");
-  const [categoryId, setCategoryId] = useState("");
-  const [roomId, setRoomId] = useState("");
-  const [phase, setPhase] = useState<ExpensePhase | "">("");
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
-  const [isPaid, setIsPaid] = useState(false);
+  const [amount, setAmount] = useState(
+    initialExpense ? String(initialExpense.amount).replace(".", ",") : ""
+  );
+  const [date, setDate] = useState(initialExpense?.expense_date ?? today);
+  const [description, setDescription] = useState(initialExpense?.description ?? "");
+  const [categoryId, setCategoryId] = useState(initialExpense?.category_id ?? "");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
+    initialExpense?.payment_method ?? "pix"
+  );
+  const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(
+    initialExpense?.receipt_url ?? null
+  );
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -58,13 +63,14 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
     setError(null);
 
     try {
+      const supabase = createClient();
       const parsedAmount = parseFloat(amount.replace(",", "."));
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         setError("Informe um valor válido.");
         return;
       }
 
-      let receiptUrl: string | null = null;
+      let receiptUrl: string | null = initialExpense?.receipt_url ?? null;
 
       if (receiptFile) {
         const {
@@ -81,23 +87,33 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
         receiptUrl = urlData.publicUrl;
       }
 
-      const { error: insertError } = await supabase.from("expenses").insert({
-        project_id: projectId,
+      const payload = {
         category_id: categoryId || null,
-        room_id: roomId || null,
-        phase: phase || null,
         description,
         amount: parsedAmount,
         expense_date: date,
         payment_method: paymentMethod,
         is_paid: isPaid,
         receipt_url: receiptUrl,
-      });
+      };
 
-      if (insertError) throw insertError;
-
-      router.push("/");
-      router.refresh();
+      if (isEditing && initialExpense) {
+        const { error: updateError } = await supabase
+          .from("expenses")
+          .update(payload)
+          .eq("id", initialExpense.id);
+        if (updateError) throw updateError;
+        router.push("/despesas");
+        router.refresh();
+      } else {
+        const { error: insertError } = await supabase.from("expenses").insert({
+          project_id: projectId,
+          ...payload,
+        });
+        if (insertError) throw insertError;
+        router.push("/");
+        router.refresh();
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao salvar despesa.";
       setError(message);
@@ -106,15 +122,52 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
     }
   }
 
-  const phases: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
+  async function handleDelete() {
+    if (!initialExpense) return;
+    if (!window.confirm("Excluir esta despesa? Esta ação não pode ser desfeita.")) return;
+    setDeleting(true);
+    try {
+      const supabase = createClient();
+      const { error: deleteError } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", initialExpense.id);
+      if (deleteError) throw deleteError;
+      router.push("/despesas");
+      router.refresh();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao excluir despesa.";
+      setError(message);
+      setDeleting(false);
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-zinc-900 pb-8">
       <div className="sticky top-0 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
-        <Link href="/" className="text-zinc-400 hover:text-zinc-100">
+        <Link
+          href={isEditing ? "/despesas" : "/"}
+          className="text-zinc-400 hover:text-zinc-100"
+        >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold text-zinc-100">Novo Lançamento</h1>
+        <h1 className="text-lg font-bold text-zinc-100 flex-1">
+          {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
+        </h1>
+        {isEditing && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleting}
+            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1"
+          >
+            {deleting ? (
+              <Loader2 className="h-5 w-5 animate-spin" />
+            ) : (
+              <Trash2 className="h-5 w-5" />
+            )}
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-5">
@@ -127,7 +180,7 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
             placeholder="0,00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            autoFocus
+            autoFocus={!isEditing}
             required
             className="text-2xl font-bold h-14"
           />
@@ -177,44 +230,6 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
                 ))}
               </SelectContent>
             </Select>
-          </div>
-        </div>
-
-        {rooms.length > 0 && (
-          <div className="space-y-2">
-            <Label>Cômodo</Label>
-            <Select value={roomId} onValueChange={setRoomId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar cômodo" />
-              </SelectTrigger>
-              <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    {room.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          <Label>Fase</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {phases.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPhase(phase === p ? "" : p)}
-                className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-colors ${
-                  phase === p
-                    ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                    : "border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -301,6 +316,8 @@ export function ExpenseForm({ projectId, categories, rooms }: ExpenseFormProps) 
         <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
           {loading ? (
             <Loader2 className="h-5 w-5 animate-spin" />
+          ) : isEditing ? (
+            "Salvar Alterações"
           ) : (
             "Salvar Lançamento"
           )}
