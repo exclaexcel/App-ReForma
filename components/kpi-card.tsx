@@ -10,10 +10,10 @@ type KpiCardProps = {
 };
 
 const variantStyles = {
-  default: "bg-zinc-800 border-zinc-700",
-  primary: "bg-zinc-700 border-zinc-600",
-  success: "bg-zinc-800 border-emerald-800",
-  warning: "bg-zinc-800 border-orange-900",
+  default: "dark:bg-zinc-800 dark:border-zinc-700/60 light:bg-stone-100 light:border-stone-200/60",
+  primary: "dark:bg-zinc-700 dark:border-zinc-600/60 light:bg-stone-100 light:border-stone-200/60",
+  success: "dark:bg-zinc-800 dark:border-emerald-800/60 light:bg-stone-100 light:border-stone-200/60",
+  warning: "dark:bg-zinc-800 dark:border-orange-900/60 light:bg-stone-100 light:border-stone-200/60",
 };
 
 const iconStyles = {
@@ -25,12 +25,15 @@ const iconStyles = {
 
 export function KpiCard({ label, value, icon: Icon, variant = "default" }: KpiCardProps) {
   return (
-    <div className={cn("rounded-2xl border p-4 flex flex-col gap-2", variantStyles[variant])}>
+    <div className={cn(
+      "rounded-xl border p-4 flex flex-col gap-2 shadow-sm shadow-black/20 transition-all duration-200 group hover:border-zinc-600/80 dark:hover:bg-zinc-700/50 light:hover:bg-stone-200/50",
+      variantStyles[variant]
+    )}>
       <div className="flex items-center justify-between">
-        <span className="text-xs text-zinc-400 font-medium uppercase tracking-wide">{label}</span>
+        <span className="text-xs dark:text-zinc-400 light:text-stone-600 font-semibold uppercase tracking-wider">{label}</span>
         <Icon className={cn("h-4 w-4", iconStyles[variant])} />
       </div>
-      <span className="text-xl font-bold text-zinc-100 tabular-nums">
+      <span className="text-xl font-bold dark:text-zinc-100 light:text-stone-900 tabular-nums">
         {formatCurrency(value)}
       </span>
     </div>

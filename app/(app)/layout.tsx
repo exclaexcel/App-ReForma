@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/bottom-nav";
-import { redirect } from "next/navigation";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -10,10 +9,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const { data: { user: authUser } } = await supabase.auth.getUser();
     user = authUser;
   } catch {
-    redirect("/login");
+    // unauthenticated — individual pages handle redirects
   }
-
-  if (!user) redirect("/login");
 
   return (
     <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900">

@@ -154,11 +154,11 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
       <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
         <Link
           href={isEditing ? "/despesas" : "/"}
-          className="text-stone-500 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100"
+          className="dark:text-zinc-400 dark:hover:text-zinc-100 light:text-stone-500 light:hover:text-stone-900 transition-colors duration-150"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold text-stone-900 dark:text-zinc-100 flex-1">
+        <h1 className="text-lg font-bold dark:text-zinc-100 light:text-stone-900 flex-1">
           {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
         </h1>
         {isEditing && (
@@ -166,7 +166,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
             type="button"
             onClick={handleDelete}
             disabled={deleting}
-            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1"
+            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1 transition-colors duration-150"
           >
             {deleting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -266,10 +266,10 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
                 key={p}
                 type="button"
                 onClick={() => setPhase(phase === p ? "" : p)}
-                className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-colors ${
+                className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-all duration-200 active:scale-95 ${
                   phase === p
                     ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
+                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 light:hover:bg-stone-200"
                 }`}
               >
                 {p}
@@ -287,10 +287,10 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
                   key={key}
                   type="button"
                   onClick={() => setPaymentMethod(key)}
-                  className={`rounded-xl border py-2 px-2 text-xs font-medium transition-colors ${
+                  className={`rounded-xl border py-2 px-2 text-xs font-medium transition-all duration-200 active:scale-95 ${
                     paymentMethod === key
                       ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
+                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 light:hover:bg-stone-200"
                   }`}
                 >
                   {label}
@@ -300,13 +300,13 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 p-4">
+        <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
           <Checkbox
             id="is_paid"
             checked={isPaid}
             onCheckedChange={(v) => setIsPaid(Boolean(v))}
           />
-          <Label htmlFor="is_paid" className="cursor-pointer">
+          <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 light:text-stone-900">
             Já está pago
           </Label>
         </div>
@@ -317,11 +317,12 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
             ref={fileInputRef}
             type="file"
             accept="image/*,application/pdf"
+            capture="environment"
             onChange={handleFileChange}
             className="hidden"
           />
           {receiptPreview ? (
-            <div className="relative rounded-xl overflow-hidden border border-stone-200 dark:border-zinc-700">
+            <div className="relative rounded-xl overflow-hidden border border-stone-200/60 dark:border-zinc-700/60 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={receiptPreview}
@@ -334,7 +335,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
                   setReceiptFile(null);
                   setReceiptPreview(null);
                 }}
-                className="absolute top-2 right-2 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1.5 text-stone-100 dark:text-zinc-300 text-xs"
+                className="absolute top-2 right-2 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1.5 text-stone-100 dark:text-zinc-300 text-xs hover:bg-stone-900 dark:hover:bg-zinc-900 transition-colors duration-150"
               >
                 ✕
               </button>
@@ -343,7 +344,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm dark:text-zinc-500 light:text-stone-400 dark:hover:border-zinc-600 light:hover:border-stone-400 dark:hover:text-zinc-400 light:hover:text-stone-600 transition-all duration-200 active:scale-95"
             >
               <Camera className="h-5 w-5" />
               Tirar foto, escolher da galeria ou PDF
@@ -352,7 +353,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
         </div>
 
         {error && (
-          <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+          <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300/60 dark:border-red-800/60 px-4 py-3 text-sm text-red-700 dark:text-red-400 shadow-sm shadow-red-900/10">
             {error}
           </div>
         )}

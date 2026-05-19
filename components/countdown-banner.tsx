@@ -8,12 +8,12 @@ export function CountdownBanner({ days }: Props) {
   const isToday = days === 0;
 
   const bannerStyle = cn(
-    "flex items-center gap-3 rounded-2xl border px-4 py-3",
+    "flex items-center gap-3 rounded-xl border px-4 py-3 shadow-sm transition-all duration-200",
     isOverdue
-      ? "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/50 text-red-700 dark:text-red-400"
+      ? "bg-red-50 dark:bg-red-950/40 border-red-200/60 dark:border-red-800/50 text-red-700 dark:text-red-400 shadow-red-900/10"
       : isToday
-        ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800/50 text-amber-700 dark:text-amber-400"
-        : "bg-orange-50 dark:bg-zinc-800 border-orange-200 dark:border-zinc-700 text-orange-800 dark:text-orange-300"
+        ? "bg-amber-50 dark:bg-amber-950/40 border-amber-200/60 dark:border-amber-800/50 text-amber-700 dark:text-amber-400 shadow-amber-900/10"
+        : "bg-orange-50 dark:bg-zinc-800 border-orange-200/60 dark:border-zinc-700/60 text-orange-800 dark:text-orange-300 shadow-orange-900/10 dark:shadow-black/20"
   );
 
   const absDays = Math.abs(days);

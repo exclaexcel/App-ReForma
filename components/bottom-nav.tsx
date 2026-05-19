@@ -26,7 +26,7 @@ export function BottomNav() {
                 href={item.href}
                 className="flex flex-col items-center justify-center -mt-6"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-700 shadow-lg shadow-orange-900/50 active:bg-orange-800 transition-colors">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-700 shadow-lg shadow-orange-900/50 active:bg-orange-800 transition-all duration-200 active:scale-95">
                   <Plus className="h-7 w-7 text-white" strokeWidth={2.5} />
                 </div>
               </Link>
@@ -39,8 +39,10 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-colors",
-                isActive ? "text-orange-500" : "text-zinc-500 hover:text-zinc-300"
+                "flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-all duration-200",
+                isActive
+                  ? "text-orange-500"
+                  : "dark:text-zinc-500 dark:hover:text-zinc-300 light:text-stone-400 light:hover:text-stone-600"
               )}
             >
               <item.icon className="h-5 w-5" />
