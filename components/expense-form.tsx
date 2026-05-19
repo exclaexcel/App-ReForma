@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Expense, PaymentMethod, PAYMENT_METHOD_LABELS } from "@/lib/types";
+import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,10 +21,11 @@ import Link from "next/link";
 type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
+  rooms?: Room[];
   initialExpense?: Expense;
 };
 
-export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFormProps) {
+export function ExpenseForm({ projectId, categories, rooms = [], initialExpense }: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
@@ -37,6 +38,8 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
   const [date, setDate] = useState(initialExpense?.expense_date ?? today);
   const [description, setDescription] = useState(initialExpense?.description ?? "");
   const [categoryId, setCategoryId] = useState(initialExpense?.category_id ?? "");
+  const [roomId, setRoomId] = useState(initialExpense?.room_id ?? "");
+  const [phase, setPhase] = useState<ExpensePhase | "">(initialExpense?.phase ?? "");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initialExpense?.payment_method ?? "pix"
   );
@@ -48,6 +51,8 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const phases: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -89,6 +94,8 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
 
       const payload = {
         category_id: categoryId || null,
+        room_id: roomId || null,
+        phase: (phase || null) as ExpensePhase | null,
         description,
         amount: parsedAmount,
         expense_date: date,
@@ -143,15 +150,15 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
   }
 
   return (
-    <div className="min-h-dvh bg-zinc-900 pb-8">
-      <div className="sticky top-0 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
+    <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900 pb-8">
+      <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
         <Link
           href={isEditing ? "/despesas" : "/"}
-          className="text-zinc-400 hover:text-zinc-100"
+          className="text-stone-500 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold text-zinc-100 flex-1">
+        <h1 className="text-lg font-bold text-stone-900 dark:text-zinc-100 flex-1">
           {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
         </h1>
         {isEditing && (
@@ -233,6 +240,44 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
           </div>
         </div>
 
+        {rooms.length > 0 && (
+          <div className="space-y-2">
+            <Label>Cômodo</Label>
+            <Select value={roomId} onValueChange={setRoomId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar cômodo" />
+              </SelectTrigger>
+              <SelectContent>
+                {rooms.map((room) => (
+                  <SelectItem key={room.id} value={room.id}>
+                    {room.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <Label>Fase</Label>
+          <div className="grid grid-cols-2 gap-2">
+            {phases.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPhase(phase === p ? "" : p)}
+                className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-colors ${
+                  phase === p
+                    ? "border-orange-600 bg-orange-700/20 text-orange-400"
+                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label>Forma de Pagamento</Label>
           <div className="grid grid-cols-3 gap-2">
@@ -245,7 +290,7 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
                   className={`rounded-xl border py-2 px-2 text-xs font-medium transition-colors ${
                     paymentMethod === key
                       ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                      : "border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600"
+                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
                   }`}
                 >
                   {label}
@@ -255,7 +300,7 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 p-4">
+        <div className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 p-4">
           <Checkbox
             id="is_paid"
             checked={isPaid}
@@ -271,13 +316,12 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
-            capture="environment"
+            accept="image/*,application/pdf"
             onChange={handleFileChange}
             className="hidden"
           />
           {receiptPreview ? (
-            <div className="relative rounded-xl overflow-hidden border border-zinc-700">
+            <div className="relative rounded-xl overflow-hidden border border-stone-200 dark:border-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={receiptPreview}
@@ -290,7 +334,7 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
                   setReceiptFile(null);
                   setReceiptPreview(null);
                 }}
-                className="absolute top-2 right-2 rounded-full bg-zinc-900/80 p-1.5 text-zinc-300 text-xs"
+                className="absolute top-2 right-2 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1.5 text-stone-100 dark:text-zinc-300 text-xs"
               >
                 ✕
               </button>
@@ -299,16 +343,16 @@ export function ExpenseForm({ projectId, categories, initialExpense }: ExpenseFo
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 py-6 text-sm text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 transition-colors"
             >
               <Camera className="h-5 w-5" />
-              Tirar foto ou escolher da galeria
+              Tirar foto, escolher da galeria ou PDF
             </button>
           )}
         </div>
 
         {error && (
-          <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}

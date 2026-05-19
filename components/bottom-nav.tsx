@@ -16,7 +16,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-zinc-900/95 border-t border-zinc-800 backdrop-blur-sm z-50">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-stone-50/95 dark:bg-zinc-900/95 border-t border-stone-200 dark:border-zinc-800 backdrop-blur-sm z-50">
       <div className="flex items-center justify-around px-2 pb-safe pt-2">
         {navItems.map((item) => {
           if (item.icon === null) {

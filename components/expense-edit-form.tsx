@@ -125,12 +125,12 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
   const phases: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
 
   return (
-    <div className="min-h-dvh bg-zinc-900 pb-8">
-      <div className="sticky top-0 bg-zinc-900/95 backdrop-blur-sm border-b border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
-        <Link href="/despesas" className="text-zinc-400 hover:text-zinc-100">
+    <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900 pb-8">
+      <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
+        <Link href="/despesas" className="text-stone-500 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold text-zinc-100">Editar Lançamento</h1>
+        <h1 className="text-lg font-bold text-stone-900 dark:text-zinc-100">Editar Lançamento</h1>
         <button
           type="button"
           onClick={handleDelete}
@@ -231,7 +231,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
                 className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-colors ${
                   phase === p
                     ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                    : "border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600"
+                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
                 }`}
               >
                 {p}
@@ -252,7 +252,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
                   className={`rounded-xl border py-2 px-2 text-xs font-medium transition-colors ${
                     paymentMethod === key
                       ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                      : "border-zinc-700 bg-zinc-800 text-zinc-400 hover:border-zinc-600"
+                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600"
                   }`}
                 >
                   {label}
@@ -262,7 +262,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-800 p-4">
+        <div className="flex items-center gap-3 rounded-xl border border-stone-200 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 p-4">
           <Checkbox
             id="is_paid"
             checked={isPaid}
@@ -278,13 +278,12 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
-            capture="environment"
+            accept="image/*,application/pdf"
             onChange={handleFileChange}
             className="hidden"
           />
           {receiptPreview ? (
-            <div className="relative rounded-xl overflow-hidden border border-zinc-700">
+            <div className="relative rounded-xl overflow-hidden border border-stone-200 dark:border-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={receiptPreview}
@@ -297,7 +296,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
                   setReceiptFile(null);
                   setReceiptPreview(null);
                 }}
-                className="absolute top-2 right-2 rounded-full bg-zinc-900/80 p-1.5 text-zinc-300 text-xs"
+                className="absolute top-2 right-2 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1.5 text-stone-100 dark:text-zinc-300 text-xs"
               >
                 ✕
               </button>
@@ -306,7 +305,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-zinc-700 bg-zinc-800/50 py-6 text-sm text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 transition-colors"
             >
               <Camera className="h-5 w-5" />
               Tirar foto ou escolher da galeria
@@ -315,7 +314,7 @@ export function ExpenseEditForm({ expense, categories, rooms }: ExpenseEditFormP
         </div>
 
         {error && (
-          <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {error}
           </div>
         )}
