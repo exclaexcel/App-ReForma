@@ -1,50 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { KpiCard } from "@/components/kpi-card";
+import { ExpenseListItem } from "@/components/expense-list-item";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { LogoutButton } from "@/components/logout-button";
-import { CountdownBanner } from "@/components/countdown-banner";
-import { PlusCircle, BarChart2, ClipboardList, LayoutGrid, FolderOpen, HardHat } from "lucide-react";
+import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, LayoutGrid, Settings } from "lucide-react";
+import { Expense } from "@/lib/types";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
-
-function getDaysRemaining(endDateStr: string | null): number | null {
-  if (!endDateStr) return null;
-  const end = new Date(endDateStr + "T00:00:00");
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-type HubCardProps = {
-  href: string;
-  icon: React.ElementType;
-  label: string;
-  description: string;
-  className?: string;
-};
-
-function HubCard({ href, icon: Icon, label, description, className }: HubCardProps) {
-  return (
-    <Link
-      href={href}
-      className={cn(
-        "flex flex-col items-start gap-3 rounded-2xl",
-        "bg-white dark:bg-zinc-800",
-        "border border-stone-200 dark:border-zinc-700",
-        "p-4 active:bg-stone-50 dark:active:bg-zinc-700",
-        "transition-colors",
-        className
-      )}
-    >
-      <Icon className="h-5 w-5 text-orange-700 dark:text-orange-500" />
-      <div>
-        <p className="text-sm font-semibold text-stone-800 dark:text-zinc-200 leading-snug">{label}</p>
-        <p className="text-xs text-stone-400 dark:text-zinc-500 mt-0.5">{description}</p>
-      </div>
-    </Link>
-  );
-}
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -52,31 +13,7 @@ export default async function HomePage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
-    return (
-      <div className="min-h-dvh bg-zinc-900 flex flex-col items-center justify-center px-6">
-        <div className="w-full max-w-sm space-y-8">
-          <div className="flex flex-col items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-700/20 border border-orange-700/30">
-              <HardHat className="h-8 w-8 text-orange-500" />
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-bold text-zinc-100">ReForma</h1>
-              <p className="text-sm text-zinc-500 mt-1">Gestão financeira da sua obra</p>
-            </div>
-          </div>
-          <div className="flex flex-col gap-3">
-            <Link href="/signup" className={cn(buttonVariants({ size: "lg" }), "w-full")}>
-              Criar minha conta
-            </Link>
-            <Link href="/login" className={cn(buttonVariants({ variant: "outline", size: "lg" }), "w-full")}>
-              Já tenho uma conta
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!user) redirect("/login");
 
   const { data: project } = await supabase
     .from("projects")
@@ -92,83 +29,96 @@ export default async function HomePage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  const daysLeft = getDaysRemaining(project.end_date);
+  const { data: expenses } = await supabase
+    .from("expenses")
+    .select("*, categories(id, name, color_hex)")
+    .eq("project_id", project.id)
+    .order("expense_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  const allExpenses = (expenses ?? []) as Expense[];
+  const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
+  const toPay = totalCommitted - totalPaid;
+  const recentExpenses = allExpenses.slice(0, 5);
 
   return (
     <div className="px-4 pt-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-stone-500 dark:text-zinc-500 uppercase tracking-wide font-medium">
-            Painel de Controle
-          </p>
-          <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100 mt-0.5">
-            Olá, {userName}!
-          </h1>
-          <p className="text-sm text-stone-500 dark:text-zinc-500 mt-0.5">
-            O que vamos fazer hoje?
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ThemeToggle />
-          <LogoutButton />
-        </div>
+      <div>
+        <p className="text-sm text-zinc-500">Início</p>
+        <h1 className="text-2xl font-bold text-zinc-100">Olá, {userName}</h1>
+        <p className="text-xs text-zinc-500 mt-0.5 truncate">{project.name}</p>
       </div>
 
-      {/* Project name */}
-      <p className="text-xs text-stone-400 dark:text-zinc-500 truncate -mt-2">
-        {project.name}
-      </p>
-
-      {/* Countdown */}
-      {daysLeft !== null && <CountdownBanner days={daysLeft} />}
-
-      {/* Primary CTA */}
-      <Link
-        href="/novo"
-        className="flex items-center justify-center gap-3 w-full rounded-2xl
-                   bg-terracota hover:bg-terracota-dark active:bg-terracota-dark
-                   text-white py-5 text-lg font-bold
-                   shadow-lg shadow-terracota/25
-                   transition-colors"
-      >
-        <PlusCircle className="h-6 w-6" />
-        Lançar Nova Despesa
-      </Link>
-
-      {/* Secondary grid */}
       <div className="grid grid-cols-2 gap-3">
-        <HubCard
-          href="/comprovantes"
-          icon={FolderOpen}
-          label="Pasta Digital"
-          description="Arquivo de comprovantes"
-          className="col-span-2"
+        <KpiCard
+          label="Total Orçado"
+          value={project.total_budget}
+          icon={Wallet}
+          variant="primary"
         />
-        <HubCard
-          href="/dashboard"
-          icon={BarChart2}
-          label="Resumo Financeiro"
-          description="KPIs e últimas despesas"
+        <KpiCard
+          label="Total Comprometido"
+          value={totalCommitted}
+          icon={TrendingDown}
+          variant="default"
         />
-        <HubCard
-          href="/despesas"
-          icon={ClipboardList}
-          label="Histórico de Gastos"
-          description="Todas as despesas"
+        <KpiCard
+          label="Efetivamente Pago"
+          value={totalPaid}
+          icon={CheckCircle2}
+          variant="success"
         />
-        <HubCard
+        <KpiCard
+          label="A Pagar (Agendado)"
+          value={toPay}
+          icon={Clock}
+          variant="warning"
+        />
+      </div>
+
+      <div className="flex gap-2">
+        <Link
           href="/comodos"
-          icon={LayoutGrid}
-          label="Gerenciar Cômodos"
-          description="Ambientes da obra"
-        />
-        <HubCard
-          href="/graficos"
-          icon={BarChart2}
-          label="Gráficos"
-          description="Análise visual"
-        />
+          className="flex-1 flex items-center gap-2 rounded-xl bg-zinc-800 border border-zinc-700 px-3 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-700 transition-colors"
+        >
+          <LayoutGrid className="h-4 w-4 text-orange-500 shrink-0" />
+          Cômodos
+        </Link>
+        <Link
+          href="/projeto/editar"
+          className="flex-1 flex items-center gap-2 rounded-xl bg-zinc-800 border border-zinc-700 px-3 py-3 text-sm font-medium text-zinc-300 hover:bg-zinc-700 transition-colors"
+        >
+          <Settings className="h-4 w-4 text-orange-500 shrink-0" />
+          Editar obra
+        </Link>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-zinc-300">Últimas Despesas</h2>
+          {allExpenses.length > 5 && (
+            <a href="/despesas" className="text-xs text-orange-500 hover:text-orange-400">
+              Ver todas
+            </a>
+          )}
+        </div>
+
+        {recentExpenses.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 py-10 text-center">
+            <HardHat className="h-8 w-8 text-zinc-600" />
+            <p className="text-sm text-zinc-500">
+              Nenhuma despesa ainda. Toque em{" "}
+              <span className="text-orange-500 font-medium">+</span> para adicionar.
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-800">
+            {recentExpenses.map((expense) => (
+              <ExpenseListItem key={expense.id} expense={expense} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
