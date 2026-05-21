@@ -35,8 +35,14 @@ export default function SignupPage() {
       options: { data: { full_name: name } },
     });
 
-    if (signupError || !data.user) {
-      setError(signupError?.message ?? "Erro ao criar conta.");
+    if (signupError) {
+      setError(signupError.message);
+      setLoading(false);
+      return;
+    }
+
+    if (!data.user) {
+      setError("Verifique seu e-mail para confirmar o cadastro. Se já tiver conta, acesse o login.");
       setLoading(false);
       return;
     }
