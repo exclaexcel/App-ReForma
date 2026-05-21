@@ -31,6 +31,8 @@ export type PaymentMethod =
 
 export type ExpensePhase = "Estrutura" | "Mobiliário & Decor";
 
+export const EXPENSE_PHASES: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
+
 export type Expense = {
   id: string;
   project_id: string;
@@ -62,3 +64,27 @@ export const DEFAULT_CATEGORIES = [
   { name: "Acabamentos", color_hex: "#D97757" },
   { name: "Móveis e Decoração", color_hex: "#92400e" },
 ];
+
+export type EventType =
+  | "entrega_material"
+  | "servico_mao_obra"
+  | "pagamento"
+  | "visita_tecnica";
+
+export const EVENT_TYPE_LABELS: Record<EventType, string> = {
+  entrega_material: "Entrega de Material",
+  servico_mao_obra: "Serviço / Mão de Obra",
+  pagamento: "Pagamento",
+  visita_tecnica: "Visita Técnica",
+};
+
+export type ScheduleEvent = {
+  id: string;
+  project_id: string;
+  user_id: string;
+  title: string;
+  event_type: EventType;
+  event_date: string;
+  notes: string | null;
+  created_at: string;
+};

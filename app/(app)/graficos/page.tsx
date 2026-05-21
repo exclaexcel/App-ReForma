@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getLatestProject } from "@/lib/queries/getProject";
 import { WaterfallChart } from "@/components/waterfall-chart";
 import { HorizontalBarChart } from "@/components/horizontal-bar-chart";
 import { SpendingAreaChart } from "@/components/area-chart";
@@ -26,13 +27,7 @@ export default async function GraficosPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const project = await getLatestProject(supabase, user.id);
 
   if (!project) redirect("/");
 

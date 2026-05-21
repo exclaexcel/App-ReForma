@@ -1,0 +1,163 @@
+PRD: App de Gestão de Reforma e Acabamento
+
+1. Visão Geral e Arquitetura do Produto (PRD)
+1.1 O aplicativo é um web app mobile-first criado para o controle financeiro rigoroso de obras e reformas. O objetivo principal é abandonar o uso do Excel e permitir o registro imediato de despesas (desde pregos até a mão de obra) diretamente do celular, no momento da compra. Embora inicie como um projeto pessoal, a arquitetura será multi-tenant, projetada para escalar e se tornar um SaaS (Software as a Service) no futuro. 
+1.2 Escalabilidade: O sistema tem arquitetura multi-tenant, sendo desenhado para evoluir para um SaaS (Software as a Service) no futuro.  
+1.3 Stack Tecnológica: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui. O backend utiliza Supabase (Auth e PostgreSQL), com gráficos do Recharts e iconografia da Lucide React.  
+1.4 Navegação: Focada no mobile (mobile-first), utiliza uma barra de abas fixas na parte inferior contendo Início, um botão central "+" em terracota para novas despesas, listagem de Despesas e Gráficos.  
+1.5 Identidade Visual: Estética "Reforma Chique"
+Cores de Fundo: Tons de cinza quentes da paleta zinc. No Dark Mode, é estritamente proibido usar preto absoluto; utilize bg-zinc-900 para fundos e bg-zinc-800 para cards.  
+Cores de Ação: Botões principais (CTAs) em Terracota (orange-700/800) e elementos secundários em Chocolate/Marrom (amber-900/950). Textos devem ser off-white (zinc-100/300) para acessibilidade.  
+Visualização de Dados: Gráficos de pizza ou rosca são terminantemente proibidos. A ênfase visual é no Gráfico de Cascata (Waterfall) para mostrar a queima do orçamento.  
+
+2. Stack Tecnológica
+Framework: Next.js 14 (App Router).
+Linguagem: TypeScript.
+Estilização: Tailwind CSS.
+Componentes de UI: shadcn/ui.
+Backend/Banco de Dados: Supabase (Auth para login com Email/Senha e PostgreSQL).
+Gráficos: Recharts.
+Ícones: Lucide React.
+
+3. Biblioteca de Prompts para o Cursor: 
+Aqui estão todos os comandos organizados para o Claude executar. Basta copiar os blocos de texto abaixo e colar no Composer (Ctrl+I ou Cmd+I).
+3.1. Atualização do Banco de Dados (Supabase). Este comando atualiza o "cérebro" do app, preparando o cálculo da contagem regressiva, a divisão por cômodos e a fase da obra.  
+3.2. Construção da Fachada: Landing Page . Cria a tela de boas-vindas elegante para receber usuários antes do login.  
+3.3. Segurança: Login, Logoff e Recuperação de Senha. Garante que a portaria digital da obra funcione e que o usuário consiga redefinir a senha.
+3.4. Painel de Controle: O Hub Rápido . Cria uma tela amigável pós-login para que o usuário escolha o módulo sem ser bombardeado por gráficos. 
+3.5. Modo Claro, Contagem Regressiva e Refinamentos . Implementa o suporte ao tema claro em tom bege e ativa o relógio da reforma.  
+3.6. Pasta Digital: O Cofre de Comprovantes . Implementa as opções de upload (câmera e PDF) e organiza a galeria de notas fiscais em ordem cronológica decrescente.  
+
+4. Identidade Visual (Estética "Reforma Chique")
+4.1 O design seguirá o conceito "chique minimalista", inspirado na paleta do "Chá de Casa Nova".
+4.2 0Fundo e Superfícies: Utilização de tons de cinza quentes da paleta zinc do Tailwind. No Dark Mode, é estritamente proibido o uso de preto absoluto (#000000); deve-se usar bg-zinc-900 para o fundo e bg-zinc-800 para os cards.
+4.3 Ações Principais (CTAs): Botões de destaque em tons de Terracota (ex: #C84B31, #D97757 ou orange-700/800).
+4.4 Elementos Secundários: Detalhes em tons de Chocolate/Marrom (ex: #5C3A21 ou amber-900/amber-950).
+4.5 Tipografia: Textos em tons off-white (zinc-100 ou zinc-300) para garantir contraste e acessibilidade.
+4.6 Iconografia Temática: Uso obrigatório de ícones de construção (ex: HardHat, BrickWall, Hammer, PaintBucket, Lightbulb).
+
+🎨 Biblioteca Oficial de Ícones (Lucide React)
+
+Capacete de Obra: HardHat (Ideal para a tela de Boas-vindas ou para o Header).  
+Martelo: Hammer (Ótimo para representar ferramentas ou ações de "construir").  
+Parede de Tijolos: BrickWall (Perfeito para representar a fase de "Estrutura").  
+Balde de Tinta: PaintBucket (Excelente para a fase de "Mobiliário & Decor" ou acabamentos).  
+Lâmpada/Ideia: Lightbulb (Ótimo para a área de planejamento ou resumo financeiro).  
+Engrenagens: Settings ou Cog (O padrão perfeito para a tela de configurações do aplicativo).
+
+adicionar essa listinha direto no seu arquivo .cursorrules!
+obrigatório consultar esse acervo temático para manter o padrão da obra em cada detalhe.
+
+5. Estrutura de Navegação
+Para garantir ergonomia e uso com apenas uma mão, a navegação principal será feita através de uma barra de abas fixas na parte inferior da tela (estilo Instagram).
+5.1 Início (Home): Resumo do fluxo de caixa com KPI Cards ("Total Orçado", "Total Comprometido", "Total Pago" e "A Pagar") e a lista das 5 últimas despesas cadastradas.
+5.2 Botão Central (+): Um botão grande em destaque na cor terracota, dedicado exclusivamente para abrir o formulário de "Novo Lançamento".
+5.3 Despesas: Página para listagem completa de gastos, buscas e histórico.
+5.4 Gráficos: Módulo de inteligência de dados.
+
+6. Funcionalidades Principais (MVP)
+6.1. Gestão de Despesas (O "Chão de Fábrica")
+6.1.1 Formulário de Lançamento: Campos para Valor, Data, Descrição, Categoria, Forma de Pagamento e um Checkbox indicando "Já está pago?".
+6.1.2 Upload de Comprovantes: Opção de anexar fotos de notas fiscais ou cupons gerados pelo celular.
+6.1.3 Controle de Fluxo de Caixa: Diferenciação visual e lógica clara entre o que já foi efetivamente pago e o que está agendado/parcelado ("A Pagar").0
+6.1.4 Categorização: Divisão de custos em frentes como Mão de Obra, Materiais Brutos, Acabamentos e Móveis/Decoração.
+6.2. Inteligência de Dados (Dashboard e Gráficos)
+6.2.1 Regra de Ouro: É terminantemente proibido o uso de gráficos de pizza ou rosca.
+6.2.2 Gráfico de Cascata (Waterfall): A visualização principal, mostrando o orçamento inicial caindo em degraus conforme o consumo das despesas, até atingir o saldo restante.
+6.2.3 Tabela de Transparência: Localizada abaixo do gráfico de cascata, exibindo colunas de Categoria, Total Consumido e Peso no Orçamento (em porcentagem) para facilitar a compreensão.
+6.2.4 Gráfico de Barras Horizontais: Para comparar gastos agrupados por categoria e ranquear os maiores custos.
+6.2.5 Gráfico de Linha ou Área: Para acompanhamento da linha do tempo financeira (picos de gastos).
+
+7. Estrutura de Banco de Dados (Supabase)
+O modelo de dados base para sustentar o sistema multi-tenant possui as seguintes tabelas:
+7.1. projects: Armazena as reformas (campos: id, user_id, name, total_budget, created_at).
+7.2. categories: Frentes da obra (campos: id, project_id, name, color_hex).
+7.3. expenses: Registro de gastos (campos: id, project_id, category_id, description, amount, expense_date, payment_method, is_paid, receipt_url, created_at).
+
+8. Diretrizes Avançadas e Escalabilidade (O "Plano Diretor")
+Para garantir que o "Cofre Digital da Obra" escale com segurança, performance e mantenha a identidade visual intacta durante todo o desenvolvimento, o projeto deve seguir as seguintes diretrizes de infraestrutura e governança de dados:
+8.1. O Arquivo Mestre de Regras (.cursorrules)
+Objetivo: Automatizar o contexto de negócio e design para o assistente de IA (Claude) no Cursor, evitando desvios na arquitetura e na interface.
+Ação: Criar um arquivo nomeado .cursorrules na raiz do projeto.
+Conteúdo Obrigatório no Arquivo:
+Imposição da estética "Reforma Chique" e da paleta de cores (Tailwind zinc, orange-700, amber-900).
+Regra inegociável: Proibição estrita do uso de preto absoluto (#000000) no Dark Mode.
+Regra inegociável: Proibição estrita da geração de gráficos de pizza ou rosca para visualização de dados.
+Obrigatoriedade do design mobile-first.
+8.2. Segurança e Isolamento de Dados (Supabase RLS)
+Objetivo: Garantir a privacidade total e preparar o terreno arquitetônico para o modelo SaaS (Software as a Service) multi-tenant.
+Ação: Ativar e configurar as políticas de Row Level Security (RLS) diretamente no painel do Supabase para todas as tabelas principais (projects, expenses, categories, rooms).
+Regra de Acesso: Um usuário autenticado tem permissão estrita para visualizar, inserir, atualizar ou deletar apenas os registros que possuam o user_id correspondente ao seu próprio token de autenticação. Os "Bolsões" (Buckets) do Supabase Storage para os comprovantes também devem herdar essas políticas de segurança.
+8.3. Estratégia de Infraestrutura e Hospedagem
+Objetivo: Equilibrar velocidade de lançamento no MVP com previsibilidade de custos a longo prazo.
+Fase 1 (MVP): Utilizar a Vercel para o deploy inicial do frontend em Next.js, aproveitando a integração contínua (CI/CD) rápida e simplificada.
+Fase 2 (Escala): Estruturar a migração do ambiente de produção para a VPS da Hostinger. Configurar o servidor próprio otimizará os custos operacionais e dará controle absoluto sobre a máquina virtual conforme o tráfego do aplicativo e o volume de requisições ao banco de dados aumentarem.
+8.4. Integração e Inteligência de Dados (Exportação)
+Objetivo: Não perder o poder de análise profunda (OLAP) enquanto se ganha a agilidade do registro mobile (OLTP) no canteiro de obras.
+Ação: Implementar uma funcionalidade de "Exportação de Dados" na tela do Histórico de Gastos (Despesas).
+Formato: O sistema deve permitir o download de todo o histórico de despesas, filtrado ou completo, em formatos estruturados (.csv ou .xlsx).
+Impacto: Essa ponte garante que as despesas lançadas rapidamente pelo celular possam ser facilmente consumidas pelo Excel ou integradas a painéis analíticos complexos no Power BI para cruzamentos financeiros avançados de final de mês.
+
+9. Expansão de Funcionalidades (O Ecossistema da Obra)
+Para transformar o aplicativo em uma plataforma de gestão definitiva, o escopo do sistema passa a incluir os seguintes módulos integrados:
+9.1. Agenda de Fornecedores (Contatos e Orçamentos)
+Objetivo: Centralizar prestadores de serviço e lojas, vinculando-os diretamente aos lançamentos financeiros.
+Campos: Nome do fornecedor/profissional, especialidade (ex: Eletricista, Marmoraria), WhatsApp, link do orçamento e avaliação.
+9.2. Leitura Inteligente de Notas Fiscais (OCR)
+Objetivo: Agilizar o cadastro de despesas no canteiro de obras, reduzindo a digitação manual.
+Funcionamento: O usuário tira a foto do cupom fiscal e o sistema extrai automaticamente o valor total e o nome do estabelecimento, preenchendo previamente o formulário de novo lançamento.
+9.3. Checklist de Execução e Diário de Obras
+Objetivo: Mapear o progresso físico de cada ambiente em paralelo ao progresso financeiro.
+Funcionamento: Vinculado diretamente à tabela de cômodos (rooms). Cada ambiente possui tarefas específicas (ex: Demolição, Hidráulica, Revestimento, Marcenaria) com status de "Pendente" ou "Concluído".  
+9.4. Galeria de "Antes e Depois" (Evolução Visual)
+Objetivo: Registrar a evolução estética do projeto e armazenar referências visuais (Moodboard).
+Funcionamento: Utiliza a infraestrutura de armazenamento do Supabase Storage para organizar fotos históricas de cada cômodo.  
+
+10. Módulo de Cronograma e Previsão Semanal
+Objetivo: Antecipar os acontecimentos da obra nas próximas semanas, unificando a entrega de materiais, visitas de técnicos e prazos de pagamento.
+Interface Visual: Uma linha do tempo (Timeline) ou visão de calendário compacta e ergonômica com foco mobile-first.  
+Inteligência de Previsão: Exibição de alertas visuais para tarefas ou pagamentos que vencem nos próximos 7, 14 e 21 dias, permitindo um planejamento antecipado do fluxo de caixa ("A Pagar").  
+
+11. Atualização da Arquitetura do Banco de Dados (Supabase)
+Para suportar essa inteligência, copie o script SQL abaixo e execute-o no SQL Editor do seu painel do Supabase. Ele criará as novas tabelas mantendo as chaves estrangeiras vinculadas ao seu projeto.  
+
+SQL
+-- 1. Tabela de Fornecedores
+CREATE TABLE suppliers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    specialty TEXT,
+    phone TEXT,
+    budget_url TEXT,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- 2. Tabela de Tarefas/Checklist (Diário de Obras)
+CREATE TABLE tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    room_id UUID REFERENCES rooms(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    status TEXT DEFAULT 'Pendente' CHECK (status IN ('Pendente', 'Em Andamento', 'Concluído')),
+    sequence_order INT,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+-- 3. Tabela de Agenda e Previsão Semanal (Eventos Cronograma)
+CREATE TABLE schedule_events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    event_type TEXT CHECK (event_type IN ('Entrega', 'Serviço', 'Pagamento', 'Visita Técnica')),
+    start_date DATE NOT NULL,
+    end_date DATE,
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW())
+);
+
+4. Modificar a tabela expenses para vincular opcionalmente a um fornecedor
+ALTER TABLE expenses ADD COLUMN supplier_id UUID REFERENCES suppliers(id) ON DELETE SET NULL;
+
+

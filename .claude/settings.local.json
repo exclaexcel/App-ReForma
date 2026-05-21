@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Command gh -ErrorAction SilentlyContinue; \\(Get-Command gh -ErrorAction SilentlyContinue\\).Source; where.exe gh 2>$null; $env:PATH -split \";\" | Where-Object { Test-Path \"$_\\\\gh.exe\" })",
+      "WebFetch(domain:api.github.com)"
+    ]
+  }
+}

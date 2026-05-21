@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ClipboardList, BarChart2, Plus } from "lucide-react";
+import { Home, ClipboardList, CalendarDays, BarChart2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", icon: Home, label: "Início" },
   { href: "/despesas", icon: ClipboardList, label: "Despesas" },
   { href: "/novo", icon: null, label: "Novo" },
+  { href: "/agenda", icon: CalendarDays, label: "Agenda" },
   { href: "/graficos", icon: BarChart2, label: "Gráficos" },
 ];
 

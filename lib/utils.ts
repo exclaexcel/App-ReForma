@@ -12,6 +12,13 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
+export function getStoragePath(receiptUrl: string): string {
+  const marker = "/object/public/receipts/";
+  const idx = receiptUrl.indexOf(marker);
+  if (idx !== -1) return receiptUrl.slice(idx + marker.length);
+  return receiptUrl;
+}
+
 export function formatDate(dateStr: string): string {
   const date = new Date(dateStr + "T00:00:00");
   const today = new Date();

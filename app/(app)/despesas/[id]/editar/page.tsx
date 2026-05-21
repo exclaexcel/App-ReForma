@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { ExpenseEditForm } from "@/components/expense-edit-form";
+import { ExpenseForm } from "@/components/expense-form";
+import { getStoragePath } from "@/lib/utils";
 
 export default async function EditExpensePage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -26,11 +27,22 @@ export default async function EditExpensePage({ params }: { params: { id: string
   if (catError) throw catError;
   if (roomError) throw roomError;
 
+  let initialSignedUrl: string | null = null;
+  if (expense.receipt_url) {
+    const path = getStoragePath(expense.receipt_url);
+    const { data: signedData } = await supabase.storage
+      .from("receipts")
+      .createSignedUrl(path, 3600);
+    initialSignedUrl = signedData?.signedUrl ?? null;
+  }
+
   return (
-    <ExpenseEditForm
-      expense={expense}
+    <ExpenseForm
+      projectId={expense.project_id}
       categories={categories ?? []}
       rooms={rooms ?? []}
+      initialExpense={expense}
+      initialSignedUrl={initialSignedUrl}
     />
   );
 }

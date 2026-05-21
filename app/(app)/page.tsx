@@ -1,12 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLatestProject } from "@/lib/queries/getProject";
-import { KpiCard } from "@/components/kpi-card";
-import { ExpenseListItem } from "@/components/expense-list-item";
 import { CreateFirstProject } from "@/components/create-first-project";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { LogoutButton } from "@/components/logout-button";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, LayoutGrid, Settings, FolderOpen, HardHat as HatIcon } from "lucide-react";
-import { Expense } from "@/lib/types";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { PlusCircle, BarChart2, Receipt, LayoutGrid, HardHat as HatIcon } from "lucide-react";
 import Link from "next/link";
 
 function LandingPage() {
@@ -63,19 +61,6 @@ export default async function HomePage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  const { data: expenses } = await supabase
-    .from("expenses")
-    .select("*, categories(id, name, color_hex)")
-    .eq("project_id", project.id)
-    .order("expense_date", { ascending: false })
-    .order("created_at", { ascending: false });
-
-  const allExpenses = (expenses ?? []) as Expense[];
-  const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
-  const toPay = totalCommitted - totalPaid;
-  const recentExpenses = allExpenses.slice(0, 5);
-
   const daysUntilEnd = project.end_date
     ? Math.ceil(
         (new Date(project.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -83,96 +68,59 @@ export default async function HomePage() {
     : null;
 
   return (
-    <div className="px-4 pt-6 space-y-6">
-      <div className="flex items-start justify-between">
+    <div className="px-4 pt-6 pb-8 space-y-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-semibold dark:text-zinc-500 light:text-stone-500 uppercase tracking-wider">Início</p>
-          <h1 className="text-3xl font-bold dark:text-zinc-100 light:text-stone-900">Olá, {userName}</h1>
-          <p className="text-xs dark:text-zinc-500 light:text-stone-500 mt-0.5 truncate">{project.name}</p>
+          <p className="text-xs font-semibold text-stone-500 dark:text-zinc-500 uppercase tracking-wider">Obra em andamento</p>
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">
+            Olá, {userName}!
+          </h1>
+          <p className="text-sm text-stone-500 dark:text-zinc-400 mt-0.5">
+            O que vamos fazer hoje?
+          </p>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
+          <LogoutButton />
+        </div>
       </div>
 
       {daysUntilEnd !== null && (
         <CountdownBanner days={daysUntilEnd} />
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          label="Total Orçado"
-          value={project.total_budget}
-          icon={Wallet}
-          variant="primary"
-        />
-        <KpiCard
-          label="Total Comprometido"
-          value={totalCommitted}
-          icon={TrendingDown}
-          variant="default"
-        />
-        <KpiCard
-          label="Efetivamente Pago"
-          value={totalPaid}
-          icon={CheckCircle2}
-          variant="success"
-        />
-        <KpiCard
-          label="A Pagar (Agendado)"
-          value={toPay}
-          icon={Clock}
-          variant="warning"
-        />
+      <div className="space-y-2">
+        <Link
+          href="/novo"
+          className="flex items-center justify-center gap-2 w-full rounded-xl bg-orange-700 hover:bg-orange-800 px-4 py-4 text-sm font-semibold text-white active:scale-95 transition-all duration-200 shadow-sm shadow-orange-900/20"
+        >
+          <PlusCircle className="h-5 w-5" />
+          Lançar Nova Despesa
+        </Link>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-3 gap-2">
+        <Link
+          href="/dashboard"
+          className="flex flex-col items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-4 text-center hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <BarChart2 className="h-5 w-5 text-orange-700 dark:text-orange-500" />
+          <span className="text-xs font-medium text-stone-900 dark:text-zinc-100">Resumo Financeiro</span>
+        </Link>
+        <Link
+          href="/despesas"
+          className="flex flex-col items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-4 text-center hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <Receipt className="h-5 w-5 text-orange-700 dark:text-orange-500" />
+          <span className="text-xs font-medium text-stone-900 dark:text-zinc-100">Histórico</span>
+        </Link>
         <Link
           href="/comodos"
-          className="flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
+          className="flex flex-col items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-4 text-center hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
         >
-          <LayoutGrid className="h-4 w-4 text-orange-500 shrink-0" />
-          Cômodos
+          <LayoutGrid className="h-5 w-5 text-orange-700 dark:text-orange-500" />
+          <span className="text-xs font-medium text-stone-900 dark:text-zinc-100">Cômodos</span>
         </Link>
-        <Link
-          href="/comprovantes"
-          className="flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
-        >
-          <FolderOpen className="h-4 w-4 text-orange-500 shrink-0" />
-          Pasta Digital
-        </Link>
-        <Link
-          href="/projeto/editar"
-          className="col-span-2 flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
-        >
-          <Settings className="h-4 w-4 text-orange-500 shrink-0" />
-          Editar obra
-        </Link>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold dark:text-zinc-300 light:text-stone-700">Últimas Despesas</h2>
-          {allExpenses.length > 5 && (
-            <a href="/despesas" className="text-xs text-orange-500 hover:text-orange-400 transition-colors duration-150">
-              Ver todas
-            </a>
-          )}
-        </div>
-
-        {recentExpenses.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <HardHat className="h-8 w-8 dark:text-zinc-600 light:text-stone-400" />
-            <p className="text-sm dark:text-zinc-500 light:text-stone-600">
-              Nenhuma despesa ainda. Toque em{" "}
-              <span className="text-orange-500 font-medium">+</span> para adicionar.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y dark:divide-zinc-800/40 light:divide-stone-200/40">
-            {recentExpenses.map((expense) => (
-              <ExpenseListItem key={expense.id} expense={expense} />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

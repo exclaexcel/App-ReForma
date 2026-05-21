@@ -2,8 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { KpiCard } from "@/components/kpi-card";
 import { ExpenseListItem } from "@/components/expense-list-item";
+import { CountdownBanner } from "@/components/countdown-banner";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat } from "lucide-react";
+import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings } from "lucide-react";
 import { Expense } from "@/lib/types";
 import Link from "next/link";
 
@@ -42,12 +43,22 @@ export default async function DashboardPage() {
   const toPay = totalCommitted - totalPaid;
   const recentExpenses = allExpenses.slice(0, 5);
 
+  const daysUntilEnd = project.end_date
+    ? Math.ceil(
+        (new Date(project.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      )
+    : null;
+
   return (
-    <div className="px-4 pt-6 space-y-6">
+    <div className="px-4 pt-6 pb-8 space-y-6">
       <div>
         <p className="text-sm text-stone-500 dark:text-zinc-500">Resumo Financeiro</p>
         <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">{project.name}</h1>
       </div>
+
+      {daysUntilEnd !== null && (
+        <CountdownBanner days={daysUntilEnd} />
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <KpiCard
@@ -101,6 +112,23 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 pt-4">
+        <Link
+          href="/comprovantes"
+          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <FolderOpen className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
+          Pasta Digital
+        </Link>
+        <Link
+          href="/projeto/editar"
+          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <Settings className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
+          Editar Obra
+        </Link>
       </div>
     </div>
   );

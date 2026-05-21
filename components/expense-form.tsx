@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase } from "@/lib/types";
+import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase, EXPENSE_PHASES } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +23,10 @@ type ExpenseFormProps = {
   categories: Category[];
   rooms?: Room[];
   initialExpense?: Expense;
+  initialSignedUrl?: string | null;
 };
 
-export function ExpenseForm({ projectId, categories, rooms = [], initialExpense }: ExpenseFormProps) {
+export function ExpenseForm({ projectId, categories, rooms = [], initialExpense, initialSignedUrl }: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
@@ -46,17 +47,21 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(
-    initialExpense?.receipt_url ?? null
+    initialSignedUrl ?? null
   );
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const phases: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
-
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("O arquivo deve ter no máximo 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setError(null);
     setReceiptFile(file);
     const url = URL.createObjectURL(file);
     setReceiptPreview(url);
@@ -86,10 +91,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
           .from("receipts")
           .upload(fileName, receiptFile);
         if (uploadError) throw uploadError;
-        const { data: urlData } = supabase.storage
-          .from("receipts")
-          .getPublicUrl(uploadData.path);
-        receiptUrl = urlData.publicUrl;
+        receiptUrl = uploadData.path;
       }
 
       const payload = {
@@ -261,7 +263,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense 
         <div className="space-y-2">
           <Label>Fase</Label>
           <div className="grid grid-cols-2 gap-2">
-            {phases.map((p) => (
+            {EXPENSE_PHASES.map((p) => (
               <button
                 key={p}
                 type="button"

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProjectEditForm } from "@/components/project-edit-form";
+import { getLatestProject } from "@/lib/queries/getProject";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
@@ -12,13 +13,7 @@ export default async function EditProjectPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const project = await getLatestProject(supabase, user.id);
 
   if (!project) redirect("/");
 

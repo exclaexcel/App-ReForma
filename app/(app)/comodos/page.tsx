@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getLatestProject } from "@/lib/queries/getProject";
 import { RoomManager } from "@/components/room-manager";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -12,13 +13,7 @@ export default async function ComodoosPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("id, name")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const project = await getLatestProject(supabase, user.id);
 
   if (!project) redirect("/");
 

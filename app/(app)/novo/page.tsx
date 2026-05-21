@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseForm } from "@/components/expense-form";
+import { getLatestProject } from "@/lib/queries/getProject";
 
 export default async function NovoPage() {
   const supabase = await createClient();
@@ -10,13 +11,7 @@ export default async function NovoPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("id")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const project = await getLatestProject(supabase, user.id);
 
   if (!project) redirect("/");
 
