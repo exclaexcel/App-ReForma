@@ -13,7 +13,7 @@ export default async function AgendaPage() {
   if (!project) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen px-4">
-        <p className="text-center dark:text-zinc-400 light:text-stone-600">
+        <p className="text-center dark:text-zinc-400 text-stone-600">
           Nenhum projeto encontrado. Crie um projeto primeiro.
         </p>
       </div>

@@ -11,7 +11,7 @@ const Label = React.forwardRef<
     className={cn(
       "text-xs font-semibold leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70",
       "dark:text-zinc-300",
-      "light:text-stone-700",
+      "text-stone-700",
       className
     )}
     {...props}

@@ -12,7 +12,7 @@ type ExpenseListItemProps = {
 export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
   const categoryColor = expense.categories?.color_hex ?? "#C84B31";
   const sharedClass =
-    "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 light:border-stone-200/40 dark:hover:bg-zinc-800/50 light:hover:bg-stone-100/30 dark:active:bg-zinc-800 light:active:bg-stone-100";
+    "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 border-stone-200/40 dark:hover:bg-zinc-800/50 light:hover:bg-stone-100/30 dark:active:bg-zinc-800 light:active:bg-stone-100";
 
   const content = (
     <>
@@ -24,18 +24,18 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium dark:text-zinc-100 light:text-stone-900 truncate">{expense.description}</p>
-        <p className="text-xs dark:text-zinc-500 light:text-stone-500 truncate">
+        <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">{expense.description}</p>
+        <p className="text-xs dark:text-zinc-500 text-stone-500 truncate">
           {expense.categories?.name ?? "Sem categoria"}
         </p>
       </div>
 
       <div className="flex flex-col items-end gap-1 shrink-0">
-        <span className="text-sm font-semibold dark:text-zinc-100 light:text-stone-900 tabular-nums">
+        <span className="text-sm font-semibold dark:text-zinc-100 text-stone-900 tabular-nums">
           {formatCurrency(expense.amount)}
         </span>
         <div className="flex items-center gap-1">
-          <span className="text-xs dark:text-zinc-500 light:text-stone-500">{formatDate(expense.expense_date)}</span>
+          <span className="text-xs dark:text-zinc-500 text-stone-500">{formatDate(expense.expense_date)}</span>
           <span
             className={cn(
               "text-xs font-medium flex items-center gap-0.5",

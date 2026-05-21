@@ -96,22 +96,22 @@ export function ScheduleEventForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-[430px] bg-white dark:bg-zinc-800 rounded-t-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div className="w-full max-w-[430px] bg-white dark:bg-zinc-800 rounded-t-2xl p-6 space-y-4 max-h-[85vh] overflow-y-scroll touch-pan-y">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold dark:text-zinc-100 light:text-stone-900">
+          <h2 className="text-lg font-semibold text-stone-900 dark:text-zinc-100">
             {isEditing ? "Editar Evento" : "Novo Evento"}
           </h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-stone-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 dark:text-zinc-400 light:text-stone-600" />
+            <X className="h-5 w-5 text-stone-600 dark:text-zinc-400" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className="text-sm dark:text-zinc-300 light:text-stone-700">
+            <Label className="text-sm text-stone-700 dark:text-zinc-300">
               Título
             </Label>
             <Input
@@ -120,12 +120,12 @@ export function ScheduleEventForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               disabled={loading}
-              className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600 dark:text-zinc-100 light:text-stone-900"
+              className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600 dark:text-zinc-100 text-stone-900"
             />
           </div>
 
           <div>
-            <Label className="text-sm dark:text-zinc-300 light:text-stone-700">
+            <Label className="text-sm text-stone-700 dark:text-zinc-300">
               Tipo de Evento
             </Label>
             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -148,7 +148,7 @@ export function ScheduleEventForm({
           </div>
 
           <div>
-            <Label className="text-sm dark:text-zinc-300 light:text-stone-700">
+            <Label className="text-sm text-stone-700 dark:text-zinc-300">
               Data
             </Label>
             <Input
@@ -156,12 +156,12 @@ export function ScheduleEventForm({
               value={eventDate}
               onChange={(e) => setEventDate(e.target.value)}
               disabled={loading}
-              className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600 dark:text-zinc-100 light:text-stone-900"
+              className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600 dark:text-zinc-100 text-stone-900"
             />
           </div>
 
           <div>
-            <Label className="text-sm dark:text-zinc-300 light:text-stone-700">
+            <Label className="text-sm text-stone-700 dark:text-zinc-300">
               Observações (opcional)
             </Label>
             <textarea
@@ -170,7 +170,7 @@ export function ScheduleEventForm({
               onChange={(e) => setNotes(e.target.value)}
               disabled={loading}
               rows={3}
-              className="mt-1 w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-zinc-700 border border-stone-200 dark:border-zinc-600 dark:text-zinc-100 light:text-stone-900 placeholder:text-stone-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+              className="mt-1 w-full px-3 py-2 rounded-lg bg-stone-50 dark:bg-zinc-700 border border-stone-200 dark:border-zinc-600 dark:text-zinc-100 text-stone-900 placeholder:text-stone-400 dark:placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-orange-500/50"
             />
           </div>
 
@@ -180,19 +180,19 @@ export function ScheduleEventForm({
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-4 pb-2">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-2 rounded-lg border border-stone-200 dark:border-zinc-700 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 font-medium"
             >
               Cancelar
             </button>
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-orange-700 hover:bg-orange-800 text-white"
+              className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-3 font-medium"
             >
               {loading ? "Salvando..." : "Salvar"}
             </Button>

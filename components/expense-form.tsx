@@ -156,11 +156,11 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
       <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
         <Link
           href={isEditing ? "/despesas" : "/"}
-          className="dark:text-zinc-400 dark:hover:text-zinc-100 light:text-stone-500 light:hover:text-stone-900 transition-colors duration-150"
+          className="dark:text-zinc-400 dark:hover:text-zinc-100 text-stone-500 light:hover:text-stone-900 transition-colors duration-150"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-lg font-bold dark:text-zinc-100 light:text-stone-900 flex-1">
+        <h1 className="text-lg font-bold dark:text-zinc-100 text-stone-900 flex-1">
           {isEditing ? "Editar Lançamento" : "Novo Lançamento"}
         </h1>
         {isEditing && (
@@ -271,7 +271,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
                 className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-all duration-200 active:scale-95 ${
                   phase === p
                     ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 light:hover:bg-stone-200"
+                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 hover:bg-stone-200"
                 }`}
               >
                 {p}
@@ -292,7 +292,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
                   className={`rounded-xl border py-2 px-2 text-xs font-medium transition-all duration-200 active:scale-95 ${
                     paymentMethod === key
                       ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 light:hover:bg-stone-200"
+                      : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 hover:bg-stone-200"
                   }`}
                 >
                   {label}
@@ -308,7 +308,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
             checked={isPaid}
             onCheckedChange={(v) => setIsPaid(Boolean(v))}
           />
-          <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 light:text-stone-900">
+          <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
             Já está pago
           </Label>
         </div>
@@ -346,7 +346,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm dark:text-zinc-500 light:text-stone-400 dark:hover:border-zinc-600 light:hover:border-stone-400 dark:hover:text-zinc-400 light:hover:text-stone-600 transition-all duration-200 active:scale-95"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm dark:text-zinc-500 text-stone-400 dark:hover:border-zinc-600 light:hover:border-stone-400 dark:hover:text-zinc-400 light:hover:text-stone-600 transition-all duration-200 active:scale-95"
             >
               <Camera className="h-5 w-5" />
               Tirar foto, escolher da galeria ou PDF
