@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Expense } from "@/lib/types";
-import { formatCurrency, formatDate, getStoragePath } from "@/lib/utils";
+import { formatCurrency, getStoragePath } from "@/lib/utils";
 import { FolderOpen, FileText, Download } from "lucide-react";
 
 function groupByMonth(expenses: Expense[]): Map<string, Expense[]> {
