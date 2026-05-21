@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
+import { getLatestProject } from "@/lib/queries/getProject";
 import { KpiCard } from "@/components/kpi-card";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { CreateFirstProject } from "@/components/create-first-project";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { LogoutButton } from "@/components/logout-button";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, LayoutGrid, Settings, HardHat as HatIcon } from "lucide-react";
+import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, LayoutGrid, Settings, FolderOpen, HardHat as HatIcon } from "lucide-react";
 import { Expense } from "@/lib/types";
 import Link from "next/link";
 
@@ -54,13 +55,7 @@ export default async function HomePage() {
 
   if (!user) return <LandingPage />;
 
-  const { data: project } = await supabase
-    .from("projects")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const project = await getLatestProject(supabase, user.id);
 
   const userName = user.user_metadata?.full_name?.split(" ")[0] ?? "Usuário";
 
@@ -129,17 +124,24 @@ export default async function HomePage() {
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Link
           href="/comodos"
-          className="flex-1 flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
+          className="flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
         >
           <LayoutGrid className="h-4 w-4 text-orange-500 shrink-0" />
           Cômodos
         </Link>
         <Link
+          href="/comprovantes"
+          className="flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
+        >
+          <FolderOpen className="h-4 w-4 text-orange-500 shrink-0" />
+          Pasta Digital
+        </Link>
+        <Link
           href="/projeto/editar"
-          className="flex-1 flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
+          className="col-span-2 flex items-center gap-2 rounded-xl dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 light:bg-stone-100 light:border-stone-200 light:text-stone-700 border px-3 py-3 text-sm font-medium dark:hover:bg-zinc-700 light:hover:bg-stone-200 transition-all duration-200"
         >
           <Settings className="h-4 w-4 text-orange-500 shrink-0" />
           Editar obra

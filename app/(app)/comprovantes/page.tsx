@@ -5,13 +5,13 @@ export const dynamic = "force-dynamic";
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Expense } from "@/lib/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, getStoragePath } from "@/lib/utils";
 import { FolderOpen, FileText, Download } from "lucide-react";
 
 function groupByMonth(expenses: Expense[]): Map<string, Expense[]> {
   const groups = new Map<string, Expense[]>();
   for (const expense of expenses) {
-    const key = expense.expense_date.slice(0, 7); // "YYYY-MM"
+    const key = expense.expense_date.slice(0, 7);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(expense);
   }
@@ -32,11 +32,10 @@ function isPdf(url: string): boolean {
   return url.toLowerCase().includes(".pdf");
 }
 
-function ReceiptCard({ expense }: { expense: Expense }) {
-  const url = expense.receipt_url!;
+function ReceiptCard({ expense, signedUrl }: { expense: Expense; signedUrl: string }) {
   return (
     <a
-      href={url}
+      href={signedUrl}
       target="_blank"
       rel="noopener noreferrer"
       className="flex flex-col rounded-2xl overflow-hidden
@@ -44,9 +43,8 @@ function ReceiptCard({ expense }: { expense: Expense }) {
                  border border-stone-200 dark:border-zinc-700
                  active:scale-[0.98] transition-transform"
     >
-      {/* Thumbnail */}
       <div className="relative h-28 w-full bg-stone-100 dark:bg-zinc-700 flex items-center justify-center overflow-hidden">
-        {isPdf(url) ? (
+        {isPdf(expense.receipt_url!) ? (
           <div className="flex flex-col items-center gap-1">
             <FileText className="h-10 w-10 text-orange-500" />
             <span className="text-xs font-medium text-stone-500 dark:text-zinc-400">PDF</span>
@@ -54,18 +52,16 @@ function ReceiptCard({ expense }: { expense: Expense }) {
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={url}
+            src={signedUrl}
             alt={expense.description}
             className="w-full h-full object-cover"
           />
         )}
-        {/* Download badge */}
         <div className="absolute top-2 right-2 rounded-full bg-black/40 p-1">
           <Download className="h-3 w-3 text-white" />
         </div>
       </div>
 
-      {/* Info */}
       <div className="p-3 space-y-0.5">
         <p className="text-sm font-bold text-orange-700 dark:text-orange-400 tabular-nums">
           {formatCurrency(expense.amount)}
@@ -74,7 +70,11 @@ function ReceiptCard({ expense }: { expense: Expense }) {
           {expense.description}
         </p>
         <p className="text-xs text-stone-400 dark:text-zinc-500">
-          {formatDate(expense.expense_date)}
+          {new Intl.DateTimeFormat("pt-BR", {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }).format(new Date(expense.expense_date + "T12:00:00"))}
         </p>
       </div>
     </a>
@@ -83,6 +83,7 @@ function ReceiptCard({ expense }: { expense: Expense }) {
 
 export default function ComprovantesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -114,7 +115,27 @@ export default function ComprovantesPage() {
 
       if (error) throw error;
 
-      setExpenses((data ?? []) as Expense[]);
+      const fetched = (data ?? []) as Expense[];
+      setExpenses(fetched);
+
+      const withReceipts = fetched.filter((e) => e.receipt_url);
+      if (withReceipts.length > 0) {
+        const paths = withReceipts.map((e) => getStoragePath(e.receipt_url!));
+        const { data: signedData } = await supabase.storage
+          .from("receipts")
+          .createSignedUrls(paths, 3600);
+
+        if (signedData) {
+          const urlMap = new Map<string, string>();
+          signedData.forEach((item, idx) => {
+            if (item.signedUrl) {
+              urlMap.set(withReceipts[idx].receipt_url!, item.signedUrl);
+            }
+          });
+          setSignedUrls(urlMap);
+        }
+      }
+
       setLoading(false);
     } catch (error) {
       console.error("Error loading comprovantes:", error);
@@ -130,7 +151,6 @@ export default function ComprovantesPage() {
 
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
-      {/* Header */}
       <div className="flex items-center gap-2">
         <FolderOpen className="h-5 w-5 text-orange-700 dark:text-orange-500" />
         <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Pasta Digital</h1>
@@ -160,9 +180,15 @@ export default function ComprovantesPage() {
                 {monthLabel(key)}
               </h2>
               <div className="grid grid-cols-2 gap-3">
-                {group.map((expense) => (
-                  <ReceiptCard key={expense.id} expense={expense} />
-                ))}
+                {group
+                  .filter((e) => signedUrls.has(e.receipt_url!))
+                  .map((expense) => (
+                    <ReceiptCard
+                      key={expense.id}
+                      expense={expense}
+                      signedUrl={signedUrls.get(expense.receipt_url!)!}
+                    />
+                  ))}
               </div>
             </section>
           ))}
