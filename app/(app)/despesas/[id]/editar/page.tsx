@@ -19,6 +19,16 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   if (!expense) redirect("/despesas");
 
+  // Verify ownership: ensure the expense's project belongs to the logged-in user
+  const { data: ownerProject } = await supabase
+    .from("projects")
+    .select("id")
+    .eq("id", expense.project_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!ownerProject) redirect("/despesas");
+
   const [{ data: categories, error: catError }, { data: rooms, error: roomError }] = await Promise.all([
     supabase.from("categories").select("*").eq("project_id", expense.project_id).order("name"),
     supabase.from("rooms").select("*").eq("project_id", expense.project_id).order("name"),
