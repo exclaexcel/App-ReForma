@@ -7,8 +7,35 @@ import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
 import { Expense, Category } from "@/lib/types";
-import { Search, SlidersHorizontal, ClipboardList } from "lucide-react";
+import { Search, SlidersHorizontal, ClipboardList, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PAYMENT_METHOD_LABELS } from "@/lib/types";
+
+function exportToCsv(expenses: Expense[]) {
+  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante"];
+  const rows = expenses.map((e) => [
+    e.expense_date,
+    e.description,
+    e.categories?.name ?? "",
+    e.rooms?.name ?? "",
+    e.amount.toFixed(2).replace(".", ","),
+    PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
+    e.is_paid ? "Pago" : "A Pagar",
+    e.receipt_url ?? "",
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(";"))
+    .join("\n");
+
+  const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `despesas_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export default function DespesasPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -40,7 +67,7 @@ export default function DespesasPage() {
     const [{ data: expData, error: expError }, { data: catData, error: catError }] = await Promise.all([
       supabase
         .from("expenses")
-        .select("*, categories(id, name, color_hex)")
+        .select("*, categories(id, name, color_hex), rooms(id, name)")
         .eq("project_id", project.id)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -77,7 +104,18 @@ export default function DespesasPage() {
     <div className="px-4 pt-6 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-zinc-100">Despesas</h1>
-        <SlidersHorizontal className="h-5 w-5 text-zinc-500" />
+        <div className="flex items-center gap-3">
+          {filtered.length > 0 && (
+            <button
+              onClick={() => exportToCsv(filtered)}
+              title="Exportar CSV"
+              className="text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
+              <Download className="h-5 w-5" />
+            </button>
+          )}
+          <SlidersHorizontal className="h-5 w-5 text-zinc-500" />
+        </div>
       </div>
 
       <div className="relative">
