@@ -65,6 +65,37 @@ export const DEFAULT_CATEGORIES = [
   { name: "Móveis e Decoração", color_hex: "#92400e" },
 ];
 
+export type SupplierSpecialty =
+  | "Elétrica"
+  | "Hidráulica"
+  | "Pintura"
+  | "Marcenaria"
+  | "Gesso"
+  | "Piso"
+  | "Outros";
+
+export const SUPPLIER_SPECIALTIES: SupplierSpecialty[] = [
+  "Elétrica",
+  "Hidráulica",
+  "Pintura",
+  "Marcenaria",
+  "Gesso",
+  "Piso",
+  "Outros",
+];
+
+export type Supplier = {
+  id: string;
+  project_id: string;
+  name: string;
+  specialty: SupplierSpecialty | null;
+  whatsapp: string | null;
+  budget_url: string | null;
+  rating: number | null;
+  notes: string | null;
+  created_at: string;
+};
+
 export type EventType =
   | "entrega_material"
   | "servico_mao_obra"
