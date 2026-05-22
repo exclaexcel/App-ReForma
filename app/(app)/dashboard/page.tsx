@@ -4,7 +4,7 @@ import { KpiCard } from "@/components/kpi-card";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings, Users } from "lucide-react";
+import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings, Users, ClipboardList } from "lucide-react";
 import { Expense } from "@/lib/types";
 import Link from "next/link";
 
@@ -135,6 +135,13 @@ export default async function DashboardPage() {
         >
           <Users className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
           Fornecedores
+        </Link>
+        <Link
+          href="/diario-obras"
+          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <ClipboardList className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
+          Diário de Obras
         </Link>
       </div>
     </div>
