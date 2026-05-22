@@ -101,7 +101,7 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
   }
 
   return (
-    <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900 pb-8">
+    <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900 pb-24">
       <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
         <Link
           href="/fornecedores"

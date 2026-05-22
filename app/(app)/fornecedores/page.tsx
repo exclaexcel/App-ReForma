@@ -64,9 +64,9 @@ export default function FornecedoresPage() {
         <h1 className="text-xl font-bold dark:text-zinc-100 text-stone-900">Fornecedores</h1>
         <Link
           href="/fornecedores/novo"
-          className="flex items-center justify-center h-8 w-8 rounded-full bg-orange-700 hover:bg-orange-600 transition-colors"
+          className="flex items-center justify-center h-11 w-11 rounded-full bg-orange-700 hover:bg-orange-600 transition-colors"
         >
-          <Plus className="h-4 w-4 text-white" />
+          <Plus className="h-5 w-5 text-white" />
         </Link>
       </div>
 
