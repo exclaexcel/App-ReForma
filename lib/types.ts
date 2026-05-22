@@ -45,9 +45,11 @@ export type Expense = {
   payment_method: PaymentMethod;
   is_paid: boolean;
   receipt_url: string | null;
+  supplier_id: string | null;
   created_at: string;
   categories?: Category | null;
   rooms?: Room | null;
+  suppliers?: { id: string; name: string } | null;
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {

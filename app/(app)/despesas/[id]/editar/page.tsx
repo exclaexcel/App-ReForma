@@ -29,13 +29,19 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   if (!ownerProject) redirect("/despesas");
 
-  const [{ data: categories, error: catError }, { data: rooms, error: roomError }] = await Promise.all([
+  const [
+    { data: categories, error: catError },
+    { data: rooms, error: roomError },
+    { data: suppliers, error: supError },
+  ] = await Promise.all([
     supabase.from("categories").select("*").eq("project_id", expense.project_id).order("name"),
     supabase.from("rooms").select("*").eq("project_id", expense.project_id).order("name"),
+    supabase.from("suppliers").select("*").eq("project_id", expense.project_id).order("name"),
   ]);
 
   if (catError) throw catError;
   if (roomError) throw roomError;
+  if (supError) throw supError;
 
   let initialSignedUrl: string | null = null;
   if (expense.receipt_url) {
@@ -51,6 +57,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
       projectId={expense.project_id}
       categories={categories ?? []}
       rooms={rooms ?? []}
+      suppliers={suppliers ?? []}
       initialExpense={expense}
       initialSignedUrl={initialSignedUrl}
     />

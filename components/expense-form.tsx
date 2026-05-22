@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase, EXPENSE_PHASES } from "@/lib/types";
+import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase, EXPENSE_PHASES, Supplier } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +22,12 @@ type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
   rooms?: Room[];
+  suppliers?: Supplier[];
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
 };
 
-export function ExpenseForm({ projectId, categories, rooms = [], initialExpense, initialSignedUrl }: ExpenseFormProps) {
+export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [], initialExpense, initialSignedUrl }: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
@@ -44,6 +45,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initialExpense?.payment_method ?? "pix"
   );
+  const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(
@@ -97,6 +99,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
       const payload = {
         category_id: categoryId || null,
         room_id: roomId || null,
+        supplier_id: supplierId || null,
         phase: (phase || null) as ExpensePhase | null,
         description,
         amount: parsedAmount,
@@ -241,6 +244,25 @@ export function ExpenseForm({ projectId, categories, rooms = [], initialExpense,
             </Select>
           </div>
         </div>
+
+        {suppliers.length > 0 && (
+          <div className="space-y-2">
+            <Label>Fornecedor</Label>
+            <Select value={supplierId} onValueChange={setSupplierId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecionar fornecedor (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Sem fornecedor</SelectItem>
+                {suppliers.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}{s.specialty ? ` · ${s.specialty}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         {rooms.length > 0 && (
           <div className="space-y-2">

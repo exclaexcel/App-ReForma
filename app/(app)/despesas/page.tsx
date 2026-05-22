@@ -12,12 +12,13 @@ import { cn } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 
 function exportToCsv(expenses: Expense[]) {
-  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante"];
+  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Fornecedor", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante"];
   const rows = expenses.map((e) => [
     e.expense_date,
     e.description,
     e.categories?.name ?? "",
     e.rooms?.name ?? "",
+    e.suppliers?.name ?? "",
     e.amount.toFixed(2).replace(".", ","),
     PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
     e.is_paid ? "Pago" : "A Pagar",
@@ -67,7 +68,7 @@ export default function DespesasPage() {
     const [{ data: expData, error: expError }, { data: catData, error: catError }] = await Promise.all([
       supabase
         .from("expenses")
-        .select("*, categories(id, name, color_hex), rooms(id, name)")
+        .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
         .eq("project_id", project.id)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false }),

@@ -27,6 +27,9 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
         <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">{expense.description}</p>
         <p className="text-xs dark:text-zinc-500 text-stone-500 truncate">
           {expense.categories?.name ?? "Sem categoria"}
+          {expense.suppliers?.name && (
+            <span className="dark:text-zinc-600 text-stone-400"> · {expense.suppliers.name}</span>
+          )}
         </p>
       </div>
 
