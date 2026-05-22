@@ -85,17 +85,17 @@ export default async function GraficosPage() {
   return (
     <div className="px-4 pt-6 space-y-6 pb-4">
       <div>
-        <p className="text-sm text-zinc-500">Inteligência de dados</p>
-        <h1 className="text-xl font-bold text-zinc-100">Gráficos</h1>
+        <p className="text-sm text-stone-600 dark:text-zinc-500">Inteligência de dados</p>
+        <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Gráficos</h1>
       </div>
 
-      <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-4 space-y-4">
+      <div className="rounded-2xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 space-y-4">
         <div>
-          <h2 className="text-sm font-semibold text-zinc-100">Cascata do Orçamento</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Consumo por categoria</p>
+          <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Cascata do Orçamento</h2>
+          <p className="text-xs text-stone-600 dark:text-zinc-500 mt-0.5">Consumo por categoria</p>
         </div>
         {totalCommitted === 0 ? (
-          <p className="text-center text-sm text-zinc-500 py-8">
+          <p className="text-center text-sm text-stone-600 dark:text-zinc-500 py-8">
             Nenhuma despesa registrada ainda.
           </p>
         ) : (
@@ -104,20 +104,20 @@ export default async function GraficosPage() {
       </div>
 
       {categorySums.length > 0 && (
-        <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-4 space-y-3">
+        <div className="rounded-2xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 space-y-3">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100">Tabela de Transparência</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Peso no orçamento por categoria</p>
+            <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Tabela de Transparência</h2>
+            <p className="text-xs text-stone-600 dark:text-zinc-500 mt-0.5">Peso no orçamento por categoria</p>
           </div>
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-700">
-                <th className="text-left text-xs font-medium text-zinc-500 pb-2">Categoria</th>
-                <th className="text-right text-xs font-medium text-zinc-500 pb-2">Total</th>
-                <th className="text-right text-xs font-medium text-zinc-500 pb-2">Peso</th>
+              <tr className="border-b border-stone-200 dark:border-zinc-700">
+                <th className="text-left text-xs font-medium text-stone-600 dark:text-zinc-500 pb-2">Categoria</th>
+                <th className="text-right text-xs font-medium text-stone-600 dark:text-zinc-500 pb-2">Total</th>
+                <th className="text-right text-xs font-medium text-stone-600 dark:text-zinc-500 pb-2">Peso</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-800">
+            <tbody className="divide-y divide-stone-200 dark:divide-zinc-800">
               {categorySums.map((cat) => (
                 <tr key={cat.name}>
                   <td className="py-2.5 flex items-center gap-2">
@@ -125,22 +125,22 @@ export default async function GraficosPage() {
                       className="inline-block h-2.5 w-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: cat.color }}
                     />
-                    <span className="text-zinc-300 text-xs">{cat.name}</span>
+                    <span className="text-stone-700 dark:text-zinc-300 text-xs">{cat.name}</span>
                   </td>
-                  <td className="py-2.5 text-right text-xs font-medium text-zinc-100 tabular-nums">
+                  <td className="py-2.5 text-right text-xs font-medium text-stone-900 dark:text-zinc-100 tabular-nums">
                     {formatCurrency(cat.total)}
                   </td>
-                  <td className="py-2.5 text-right text-xs font-medium text-orange-400 tabular-nums">
+                  <td className="py-2.5 text-right text-xs font-medium text-orange-600 dark:text-orange-400 tabular-nums">
                     {cat.percentage}%
                   </td>
                 </tr>
               ))}
-              <tr className="border-t border-zinc-700">
-                <td className="pt-3 text-xs font-semibold text-zinc-300">Total gasto</td>
-                <td className="pt-3 text-right text-xs font-bold text-zinc-100 tabular-nums">
+              <tr className="border-t border-stone-200 dark:border-zinc-700">
+                <td className="pt-3 text-xs font-semibold text-stone-700 dark:text-zinc-300">Total gasto</td>
+                <td className="pt-3 text-right text-xs font-bold text-stone-900 dark:text-zinc-100 tabular-nums">
                   {formatCurrency(totalCommitted)}
                 </td>
-                <td className="pt-3 text-right text-xs font-bold text-orange-400 tabular-nums">
+                <td className="pt-3 text-right text-xs font-bold text-orange-600 dark:text-orange-400 tabular-nums">
                   {project.total_budget > 0
                     ? Math.round((totalCommitted / project.total_budget) * 100)
                     : 0}
@@ -153,20 +153,20 @@ export default async function GraficosPage() {
       )}
 
       {categorySums.length > 0 && (
-        <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-4 space-y-4">
+        <div className="rounded-2xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100">Ranking por Categoria</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Maiores custos</p>
+            <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Ranking por Categoria</h2>
+            <p className="text-xs text-stone-600 dark:text-zinc-500 mt-0.5">Maiores custos</p>
           </div>
           <HorizontalBarChart data={categorySums} />
         </div>
       )}
 
       {weeklyData.length > 1 && (
-        <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-4 space-y-4">
+        <div className="rounded-2xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 space-y-4">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-100">Linha do Tempo</h2>
-            <p className="text-xs text-zinc-500 mt-0.5">Gastos por semana</p>
+            <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">Linha do Tempo</h2>
+            <p className="text-xs text-stone-600 dark:text-zinc-500 mt-0.5">Gastos por semana</p>
           </div>
           <SpendingAreaChart data={weeklyData} />
         </div>

@@ -104,18 +104,18 @@ export default function DespesasPage() {
   return (
     <div className="px-4 pt-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-zinc-100">Despesas</h1>
+        <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Despesas</h1>
         <div className="flex items-center gap-3">
           {filtered.length > 0 && (
             <button
               onClick={() => exportToCsv(filtered)}
               title="Exportar CSV"
-              className="text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
             >
               <Download className="h-5 w-5" />
             </button>
           )}
-          <SlidersHorizontal className="h-5 w-5 text-zinc-500" />
+          <SlidersHorizontal className="h-5 w-5 text-stone-500 dark:text-zinc-500" />
         </div>
       </div>
 
@@ -138,7 +138,7 @@ export default function DespesasPage() {
               "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
               filterPaid === opt
                 ? "bg-orange-700 text-white"
-                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+                : "bg-stone-200 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-300 dark:hover:bg-zinc-700"
             )}
           >
             {opt === "all" ? "Todos" : opt === "paid" ? "Pagos" : "A Pagar"}
@@ -149,8 +149,8 @@ export default function DespesasPage() {
           className={cn(
             "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
             filterCategory === "all"
-              ? "bg-zinc-600 text-white"
-              : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              ? "bg-stone-400 dark:bg-zinc-600 text-white"
+              : "bg-stone-200 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-300 dark:hover:bg-zinc-700"
           )}
         >
           Todas categorias

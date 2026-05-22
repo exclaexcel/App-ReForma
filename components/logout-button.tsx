@@ -19,8 +19,8 @@ export function LogoutButton() {
       onClick={handleLogout}
       aria-label="Sair"
       className="flex h-9 w-9 items-center justify-center rounded-xl
-                 text-zinc-500 dark:text-zinc-400
-                 hover:text-zinc-300
+                 text-stone-500 dark:text-zinc-400
+                 hover:text-stone-700 dark:hover:text-zinc-300
                  transition-colors"
     >
       <LogOut className="h-4 w-4" />

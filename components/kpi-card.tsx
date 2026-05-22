@@ -10,10 +10,10 @@ type KpiCardProps = {
 };
 
 const variantStyles = {
-  default: "dark:bg-zinc-800 dark:border-zinc-700/60 bg-stone-100 light:border-stone-200/60",
-  primary: "dark:bg-zinc-700 dark:border-zinc-600/60 bg-stone-100 light:border-stone-200/60",
-  success: "dark:bg-zinc-800 dark:border-emerald-800/60 bg-stone-100 light:border-stone-200/60",
-  warning: "dark:bg-zinc-800 dark:border-orange-900/60 bg-stone-100 light:border-stone-200/60",
+  default: "bg-white border-stone-200 dark:bg-zinc-800 dark:border-zinc-700/60",
+  primary: "bg-white border-stone-200 dark:bg-zinc-700 dark:border-zinc-600/60",
+  success: "bg-white border-stone-200 dark:bg-zinc-800 dark:border-emerald-800/60",
+  warning: "bg-white border-stone-200 dark:bg-zinc-800 dark:border-orange-900/60",
 };
 
 const iconStyles = {

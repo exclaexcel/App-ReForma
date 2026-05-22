@@ -43,7 +43,7 @@ export function BottomNav() {
                 "flex flex-col items-center gap-1 px-4 py-1 rounded-xl transition-all duration-200",
                 isActive
                   ? "text-orange-500"
-                  : "dark:text-zinc-500 dark:hover:text-zinc-300 text-stone-400 light:hover:text-stone-600"
+                  : "text-stone-400 hover:text-stone-600 dark:text-zinc-500 dark:hover:text-zinc-300"
               )}
             >
               <item.icon className="h-5 w-5" />

@@ -25,9 +25,9 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Toolti
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="rounded-xl bg-zinc-800 border border-zinc-700 px-3 py-2 shadow-xl text-xs">
-      <p className="font-semibold text-zinc-100">{item?.payload?.name}</p>
-      <p className="text-zinc-300">{formatCurrency(item?.value ?? 0)}</p>
+    <div className="rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-2 shadow-xl text-xs">
+      <p className="font-semibold text-stone-900 dark:text-zinc-100">{item?.payload?.name}</p>
+      <p className="text-stone-600 dark:text-zinc-300">{formatCurrency(item?.value ?? 0)}</p>
     </div>
   );
 }

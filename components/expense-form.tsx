@@ -159,7 +159,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
       <div className="sticky top-0 bg-stone-50/95 dark:bg-zinc-900/95 backdrop-blur-sm border-b border-stone-200 dark:border-zinc-800 z-10 px-4 py-4 flex items-center gap-3">
         <Link
           href={isEditing ? "/despesas" : "/"}
-          className="dark:text-zinc-400 dark:hover:text-zinc-100 text-stone-500 light:hover:text-stone-900 transition-colors duration-150"
+          className="text-stone-500 hover:text-stone-900 dark:text-zinc-400 dark:hover:text-zinc-100 transition-colors duration-150"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
@@ -368,7 +368,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm dark:text-zinc-500 text-stone-400 dark:hover:border-zinc-600 light:hover:border-stone-400 dark:hover:text-zinc-400 light:hover:text-stone-600 transition-all duration-200 active:scale-95"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 transition-all duration-200 active:scale-95"
             >
               <Camera className="h-5 w-5" />
               Tirar foto, escolher da galeria ou PDF

@@ -9,11 +9,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-orange-700 text-zinc-100 hover:bg-orange-800 active:bg-orange-900",
-        secondary: "bg-zinc-800 text-zinc-100 hover:bg-zinc-700",
-        ghost: "text-zinc-300 hover:bg-zinc-800",
-        destructive: "bg-red-700 text-zinc-100 hover:bg-red-800",
-        outline: "border border-zinc-700 bg-transparent text-zinc-100 hover:bg-zinc-800",
+        default: "bg-orange-700 text-white hover:bg-orange-800 active:bg-orange-900",
+        secondary: "bg-stone-100 text-stone-700 hover:bg-stone-200 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700",
+        ghost: "text-stone-600 hover:bg-stone-100 dark:text-zinc-300 dark:hover:bg-zinc-800",
+        destructive: "bg-red-700 text-white hover:bg-red-800",
+        outline: "border border-stone-300 bg-transparent text-stone-700 hover:bg-stone-100 dark:border-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-800",
       },
       size: {
         default: "h-11 px-4 py-2",

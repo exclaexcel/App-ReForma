@@ -83,7 +83,7 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
         <div className="divide-y divide-zinc-800">
           {rooms.map((room) => (
             <div key={room.id} className="flex items-center justify-between py-3">
-              <span className="text-sm font-medium text-zinc-200">{room.name}</span>
+              <span className="text-sm font-medium text-stone-800 dark:text-zinc-200">{room.name}</span>
               <button
                 onClick={() => handleDelete(room.id)}
                 disabled={deletingId === room.id}
