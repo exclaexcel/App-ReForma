@@ -89,7 +89,7 @@ export function ScheduleView({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold dark:text-zinc-100 text-stone-900">
+        <h1 className="text-2xl font-semibold text-stone-900 dark:text-zinc-100">
           Cronograma da Obra
         </h1>
         <button
@@ -109,13 +109,13 @@ export function ScheduleView({
 
           return (
             <div key={week}>
-              <h2 className="text-sm font-semibold uppercase tracking-wide dark:text-zinc-400 text-stone-600 mb-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-600 dark:text-zinc-400 mb-3">
                 {week}
               </h2>
 
               {weekEvents.length === 0 ? (
                 <div className="p-4 rounded-xl bg-stone-50 dark:bg-zinc-800/50 border border-dashed border-stone-200 dark:border-zinc-700 text-center">
-                  <p className="text-sm dark:text-zinc-400 text-stone-500">
+                  <p className="text-sm text-stone-500 dark:text-zinc-400">
                     Nenhum evento previsto
                   </p>
                 </div>
@@ -143,12 +143,12 @@ export function ScheduleView({
                           </div>
 
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold dark:text-zinc-100 text-stone-900 truncate">
+                            <h3 className="font-semibold text-stone-900 dark:text-zinc-100 truncate">
                               {event.title}
                             </h3>
 
                             <div className="flex flex-wrap items-center gap-2 mt-2">
-                              <span className="text-xs dark:text-zinc-400 text-stone-500">
+                              <span className="text-xs text-stone-500 dark:text-zinc-400">
                                 {dayOfWeek.charAt(0).toUpperCase() +
                                   dayOfWeek.slice(1)}{" "}
                                 • {formattedDate}
@@ -159,7 +159,7 @@ export function ScheduleView({
                             </div>
 
                             {event.notes && (
-                              <p className="text-sm italic dark:text-zinc-500 text-stone-500 mt-2 line-clamp-2">
+                              <p className="text-sm italic text-stone-500 dark:text-zinc-500 mt-2 line-clamp-2">
                                 {event.notes}
                               </p>
                             )}

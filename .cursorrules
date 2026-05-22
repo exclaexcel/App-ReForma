@@ -1,299 +1,64 @@
-# 🏗️ App ReForma - Regras do Projeto para Claude/Cursor
-
-## 📌 VISÃO GERAL DO PROJETO
-
-App de gestão financeira de reformas. Stack: Next.js 14, TypeScript, Tailwind CSS, Supabase.
-Objetivo: Substituir Excel por app mobile-first para rastrear despesas de obras em tempo real.
-Modelo: Multi-tenant, preparado para evoluir para SaaS.
-
----
-
-## 🎨 IDENTIDADE VISUAL - "REFORMA CHIQUE"
-
-### ✅ OBRIGATÓRIO EM TODAS AS IMPLEMENTAÇÕES:
-
-**Cores Light Mode:**
-- Fundo: `bg-stone-50` (bege quente, nunca branco puro)
-- Cards/Componentes: `bg-white`
-- Texto principal: `text-stone-900`
-- Texto secundário: `text-stone-500`
-- Bordas: `border-stone-200`
-
-**Cores Dark Mode:**
-- Fundo: `bg-zinc-900` (OBRIGAÇÃO: NÃO usar #000000 - preto absoluto)
-- Cards/Componentes: `bg-zinc-800`
-- Texto principal: `text-zinc-100`
-- Texto secundário: `text-zinc-400`
-- Bordas: `border-zinc-700`
-
-**Ações e CTAs:**
-- Botão primário: `bg-orange-700 hover:bg-orange-800` (Terracota)
-- Elementos secundários: `amber-900` (Chocolate/Marrom)
-
-**Padrão de cores em componentes:**
-```
-Light mode: text-stone-900 bg-stone-50
-Dark mode:  dark:text-zinc-100 dark:bg-zinc-900
-```
-
-**NUNCA usar:** `light:` prefix (não existe no Tailwind com darkMode: "class")
-
----
-
-## 📱 DESIGN MOBILE-FIRST
-
-- ✅ Máxima largura: 430px para mobile
-- ✅ Responsivo para tablets/desktop (mas principal é mobile)
-- ✅ Bottom navigation fixa (barra de abas na parte inferior)
-- ✅ Touch-friendly: mínimo 44px para clickable areas
-- ✅ Suporte a `capture="environment"` para câmera
-
----
-
-## 📊 PROIBIÇÕES INEGOCIÁVEIS
-
-### ❌ ABSOLUTAMENTE PROIBIDO:
-
-1. **Gráficos de Pizza ou Rosca**
-   - Nunca importe: `PieChart`, `DoughnutChart`, `RadarChart`
-   - Use: `BarChart`, `AreaChart`, `LineChart`, `BarChart` horizontal
-   - Gráfico obrigatório: **Waterfall** para mostrar consumo de orçamento
-
-2. **Preto Absoluto (#000000) em Dark Mode**
-   - Use `bg-zinc-900` ou `bg-zinc-800` sempre
-   - Nunca `dark:#000` ou equivalente
-
-3. **Quebra de Mobile-First**
-   - Todos os componentes devem funcionar em mobile primeiro
-   - Depois responsivo para desktop
-
----
-
-## 🔐 SEGURANÇA E MULTI-TENANT
-
-### ✅ OBRIGATÓRIO EM QUERIES:
-
-1. **Sempre filtrar por user_id ou project_id**
-   ```typescript
-   .eq("user_id", userId) // Isolamento de dados
-   .eq("project_id", projectId) // Para projetos específicos
-   ```
-
-2. **RLS (Row Level Security) deve estar ATIVO no Supabase**
-   - Todas as tabelas: projects, expenses, categories, rooms, schedule_events, tasks
-   - Politicas de acesso por user_id
-
-3. **Middleware de autenticação ativo**
-   - Redirecionamento automático para login se não autenticado
-   - Proteção de rotas protegidas
-
----
-
-## 📐 STACK TECNOLÓGICO (FIXO)
-
-- **Framework:** Next.js 14 (App Router)
-- **Linguagem:** TypeScript (strict mode)
-- **Estilização:** Tailwind CSS
-- **Componentes UI:** shadcn/ui
-- **Ícones:** Lucide React (especialmente construção: HardHat, Hammer, BrickWall, PaintBucket)
-- **Backend:** Supabase (Auth + PostgreSQL)
-- **Gráficos:** Recharts (NENHUMA pizza/rosca)
-- **Temas:** next-themes
-
-**NÃO introduzir:** UI libraries diferentes, CSS-in-JS, componentes de fora, APIs diferentes.
-
----
-
-## 📋 MODELOS DE DADOS (IMUTÁVEL)
-
-### Tabelas Supabase:
-
-**projects**
-- id (UUID)
-- user_id (UUID) - referência ao usuário
-- name (TEXT)
-- total_budget (NUMERIC)
-- start_date (DATE)
-- end_date (DATE)
-- created_at (TIMESTAMP)
-
-**expenses**
-- id (UUID)
-- project_id (UUID)
-- category_id (UUID) - nullable
-- room_id (UUID) - nullable
-- phase (TEXT) - "Estrutura" ou "Mobiliário & Decor"
-- description (TEXT)
-- amount (NUMERIC)
-- expense_date (DATE)
-- payment_method (TEXT) - pix, cartao_credito, cartao_debito, dinheiro, boleto
-- is_paid (BOOLEAN)
-- receipt_url (TEXT) - nullable
-- created_at (TIMESTAMP)
-
-**categories**
-- id (UUID)
-- project_id (UUID)
-- name (TEXT)
-- color_hex (TEXT)
-
-**rooms**
-- id (UUID)
-- project_id (UUID)
-- name (TEXT)
-
-**schedule_events**
-- id (UUID)
-- project_id (UUID)
-- user_id (UUID)
-- title (TEXT)
-- event_type (TEXT) - entrega_material, servico_mao_obra, pagamento, visita_tecnica
-- event_date (DATE)
-- notes (TEXT) - nullable
-
-**tasks**
-- id (UUID)
-- project_id (UUID)
-- room_id (UUID) - nullable
-- title (TEXT)
-- status (TEXT) - Pendente, Em Andamento, Concluído
-- sequence_order (INT)
-
----
-
-## 🛣️ ROTAS E PÁGINAS (ESTRUTURA FIXA)
-
-### Autenticação (sem app bar, sem bottom nav):
-- `/` - Landing Page (sem login)
-- `/login` - Login
-- `/signup` - Cadastro
-- `/recuperar-senha` - Solicitar reset
-- `/atualizar-senha` - Alterar senha
-
-### App Principal (com bottom nav):
-- `/(app)/` - Hub Rápido (Home)
-- `/(app)/dashboard` - Resumo Financeiro com KPIs
-- `/(app)/novo` - Formulário Nova Despesa
-- `/(app)/despesas` - Histórico de Despesas
-- `/(app)/despesas/[id]/editar` - Editar Despesa
-- `/(app)/comprovantes` - Pasta Digital
-- `/(app)/graficos` - Gráficos Inteligentes
-- `/(app)/agenda` - Agenda de Eventos
-- `/(app)/comodos` - Gerenciador de Cômodos
-- `/(app)/projeto/editar` - Editar Projeto
-
----
-
-## 🧩 COMPONENTES PRINCIPAIS
-
-### Componentes UI Base (shadcn/ui):
-- Button, Input, Label, Select, Checkbox
-- Dialog (modais)
-- Form components
-
-### Componentes Custom:
-- `bottom-nav.tsx` - Navegação inferior fixa
-- `expense-form.tsx` - Formulário de despesas
-- `waterfall-chart.tsx` - Gráfico de cascata
-- `horizontal-bar-chart.tsx` - Gráfico de barras
-- `area-chart.tsx` - Gráfico de área
-- `countdown-banner.tsx` - Contagem regressiva
-- `schedule-event-form.tsx` - Formulário de eventos
-- `theme-toggle.tsx` - Alternador claro/escuro
-
----
-
-## ⚡ PADRÕES DE CÓDIGO
-
-### Imports de Tipos:
-```typescript
-import type { Project, Expense, Category } from "@/lib/types";
-```
-
-### Supabase Client:
-```typescript
-// Server Components
-import { createClient } from "@/lib/supabase/server";
-const supabase = await createClient();
-
-// Client Components ("use client")
-import { createClient } from "@/lib/supabase/client";
-const supabase = createClient();
-```
-
-### Tratamento de Erros:
-```typescript
-const { data, error } = await supabase.from("table").select();
-if (error) throw error; // Deixar bubblar para error boundary
-```
-
-### Formatação de Moeda:
-```typescript
-import { formatCurrency } from "@/lib/utils";
-// Usa: formatCurrency(1500) → "R$ 1.500,00"
-```
-
----
-
-## 🎯 DIRETRIZES DE IMPLEMENTAÇÃO
-
-### Quando adicionar nova funcionalidade:
-
-1. ✅ Respeite a estrutura existente (não refatore sem necessidade)
-2. ✅ Use cores da paleta "Reforma Chique"
-3. ✅ Mobile-first: testar em 430px width primeiro
-4. ✅ Adicione tipagem TypeScript em 100%
-5. ✅ Proteja com autenticação + RLS
-6. ✅ Trate erros com mensagens amigáveis
-7. ✅ Não quebra gráficos: nunca pizza/rosca
-8. ✅ Light/Dark Mode: teste nos dois temas
-
-### Quando mexer em componentes existentes:
-
-- ✅ Valide que não quebra mobile
-- ✅ Valide que cores não infringem "Reforma Chique"
-- ✅ Rode testes locais antes de fazer push
-- ✅ Não remova campos de formulários sem motivo
-
----
-
-## 📝 CONVENÇÕES
-
-### Nomes de Componentes:
-- PascalCase: `ExpenseForm`, `WaterfallChart`
-- Suffix "_form" para formulários
-- Suffix "_chart" para gráficos
-- Suffix "_view" para páginas complexas
-
-### Nomes de Arquivos:
-- kebab-case: `expense-form.tsx`, `countdown-banner.tsx`
-
-### Variáveis de Estado:
-- Descriptivo: `const [expenses, setExpenses]`
-- Não: `const [data, setData]`
-
----
-
-## 🚀 ANTES DE FAZER PUSH
-
-1. ✅ `npm run build` - Compila sem erros?
-2. ✅ `npm run lint` - Sem warnings?
-3. ✅ Testou no mobile (430px)?
-4. ✅ Light mode e Dark mode funcionam?
-5. ✅ Autenticação não foi quebrada?
-6. ✅ Sem console.error em estado "limpo"?
-
----
-
-## 📚 REFERÊNCIAS
-
-- **PRD Completo:** Veja `PRD_MD.txt` na raiz
-- **Documentação Tailwind:** https://tailwindcss.com
-- **shadcn/ui:** https://ui.shadcn.com
-- **Supabase:** https://supabase.com/docs
-- **Next.js 14 App Router:** https://nextjs.org/docs/app
-
----
-
-**Última Atualização:** 21 de maio de 2026  
-**Versão:** 1.0
+# ReForma App — Regras Inegociáveis do Projeto
+
+## Stack
+- Next.js 14 App Router, TypeScript, Tailwind CSS, shadcn/ui
+- Backend: Supabase (Auth + PostgreSQL + Storage)
+- Gráficos: Recharts | Ícones: Lucide React
+
+## Identidade Visual: "Reforma Chique"
+
+### Cores obrigatórias
+- Fundo dark: bg-zinc-900 (NUNCA preto absoluto #000000)
+- Cards dark: bg-zinc-800
+- Fundo light: bg-stone-50 ou bg-orange-50 (NUNCA branco puro como fundo de página)
+- Cards light: bg-white
+- CTA principal: bg-orange-700 / hover:bg-orange-800 (Terracota)
+- Elementos secundários: amber-900 / amber-950 (Chocolate/Marrom)
+- Texto dark: text-zinc-100 / text-zinc-400
+- Texto light: text-stone-900 / text-stone-500
+
+### Regras de Tailwind para temas
+- NUNCA usar o prefixo `light:` — ele não existe no Tailwind CSS
+- Classe base (sem prefixo) = modo claro | `dark:` = modo escuro
+- Exemplo correto: `text-stone-900 dark:text-zinc-100`
+- Exemplo errado: `light:text-stone-900 dark:text-zinc-100`
+
+## Proibições absolutas
+1. Preto absoluto (#000000 ou bg-black) no Dark Mode
+2. Gráficos de pizza ou rosca (donut) para visualização de dados
+3. O prefixo `light:` no Tailwind CSS
+4. Fundo branco puro (bg-white) como fundo de página (apenas para cards)
+
+## Ícones temáticos obrigatórios (Lucide React)
+- HardHat → tela de boas-vindas, header, identidade da marca
+- Hammer → ferramentas, serviços, mão de obra
+- BrickWall → fase "Estrutura"
+- PaintBucket → fase "Mobiliário & Decor", acabamentos
+- Truck → entrega de materiais
+- DollarSign → pagamentos, financeiro
+- CalendarDays → agenda, visitas técnicas
+- FolderOpen → Pasta Digital (comprovantes)
+- PlusCircle → CTA principal de novo lançamento
+
+## Arquitetura de rotas
+- / → Hub Rápido (pós-login) ou Landing Page (não logado)
+- /dashboard → KPIs + últimas despesas
+- /novo → formulário nova despesa
+- /despesas → histórico completo
+- /graficos → waterfall + barras horizontais + área
+- /agenda → cronograma semanal
+- /comprovantes → pasta digital de recibos
+- /comodos → gerenciamento de cômodos
+- /projeto/editar → editar dados da obra
+
+## Design mobile-first
+- max-width: 430px centrado
+- Bottom Nav fixo com 5 abas
+- Botão FAB central em terracota para nova despesa
+- Todos os inputs com inputMode adequado (decimal, email, etc.)
+
+## Banco de dados (Supabase)
+- Tabelas principais: projects, categories, expenses, rooms, schedule_events
+- Todas as tabelas devem ter RLS ativo
+- Um usuário só acessa seus próprios registros (user_id = auth.uid())
+- schedule_events.event_type valores: entrega_material | servico_mao_obra | pagamento | visita_tecnica

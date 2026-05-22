@@ -4,7 +4,7 @@ import { CreateFirstProject } from "@/components/create-first-project";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { PlusCircle, BarChart2, Receipt, LayoutGrid, HardHat as HatIcon } from "lucide-react";
+import { PlusCircle, BarChart2, Receipt, LayoutGrid, FolderOpen, HardHat as HatIcon } from "lucide-react";
 import Link from "next/link";
 
 function LandingPage() {
@@ -99,7 +99,7 @@ export default async function HomePage() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <Link
           href="/dashboard"
           className="flex flex-col items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-4 text-center hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
@@ -120,6 +120,13 @@ export default async function HomePage() {
         >
           <LayoutGrid className="h-5 w-5 text-orange-700 dark:text-orange-500" />
           <span className="text-xs font-medium text-stone-900 dark:text-zinc-100">Cômodos</span>
+        </Link>
+        <Link
+          href="/comprovantes"
+          className="flex flex-col items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-4 text-center hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
+        >
+          <FolderOpen className="h-5 w-5 text-orange-700 dark:text-orange-500" />
+          <span className="text-xs font-medium text-stone-900 dark:text-zinc-100">Pasta Digital</span>
         </Link>
       </div>
     </div>

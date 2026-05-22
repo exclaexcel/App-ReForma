@@ -96,7 +96,7 @@ export function ScheduleEventForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-[430px] bg-white dark:bg-zinc-800 rounded-t-2xl p-6 space-y-4 max-h-[85vh] overflow-y-scroll touch-pan-y">
+      <div className="w-full max-w-[430px] bg-white dark:bg-zinc-800 rounded-t-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-stone-900 dark:text-zinc-100">
             {isEditing ? "Editar Evento" : "Novo Evento"}
@@ -111,7 +111,7 @@ export function ScheduleEventForm({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label className="text-sm text-stone-700 dark:text-zinc-300">
+            <Label className="text-sm dark:text-zinc-300 text-stone-700">
               Título
             </Label>
             <Input
@@ -125,7 +125,7 @@ export function ScheduleEventForm({
           </div>
 
           <div>
-            <Label className="text-sm text-stone-700 dark:text-zinc-300">
+            <Label className="text-sm dark:text-zinc-300 text-stone-700">
               Tipo de Evento
             </Label>
             <div className="grid grid-cols-2 gap-2 mt-2">
@@ -148,7 +148,7 @@ export function ScheduleEventForm({
           </div>
 
           <div>
-            <Label className="text-sm text-stone-700 dark:text-zinc-300">
+            <Label className="text-sm dark:text-zinc-300 text-stone-700">
               Data
             </Label>
             <Input
@@ -161,7 +161,7 @@ export function ScheduleEventForm({
           </div>
 
           <div>
-            <Label className="text-sm text-stone-700 dark:text-zinc-300">
+            <Label className="text-sm dark:text-zinc-300 text-stone-700">
               Observações (opcional)
             </Label>
             <textarea
@@ -180,19 +180,19 @@ export function ScheduleEventForm({
             </div>
           )}
 
-          <div className="flex gap-2 pt-4 pb-2">
+          <div className="flex gap-2 pt-2">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="flex-1 px-4 py-3 rounded-lg border border-stone-200 dark:border-zinc-700 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50 font-medium"
+              className="flex-1 px-4 py-2 rounded-lg border border-stone-200 dark:border-zinc-700 text-stone-700 dark:text-zinc-300 hover:bg-stone-100 dark:hover:bg-zinc-700 transition-colors disabled:opacity-50"
             >
               Cancelar
             </button>
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-orange-700 hover:bg-orange-800 text-white py-3 font-medium"
+              className="flex-1 bg-orange-700 hover:bg-orange-800 text-white"
             >
               {loading ? "Salvando..." : "Salvar"}
             </Button>
