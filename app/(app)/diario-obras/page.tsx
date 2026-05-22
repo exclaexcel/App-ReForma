@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TaskListItem } from "@/components/task-list-item";
 import { Input } from "@/components/ui/input";
-import { Task, TaskStatus, TASK_STATUS_LABELS } from "@/lib/types";
+import { Task, TaskStatus } from "@/lib/types";
 import { Search, ClipboardList, Plus } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
