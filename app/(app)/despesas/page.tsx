@@ -6,10 +6,11 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
-import { Expense, Category, DocStatus } from "@/lib/types";
+import { Expense, Category, DocStatus, ExpenseType } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, Download } from "lucide-react";
 import { cn, getDocStatus } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
+import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
 
 function exportToCsv(expenses: Expense[]) {
   const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Fornecedor", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante"];
@@ -45,6 +46,15 @@ export default function DespesasPage() {
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "pending">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterDocStatus, setFilterDocStatus] = useState<DocStatus | "all">("all");
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    dateFrom?: string;
+    dateTo?: string;
+    amountMin?: number;
+    amountMax?: number;
+    expenseType?: ExpenseType;
+    isPaid?: boolean | null;
+  }>({});
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -101,7 +111,30 @@ export default function DespesasPage() {
     const matchCat = filterCategory === "all" || e.category_id === filterCategory;
     const docStatus = getDocStatus(e);
     const matchDocStatus = filterDocStatus === "all" || docStatus === filterDocStatus;
-    return matchSearch && matchPaid && matchCat && matchDocStatus;
+
+    // Advanced filters
+    const matchDateFrom = !advancedFilters.dateFrom || e.expense_date >= advancedFilters.dateFrom;
+    const matchDateTo = !advancedFilters.dateTo || e.expense_date <= advancedFilters.dateTo;
+    const matchAmountMin = advancedFilters.amountMin === undefined || e.amount >= advancedFilters.amountMin;
+    const matchAmountMax = advancedFilters.amountMax === undefined || e.amount <= advancedFilters.amountMax;
+    const matchExpenseType = !advancedFilters.expenseType || e.expense_type === advancedFilters.expenseType;
+    const matchAdvancedPaid =
+      advancedFilters.isPaid === undefined ||
+      advancedFilters.isPaid === null ||
+      e.is_paid === advancedFilters.isPaid;
+
+    return (
+      matchSearch &&
+      matchPaid &&
+      matchCat &&
+      matchDocStatus &&
+      matchDateFrom &&
+      matchDateTo &&
+      matchAmountMin &&
+      matchAmountMax &&
+      matchExpenseType &&
+      matchAdvancedPaid
+    );
   });
 
   return (
@@ -118,7 +151,13 @@ export default function DespesasPage() {
               <Download className="h-5 w-5" />
             </button>
           )}
-          <SlidersHorizontal className="h-5 w-5 text-stone-500 dark:text-zinc-500" />
+          <button
+            onClick={() => setShowAdvancedFilters(true)}
+            title="Filtros avançados"
+            className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
+          >
+            <SlidersHorizontal className="h-5 w-5" />
+          </button>
         </div>
       </div>
 
@@ -230,6 +269,13 @@ export default function DespesasPage() {
           ))}
         </div>
       )}
+
+      <AdvancedFiltersModal
+        isOpen={showAdvancedFilters}
+        onClose={() => setShowAdvancedFilters(false)}
+        filters={advancedFilters}
+        onFiltersChange={setAdvancedFilters}
+      />
     </div>
   );
 }
