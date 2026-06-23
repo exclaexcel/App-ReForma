@@ -53,7 +53,7 @@ export function AdvancedFiltersModal({
         onClick={onClose}
       />
       {/* Modal */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-stone-900 dark:bg-zinc-900 border-t border-stone-200 dark:border-zinc-800 max-w-md mx-auto p-6 space-y-5">
+      <div className="fixed bottom-24 left-0 right-0 z-50 rounded-t-2xl bg-stone-900 dark:bg-zinc-900 border-t border-stone-200 dark:border-zinc-800 max-w-md mx-auto p-6 space-y-5 max-h-96 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-stone-100">Filtros Avançados</h2>
           <button
