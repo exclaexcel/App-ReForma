@@ -6,9 +6,9 @@ import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
-import { Expense, Category } from "@/lib/types";
+import { Expense, Category, DocStatus } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, Download } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, getDocStatus } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 
 function exportToCsv(expenses: Expense[]) {
@@ -44,6 +44,7 @@ export default function DespesasPage() {
   const [search, setSearch] = useState("");
   const [filterPaid, setFilterPaid] = useState<"all" | "paid" | "pending">("all");
   const [filterCategory, setFilterCategory] = useState<string>("all");
+  const [filterDocStatus, setFilterDocStatus] = useState<DocStatus | "all">("all");
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
@@ -98,7 +99,9 @@ export default function DespesasPage() {
       (filterPaid === "paid" && e.is_paid) ||
       (filterPaid === "pending" && !e.is_paid);
     const matchCat = filterCategory === "all" || e.category_id === filterCategory;
-    return matchSearch && matchPaid && matchCat;
+    const docStatus = getDocStatus(e);
+    const matchDocStatus = filterDocStatus === "all" || docStatus === filterDocStatus;
+    return matchSearch && matchPaid && matchCat && matchDocStatus;
   });
 
   return (
@@ -142,6 +145,35 @@ export default function DespesasPage() {
             )}
           >
             {opt === "all" ? "Todos" : opt === "paid" ? "Pagos" : "A Pagar"}
+          </button>
+        ))}
+        <button
+          onClick={() => setFilterDocStatus("all")}
+          className={cn(
+            "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+            filterDocStatus === "all"
+              ? "bg-stone-400 dark:bg-zinc-600 text-white"
+              : "bg-stone-200 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-300 dark:hover:bg-zinc-700"
+          )}
+        >
+          Toda documentação
+        </button>
+        {(["completo", "pendente", "divergencia"] as const).map((status) => (
+          <button
+            key={status}
+            onClick={() => setFilterDocStatus(status === filterDocStatus ? "all" : status)}
+            className={cn(
+              "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+              filterDocStatus === status
+                ? status === "completo"
+                  ? "bg-emerald-600 text-white"
+                  : status === "pendente"
+                    ? "bg-amber-600 text-white"
+                    : "bg-red-600 text-white"
+                : "bg-stone-200 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-300 dark:hover:bg-zinc-700"
+            )}
+          >
+            {status === "completo" ? "Documentado" : status === "pendente" ? "Doc. incompleta" : "Divergência"}
           </button>
         ))}
         <button

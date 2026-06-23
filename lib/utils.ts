@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { type Expense, type DocStatus } from "./types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -32,4 +33,30 @@ export function formatDate(dateStr: string): string {
     day: "2-digit",
     month: "short",
   }).format(date);
+}
+
+export function getDocStatus(expense: Expense): DocStatus {
+  const { expense_type, is_paid, receipt_url, invoice_url, invoice_value, amount } =
+    expense;
+
+  if (expense_type === "mao_obra") {
+    if (is_paid && !receipt_url) return "pendente";
+    return "completo";
+  }
+
+  if (expense_type === "material" || expense_type === "loja") {
+    if (!invoice_url) return "pendente";
+    if (is_paid && !receipt_url) return "pendente";
+    if (invoice_value && Math.abs(invoice_value - amount) > 0.01)
+      return "divergencia";
+    return "completo";
+  }
+
+  if (expense_type === "servico") {
+    if (is_paid && !receipt_url) return "pendente";
+    if (!invoice_url) return "pendente";
+    return "completo";
+  }
+
+  return "sem_regra";
 }

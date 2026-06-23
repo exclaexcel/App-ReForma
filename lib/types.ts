@@ -29,22 +29,49 @@ export type PaymentMethod =
   | "dinheiro"
   | "boleto";
 
-export type ExpensePhase = "Estrutura" | "Mobiliário & Decor";
+export type ExpenseType = "mao_obra" | "material" | "loja" | "servico" | "outro";
 
-export const EXPENSE_PHASES: ExpensePhase[] = ["Estrutura", "Mobiliário & Decor"];
+export const EXPENSE_TYPES: ExpenseType[] = [
+  "mao_obra",
+  "material",
+  "loja",
+  "servico",
+  "outro",
+];
+
+export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
+  mao_obra: "Mão de Obra",
+  material: "Material",
+  loja: "Loja / Acabamento",
+  servico: "Serviço",
+  outro: "Outro",
+};
+
+export type DocStatus = "completo" | "pendente" | "divergencia" | "sem_regra";
+
+export const DOC_STATUS_LABELS: Record<DocStatus, string> = {
+  completo: "Documentado",
+  pendente: "Doc. incompleta",
+  divergencia: "Divergência",
+  sem_regra: "—",
+};
 
 export type Expense = {
   id: string;
   project_id: string;
   category_id: string | null;
   room_id: string | null;
-  phase: ExpensePhase | null;
+  expense_type: ExpenseType;
   description: string;
   amount: number;
   expense_date: string;
   payment_method: PaymentMethod;
   is_paid: boolean;
   receipt_url: string | null;
+  invoice_url: string | null;
+  invoice_number: string | null;
+  invoice_value: number | null;
+  paid_at: string | null;
   supplier_id: string | null;
   created_at: string;
   categories?: Category | null;

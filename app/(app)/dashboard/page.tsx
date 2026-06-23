@@ -4,8 +4,9 @@ import { KpiCard } from "@/components/kpi-card";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { CountdownBanner } from "@/components/countdown-banner";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings, Users, ClipboardList } from "lucide-react";
+import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings, Users, ClipboardList, AlertCircle } from "lucide-react";
 import { Expense } from "@/lib/types";
+import { getDocStatus } from "@/lib/utils";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -42,6 +43,9 @@ export default async function DashboardPage() {
   const totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
   const toPay = totalCommitted - totalPaid;
   const recentExpenses = allExpenses.slice(0, 5);
+
+  const pendenteDocs = allExpenses.filter((e) => getDocStatus(e) === "pendente").length;
+  const divergenciaDocs = allExpenses.filter((e) => getDocStatus(e) === "divergencia").length;
 
   const daysUntilEnd = project.end_date
     ? Math.ceil(
@@ -86,6 +90,37 @@ export default async function DashboardPage() {
           variant="warning"
         />
       </div>
+
+      {(pendenteDocs > 0 || divergenciaDocs > 0) && (
+        <div className="space-y-2">
+          {pendenteDocs > 0 && (
+            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                  {pendenteDocs} {pendenteDocs === 1 ? "despesa" : "despesas"} com documentação incompleta
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-200 mt-0.5">
+                  Verifique se comprovantes e notas fiscais foram anexados.
+                </p>
+              </div>
+            </div>
+          )}
+          {divergenciaDocs > 0 && (
+            <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-4 py-3 flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-red-900 dark:text-red-100">
+                  {divergenciaDocs} {divergenciaDocs === 1 ? "despesa" : "despesas"} com divergência de valor
+                </p>
+                <p className="text-xs text-red-800 dark:text-red-200 mt-0.5">
+                  O valor da nota fiscal é diferente do valor pago.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div>
         <div className="flex items-center justify-between mb-3">

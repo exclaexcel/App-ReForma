@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpensePhase, EXPENSE_PHASES, Supplier } from "@/lib/types";
+import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpenseType, EXPENSE_TYPES, EXPENSE_TYPE_LABELS, Supplier } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,21 +41,32 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
   const [description, setDescription] = useState(initialExpense?.description ?? "");
   const [categoryId, setCategoryId] = useState(initialExpense?.category_id ?? "");
   const [roomId, setRoomId] = useState(initialExpense?.room_id ?? "");
-  const [phase, setPhase] = useState<ExpensePhase | "">(initialExpense?.phase ?? "");
+  const [expenseType, setExpenseType] = useState<ExpenseType>(
+    initialExpense?.expense_type ?? "outro"
+  );
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initialExpense?.payment_method ?? "pix"
   );
   const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
+  const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(
     initialSignedUrl ?? null
+  );
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [invoicePreview, setInvoicePreview] = useState<string | null>(
+    initialExpense?.invoice_url ?? null
+  );
+  const [invoiceNumber, setInvoiceNumber] = useState(initialExpense?.invoice_number ?? "");
+  const [invoiceValue, setInvoiceValue] = useState(
+    initialExpense?.invoice_value ? String(initialExpense.invoice_value).replace(".", ",") : ""
   );
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, field: "receipt" | "invoice") {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
@@ -64,9 +75,14 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
       return;
     }
     setError(null);
-    setReceiptFile(file);
     const url = URL.createObjectURL(file);
-    setReceiptPreview(url);
+    if (field === "receipt") {
+      setReceiptFile(file);
+      setReceiptPreview(url);
+    } else {
+      setInvoiceFile(file);
+      setInvoicePreview(url);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -83,30 +99,55 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
       }
 
       let receiptUrl: string | null = initialExpense?.receipt_url ?? null;
+      let invoiceUrl: string | null = initialExpense?.invoice_url ?? null;
 
-      if (receiptFile) {
+      if (receiptFile || invoiceFile) {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        const fileName = `${user!.id}/${Date.now()}-${receiptFile.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("receipts")
-          .upload(fileName, receiptFile);
-        if (uploadError) throw uploadError;
-        receiptUrl = uploadData.path;
+        if (!user) {
+          setError("Sessão expirada. Por favor, faça login novamente.");
+          return;
+        }
+
+        if (receiptFile) {
+          const fileName = `${user.id}/${Date.now()}-receipt-${receiptFile.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("receipts")
+            .upload(fileName, receiptFile);
+          if (uploadError) throw uploadError;
+          receiptUrl = uploadData.path;
+        }
+
+        if (invoiceFile) {
+          const fileName = `${user.id}/${Date.now()}-invoice-${invoiceFile.name}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from("receipts")
+            .upload(fileName, invoiceFile);
+          if (uploadError) throw uploadError;
+          invoiceUrl = uploadData.path;
+        }
       }
+
+      const parsedInvoiceValue = invoiceValue
+        ? parseFloat(invoiceValue.replace(",", "."))
+        : null;
 
       const payload = {
         category_id: categoryId || null,
         room_id: roomId || null,
         supplier_id: supplierId || null,
-        phase: (phase || null) as ExpensePhase | null,
+        expense_type: expenseType,
         description,
         amount: parsedAmount,
         expense_date: date,
         payment_method: paymentMethod,
         is_paid: isPaid,
+        paid_at: isPaid ? paidAt : null,
         receipt_url: receiptUrl,
+        invoice_url: invoiceUrl,
+        invoice_number: invoiceNumber || null,
+        invoice_value: parsedInvoiceValue,
       };
 
       if (isEditing && initialExpense) {
@@ -264,6 +305,29 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           </div>
         )}
 
+        <div className="space-y-2">
+          <Label>Tipo de Despesa *</Label>
+          <Select value={expenseType} onValueChange={(val) => setExpenseType(val as ExpenseType)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EXPENSE_TYPES.map((type) => (
+                <SelectItem key={type} value={type}>
+                  {EXPENSE_TYPE_LABELS[type]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-stone-500 dark:text-zinc-400">
+            {expenseType === "mao_obra" && "Requer comprovante de pagamento"}
+            {expenseType === "material" && "Requer comprovante e nota fiscal"}
+            {expenseType === "loja" && "Requer comprovante e nota fiscal"}
+            {expenseType === "servico" && "Requer comprovante (NF quando PJ)"}
+            {expenseType === "outro" && "Sem requisitos específicos"}
+          </p>
+        </div>
+
         {rooms.length > 0 && (
           <div className="space-y-2">
             <Label>Cômodo</Label>
@@ -281,26 +345,6 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
             </Select>
           </div>
         )}
-
-        <div className="space-y-2">
-          <Label>Fase</Label>
-          <div className="grid grid-cols-2 gap-2">
-            {EXPENSE_PHASES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPhase(phase === p ? "" : p)}
-                className={`rounded-xl border py-2.5 px-3 text-xs font-medium transition-all duration-200 active:scale-95 ${
-                  phase === p
-                    ? "border-orange-600 bg-orange-700/20 text-orange-400"
-                    : "border-stone-300 dark:border-zinc-700 bg-stone-100 dark:bg-zinc-800 text-stone-500 dark:text-zinc-400 hover:border-stone-400 dark:hover:border-zinc-600 hover:bg-stone-200"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
-          </div>
-        </div>
 
         <div className="space-y-2">
           <Label>Forma de Pagamento</Label>
@@ -335,14 +379,31 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           </Label>
         </div>
 
+        {isPaid && (
+          <div className="space-y-2">
+            <Label htmlFor="paid_at">Data do Pagamento</Label>
+            <Input
+              id="paid_at"
+              type="date"
+              value={paidAt}
+              onChange={(e) => setPaidAt(e.target.value)}
+              required
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
-          <Label>Comprovante (opcional)</Label>
+          <Label>
+            Comprovante de Pagamento
+            {expenseType !== "outro" && <span className="text-red-500"> *</span>}
+            {expenseType === "outro" && " (opcional)"}
+          </Label>
           <input
             ref={fileInputRef}
             type="file"
             accept="image/*,application/pdf"
             capture="environment"
-            onChange={handleFileChange}
+            onChange={(e) => handleFileChange(e, "receipt")}
             className="hidden"
           />
           {receiptPreview ? (
@@ -375,6 +436,76 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
             </button>
           )}
         </div>
+
+        {(expenseType === "material" || expenseType === "loja" || expenseType === "servico") && (
+          <>
+            <div className="space-y-2">
+              <Label>
+                Nota Fiscal
+                {(expenseType === "material" || expenseType === "loja") && (
+                  <span className="text-red-500"> *</span>
+                )}
+                {expenseType === "servico" && " (opcional, se PJ)"}
+              </Label>
+              <div className="space-y-2">
+                <Input
+                  type="text"
+                  placeholder="Número da NF"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  className="text-sm"
+                />
+                <Input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="Valor da NF (R$)"
+                  value={invoiceValue}
+                  onChange={(e) => setInvoiceValue(e.target.value)}
+                  className="text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Arquivo da Nota Fiscal</Label>
+              <input
+                type="file"
+                accept="image/*,application/pdf"
+                onChange={(e) => handleFileChange(e, "invoice")}
+                className="hidden"
+                id="invoice-input"
+              />
+              {invoicePreview ? (
+                <div className="relative rounded-xl overflow-hidden border border-stone-200/60 dark:border-zinc-700/60 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={invoicePreview}
+                    alt="Nota Fiscal"
+                    className="w-full h-40 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInvoiceFile(null);
+                      setInvoicePreview(null);
+                    }}
+                    className="absolute top-2 right-2 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1.5 text-stone-100 dark:text-zinc-300 text-xs hover:bg-stone-900 dark:hover:bg-zinc-900 transition-colors duration-150"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <label
+                  htmlFor="invoice-input"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-6 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 hover:text-stone-600 dark:hover:text-zinc-400 transition-all duration-200 active:scale-95 cursor-pointer"
+                >
+                  <Camera className="h-5 w-5" />
+                  Tirar foto, escolher da galeria ou PDF
+                </label>
+              )}
+            </div>
+          </>
+        )}
 
         {error && (
           <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300/60 dark:border-red-800/60 px-4 py-3 text-sm text-red-700 dark:text-red-400 shadow-sm shadow-red-900/10">
