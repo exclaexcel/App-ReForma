@@ -47,11 +47,12 @@ export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
   outro: "Outro",
 };
 
-export type DocStatus = "completo" | "pendente" | "divergencia" | "sem_regra";
+export type DocStatus = "completo" | "pendente" | "sem_comprovante" | "divergencia" | "sem_regra";
 
 export const DOC_STATUS_LABELS: Record<DocStatus, string> = {
   completo: "Documentado",
   pendente: "Doc. incompleta",
+  sem_comprovante: "Sem comprovante",
   divergencia: "Divergência",
   sem_regra: "—",
 };
@@ -73,6 +74,7 @@ export type Expense = {
   invoice_value: number | null;
   paid_at: string | null;
   supplier_id: string | null;
+  status: "ativo" | "cancelado";
   created_at: string;
   categories?: Category | null;
   rooms?: Room | null;

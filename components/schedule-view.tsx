@@ -1,16 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Truck,
   Hammer,
   DollarSign,
   CalendarDays,
   Plus,
+  Edit2,
+  Trash2,
+  Loader2,
   LucideIcon,
 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { ScheduleEvent, EventType, EVENT_TYPE_LABELS } from "@/lib/types";
 import { ScheduleEventForm } from "@/components/schedule-event-form";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type ScheduleViewProps = {
   events: ScheduleEvent[];
@@ -76,7 +83,13 @@ export function ScheduleView({
   projectId,
   userId,
 }: ScheduleViewProps) {
+  const router = useRouter();
+  const supabase = createClient();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<ScheduleEvent | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<ScheduleEvent | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const grouped = groupEventsByWeek(events);
   const weeks = [
@@ -86,6 +99,37 @@ export function ScheduleView({
     "Futuro",
   ];
 
+  async function handleDelete(event: ScheduleEvent) {
+    setDeletingId(event.id);
+    const toastId = toast.loading("Deletando...");
+    try {
+      const { error } = await supabase
+        .from("schedule_events")
+        .delete()
+        .eq("id", event.id);
+      if (error) throw error;
+      toast.success("Evento deletado", { id: toastId });
+      router.refresh();
+      setShowDeleteDialog(false);
+      setEventToDelete(null);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao deletar evento.";
+      toast.error(message, { id: toastId });
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleEdit(event: ScheduleEvent) {
+    setEditingEvent(event);
+    setIsFormOpen(true);
+  }
+
+  function closeForm() {
+    setIsFormOpen(false);
+    setEditingEvent(null);
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -93,7 +137,10 @@ export function ScheduleView({
           Cronograma da Obra
         </h1>
         <button
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            setEditingEvent(null);
+            setIsFormOpen(true);
+          }}
           aria-label="Novo evento"
           className="p-2 rounded-lg bg-orange-700 hover:bg-orange-800 text-white transition-colors"
         >
@@ -165,6 +212,32 @@ export function ScheduleView({
                               </p>
                             )}
                           </div>
+
+                          <div className="flex gap-2 shrink-0">
+                            <button
+                              onClick={() => handleEdit(event)}
+                              disabled={deletingId === event.id}
+                              aria-label="Editar evento"
+                              className="p-2 rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors disabled:opacity-40"
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEventToDelete(event);
+                                setShowDeleteDialog(true);
+                              }}
+                              disabled={deletingId === event.id}
+                              aria-label="Deletar evento"
+                              className="p-2 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
+                            >
+                              {deletingId === event.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -180,9 +253,23 @@ export function ScheduleView({
         <ScheduleEventForm
           projectId={projectId}
           userId={userId}
-          onClose={() => setIsFormOpen(false)}
+          initialEvent={editingEvent ?? undefined}
+          onClose={closeForm}
         />
       )}
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Deletar evento?"
+        description="Esta ação não pode ser desfeita."
+        actionLabel="Deletar"
+        onConfirm={() => eventToDelete && handleDelete(eventToDelete)}
+        onCancel={() => {
+          setShowDeleteDialog(false);
+          setEventToDelete(null);
+        }}
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }

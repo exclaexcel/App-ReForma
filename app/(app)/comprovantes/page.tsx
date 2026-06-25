@@ -111,6 +111,7 @@ export default function ComprovantesPage() {
         .from("expenses")
         .select("*, categories(id, name, color_hex)")
         .eq("project_id", project.id)
+        .eq("status", "ativo")
         .not("receipt_url", "is", null)
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });

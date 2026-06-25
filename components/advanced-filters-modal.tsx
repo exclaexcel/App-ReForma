@@ -18,6 +18,7 @@ type AdvancedFiltersModalProps = {
     amountMax?: number;
     expenseType?: ExpenseType;
     isPaid?: boolean | null;
+    semComprovante?: boolean;
   };
   onFiltersChange: (filters: AdvancedFiltersModalProps["filters"]) => void;
 };
@@ -184,6 +185,23 @@ export function AdvancedFiltersModal({
                   A Pagar
                 </label>
               </div>
+            </div>
+          </div>
+
+          {/* No Receipt */}
+          <div className="space-y-2">
+            <Label>Documentação</Label>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="semComprovante"
+                checked={!!local.semComprovante}
+                onCheckedChange={(checked) =>
+                  setLocal({ ...local, semComprovante: checked ? true : undefined })
+                }
+              />
+              <label htmlFor="semComprovante" className="text-sm cursor-pointer">
+                Pagos sem comprovante
+              </label>
             </div>
           </div>
         </div>

@@ -61,10 +61,11 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
                 "text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1",
                 docStatus === "completo" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                 docStatus === "pendente" && "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+                docStatus === "sem_comprovante" && "bg-orange-500/20 text-orange-600 dark:text-orange-400",
                 docStatus === "divergencia" && "bg-red-500/20 text-red-600 dark:text-red-400"
               )}
             >
-              {(docStatus === "pendente" || docStatus === "divergencia") && (
+              {(docStatus === "pendente" || docStatus === "divergencia" || docStatus === "sem_comprovante") && (
                 <AlertCircle className="h-3 w-3" />
               )}
               {DOC_STATUS_LABELS[docStatus]}

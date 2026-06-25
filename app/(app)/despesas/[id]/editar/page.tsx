@@ -19,6 +19,9 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   if (!expense) redirect("/despesas");
 
+  // Redirect if expense is cancelled
+  if (expense.status === "cancelado") redirect("/despesas");
+
   // Verify ownership: ensure the expense's project belongs to the logged-in user
   const { data: ownerProject } = await supabase
     .from("projects")

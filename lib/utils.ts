@@ -40,20 +40,20 @@ export function getDocStatus(expense: Expense): DocStatus {
     expense;
 
   if (expense_type === "mao_obra") {
-    if (is_paid && !receipt_url) return "pendente";
+    if (is_paid && !receipt_url) return "sem_comprovante";
     return "completo";
   }
 
   if (expense_type === "material" || expense_type === "loja") {
     if (!invoice_url) return "pendente";
-    if (is_paid && !receipt_url) return "pendente";
+    if (is_paid && !receipt_url) return "sem_comprovante";
     if (invoice_value && Math.abs(invoice_value - amount) > 0.01)
       return "divergencia";
     return "completo";
   }
 
   if (expense_type === "servico") {
-    if (is_paid && !receipt_url) return "pendente";
+    if (is_paid && !receipt_url) return "sem_comprovante";
     if (!invoice_url) return "pendente";
     return "completo";
   }

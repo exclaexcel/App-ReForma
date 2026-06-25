@@ -3,6 +3,8 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
+
+const PAGE_SIZE = 20;
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
@@ -53,9 +55,11 @@ export default function DespesasPage() {
     amountMax?: number;
     expenseType?: ExpenseType;
     isPaid?: boolean | null;
+    semComprovante?: boolean;
   }>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const fetchData = useCallback(async () => {
     try {
@@ -81,6 +85,7 @@ export default function DespesasPage() {
         .from("expenses")
         .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
         .eq("project_id", project.id)
+        .eq("status", "ativo")
         .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false }),
       supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
@@ -106,6 +111,10 @@ export default function DespesasPage() {
     fetchData();
   }, [fetchData]);
 
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [search, filterCategory, advancedFilters]);
+
   const filtered = expenses.filter((e) => {
     const matchSearch = e.description.toLowerCase().includes(search.toLowerCase());
     const matchCat = filterCategory === "all" || e.category_id === filterCategory;
@@ -120,6 +129,8 @@ export default function DespesasPage() {
       advancedFilters.isPaid === undefined ||
       advancedFilters.isPaid === null ||
       e.is_paid === advancedFilters.isPaid;
+    const matchSemComprovante = !advancedFilters.semComprovante ||
+      (e.is_paid && !e.receipt_url);
 
     return (
       matchSearch &&
@@ -129,9 +140,13 @@ export default function DespesasPage() {
       matchAmountMin &&
       matchAmountMax &&
       matchExpenseType &&
-      matchAdvancedPaid
+      matchAdvancedPaid &&
+      matchSemComprovante
     );
   });
+
+  const paginated = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
 
   return (
     <div className="px-4 pt-6 space-y-4">
@@ -242,10 +257,20 @@ export default function DespesasPage() {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-zinc-800">
-          {filtered.map((expense) => (
-            <ExpenseListItem key={expense.id} expense={expense} href={`/despesas/${expense.id}/editar`} />
-          ))}
+        <div className="space-y-4">
+          <div className="divide-y divide-zinc-800">
+            {paginated.map((expense) => (
+              <ExpenseListItem key={expense.id} expense={expense} href={`/despesas/${expense.id}/editar`} />
+            ))}
+          </div>
+          {hasMore && (
+            <button
+              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              className="w-full py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
+            >
+              Carregar mais ({filtered.length - visibleCount} restantes)
+            </button>
+          )}
         </div>
       )}
 

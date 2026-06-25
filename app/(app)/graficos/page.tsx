@@ -35,6 +35,7 @@ export default async function GraficosPage() {
     .from("expenses")
     .select("*, categories(id, name, color_hex)")
     .eq("project_id", project.id)
+    .eq("status", "ativo")
     .order("expense_date", { ascending: true });
 
   if (expensesError) throw expensesError;
