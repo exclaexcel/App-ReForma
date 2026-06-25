@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Supplier, SupplierSpecialty, SUPPLIER_SPECIALTIES } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 import { Loader2, ArrowLeft, Trash2, Star } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type SupplierFormProps = {
   projectId: string;
@@ -38,11 +40,13 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const toastId = toast.loading("Salvando...");
 
     try {
       const supabase = createClient();
@@ -62,6 +66,7 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
           .update(payload)
           .eq("id", initialSupplier.id);
         if (updateError) throw updateError;
+        toast.success("Fornecedor atualizado", { id: toastId });
         router.push("/fornecedores");
         router.refresh();
       } else {
@@ -69,12 +74,14 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
           .from("suppliers")
           .insert({ project_id: projectId, ...payload });
         if (insertError) throw insertError;
+        toast.success("Fornecedor cadastrado", { id: toastId });
         router.push("/fornecedores");
         router.refresh();
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao salvar fornecedor.";
       setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -82,8 +89,8 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
 
   async function handleDelete() {
     if (!initialSupplier) return;
-    if (!window.confirm("Excluir este fornecedor? Esta ação não pode ser desfeita.")) return;
     setDeleting(true);
+    const toastId = toast.loading("Deletando...");
     try {
       const supabase = createClient();
       const { error: deleteError } = await supabase
@@ -91,13 +98,16 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
         .delete()
         .eq("id", initialSupplier.id);
       if (deleteError) throw deleteError;
+      toast.success("Fornecedor excluído", { id: toastId });
       router.push("/fornecedores");
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao excluir fornecedor.";
       setError(message);
+      toast.error(message, { id: toastId });
       setDeleting(false);
     }
+    setShowDeleteDialog(false);
   }
 
   return (
@@ -115,9 +125,10 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
         {isEditing && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleting}
-            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1 transition-colors duration-150"
+            aria-label="Excluir fornecedor"
+            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-3 transition-colors duration-150"
           >
             {deleting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -243,6 +254,16 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
           )}
         </Button>
       </form>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir fornecedor?"
+        description="Esta ação não pode ser desfeita."
+        actionLabel="Excluir"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        isLoading={deleting}
+      />
     </div>
   );
 }

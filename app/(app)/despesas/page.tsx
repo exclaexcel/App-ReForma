@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
@@ -223,6 +224,11 @@ export default function DespesasPage() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <ClipboardList className="h-10 w-10 text-zinc-600" />
           <p className="text-sm text-zinc-500">Nenhuma despesa encontrada.</p>
+          {!search && !filterCategory && !advancedFilters.dateFrom && !advancedFilters.dateTo && advancedFilters.amountMin === undefined && advancedFilters.amountMax === undefined && !advancedFilters.expenseType && advancedFilters.isPaid === undefined && (
+            <Link href="/novo" className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium">
+              Lançar primeira despesa
+            </Link>
+          )}
         </div>
       ) : (
         <div className="divide-y divide-zinc-800">

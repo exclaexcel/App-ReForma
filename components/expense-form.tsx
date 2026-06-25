@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpenseType, EXPENSE_TYPES, EXPENSE_TYPE_LABELS, Supplier } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type ExpenseFormProps = {
   projectId: string;
@@ -65,6 +67,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, field: "receipt" | "invoice") {
     const file = e.target.files?.[0];
@@ -89,12 +92,14 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const toastId = toast.loading("Salvando...");
 
     try {
       const supabase = createClient();
       const parsedAmount = parseFloat(amount.replace(",", "."));
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         setError("Informe um valor válido.");
+        toast.dismiss(toastId);
         return;
       }
 
@@ -107,6 +112,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         } = await supabase.auth.getUser();
         if (!user) {
           setError("Sessão expirada. Por favor, faça login novamente.");
+          toast.dismiss(toastId);
           return;
         }
 
@@ -156,6 +162,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           .update(payload)
           .eq("id", initialExpense.id);
         if (updateError) throw updateError;
+        toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else {
@@ -164,12 +171,14 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           ...payload,
         });
         if (insertError) throw insertError;
-        router.push("/");
+        toast.success("Despesa lançada com sucesso", { id: toastId });
+        router.push("/despesas");
         router.refresh();
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao salvar despesa.";
       setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -177,8 +186,8 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
 
   async function handleDelete() {
     if (!initialExpense) return;
-    if (!window.confirm("Excluir esta despesa? Esta ação não pode ser desfeita.")) return;
     setDeleting(true);
+    const toastId = toast.loading("Deletando...");
     try {
       const supabase = createClient();
       const { error: deleteError } = await supabase
@@ -186,13 +195,16 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         .delete()
         .eq("id", initialExpense.id);
       if (deleteError) throw deleteError;
+      toast.success("Despesa excluída", { id: toastId });
       router.push("/despesas");
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao excluir despesa.";
       setError(message);
+      toast.error(message, { id: toastId });
       setDeleting(false);
     }
+    setShowDeleteDialog(false);
   }
 
   return (
@@ -210,9 +222,10 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         {isEditing && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleting}
-            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1 transition-colors duration-150"
+            aria-label="Excluir despesa"
+            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-3 transition-colors duration-150"
           >
             {deleting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -523,6 +536,16 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           )}
         </Button>
       </form>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir despesa?"
+        description="Esta ação não pode ser desfeita."
+        actionLabel="Excluir"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        isLoading={deleting}
+      />
     </div>
   );
 }

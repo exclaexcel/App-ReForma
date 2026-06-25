@@ -94,6 +94,7 @@ export function ScheduleView({
         </h1>
         <button
           onClick={() => setIsFormOpen(true)}
+          aria-label="Novo evento"
           className="p-2 rounded-lg bg-orange-700 hover:bg-orange-800 text-white transition-colors"
         >
           <Plus className="h-6 w-6" />

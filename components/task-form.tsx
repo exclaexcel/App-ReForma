@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Task, TaskStatus, TASK_STATUS_LABELS } from "@/lib/types";
 import { Room } from "@/lib/types";
@@ -18,6 +19,7 @@ import {
 import { Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 const TASK_STATUSES: TaskStatus[] = ["pendente", "em_andamento", "concluido"];
 
@@ -38,11 +40,13 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const toastId = toast.loading("Salvando...");
 
     try {
       const supabase = createClient();
@@ -61,11 +65,13 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
           .update(payload)
           .eq("id", initialTask.id);
         if (updateError) throw updateError;
+        toast.success("Tarefa atualizada", { id: toastId });
       } else {
         const { error: insertError } = await supabase
           .from("tasks")
           .insert({ project_id: projectId, ...payload });
         if (insertError) throw insertError;
+        toast.success("Tarefa criada", { id: toastId });
       }
 
       router.push("/diario-obras");
@@ -73,6 +79,7 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao salvar tarefa.";
       setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -80,8 +87,8 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
 
   async function handleDelete() {
     if (!initialTask) return;
-    if (!window.confirm("Excluir esta tarefa? Esta ação não pode ser desfeita.")) return;
     setDeleting(true);
+    const toastId = toast.loading("Deletando...");
     try {
       const supabase = createClient();
       const { error: deleteError } = await supabase
@@ -89,13 +96,16 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
         .delete()
         .eq("id", initialTask.id);
       if (deleteError) throw deleteError;
+      toast.success("Tarefa excluída", { id: toastId });
       router.push("/diario-obras");
       router.refresh();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao excluir tarefa.";
       setError(message);
+      toast.error(message, { id: toastId });
       setDeleting(false);
     }
+    setShowDeleteDialog(false);
   }
 
   return (
@@ -113,9 +123,10 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
         {isEditing && (
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteDialog(true)}
             disabled={deleting}
-            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-1 transition-colors duration-150"
+            aria-label="Excluir tarefa"
+            className="text-red-500 hover:text-red-400 disabled:opacity-50 p-3 transition-colors duration-150"
           >
             {deleting ? (
               <Loader2 className="h-5 w-5 animate-spin" />
@@ -213,6 +224,16 @@ export function TaskForm({ projectId, rooms = [], initialTask }: TaskFormProps) 
           )}
         </Button>
       </form>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir tarefa?"
+        description="Esta ação não pode ser desfeita."
+        actionLabel="Excluir"
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        isLoading={deleting}
+      />
     </div>
   );
 }

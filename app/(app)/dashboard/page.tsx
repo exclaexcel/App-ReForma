@@ -137,7 +137,10 @@ export default async function DashboardPage() {
             <HardHat className="h-8 w-8 text-stone-300 dark:text-zinc-600" />
             <p className="text-sm text-stone-500 dark:text-zinc-500">
               Nenhuma despesa ainda. Toque em{" "}
-              <span className="text-orange-600 dark:text-orange-500 font-medium">+</span> para adicionar.
+              <Link href="/novo" className="text-orange-600 dark:text-orange-500 font-medium underline hover:opacity-80">
+                aqui
+              </Link>
+              {" "}para adicionar.
             </p>
           </div>
         ) : (

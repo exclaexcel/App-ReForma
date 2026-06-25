@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Expense } from "@/lib/types";
 import { formatCurrency, getStoragePath } from "@/lib/utils";
@@ -171,6 +172,9 @@ export default function ComprovantesPage() {
           <p className="text-xs text-stone-400 dark:text-zinc-600">
             Adicione fotos ou PDFs ao lançar uma despesa.
           </p>
+          <Link href="/novo" className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium">
+            Ir para Novo Lançamento
+          </Link>
         </div>
       ) : (
         <div className="space-y-6">

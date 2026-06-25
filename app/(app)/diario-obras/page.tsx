@@ -97,6 +97,7 @@ export default function DiarioObrasPage() {
         <h1 className="text-xl font-bold dark:text-zinc-100 text-stone-900">Diário de Obras</h1>
         <Link
           href="/diario-obras/nova"
+          aria-label="Nova tarefa"
           className="flex items-center justify-center h-11 w-11 rounded-full bg-orange-700 hover:bg-orange-600 transition-colors"
         >
           <Plus className="h-5 w-5 text-white" />

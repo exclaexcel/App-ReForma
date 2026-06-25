@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Room } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, DoorOpen, Plus } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type RoomManagerProps = {
   projectId: string;
@@ -19,12 +21,15 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
   const [adding, setAdding] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!newName.trim()) return;
     setAdding(true);
     setError(null);
+    const toastId = toast.loading("Adicionando...");
 
     const { data, error: insertError } = await supabase
       .from("rooms")
@@ -34,22 +39,28 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
 
     if (insertError || !data) {
       setError("Erro ao adicionar cômodo.");
+      toast.error("Erro ao adicionar cômodo.", { id: toastId });
     } else {
       setRooms((prev) => [...prev, data as Room].sort((a, b) => a.name.localeCompare(b.name)));
       setNewName("");
+      toast.success("Cômodo adicionado", { id: toastId });
     }
     setAdding(false);
   }
 
   async function handleDelete(roomId: string) {
     setDeletingId(roomId);
+    const toastId = toast.loading("Deletando...");
     const { error: deleteError } = await supabase.from("rooms").delete().eq("id", roomId);
     if (deleteError) {
       setError("Erro ao remover cômodo.");
+      toast.error("Erro ao remover cômodo.", { id: toastId });
     } else {
       setRooms((prev) => prev.filter((r) => r.id !== roomId));
+      toast.success("Cômodo excluído", { id: toastId });
     }
     setDeletingId(null);
+    setShowDeleteDialog(false);
   }
 
   return (
@@ -85,9 +96,13 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
             <div key={room.id} className="flex items-center justify-between py-3">
               <span className="text-sm font-medium text-stone-800 dark:text-zinc-200">{room.name}</span>
               <button
-                onClick={() => handleDelete(room.id)}
+                onClick={() => {
+                  setRoomToDelete(room.id);
+                  setShowDeleteDialog(true);
+                }}
                 disabled={deletingId === room.id}
-                className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-40"
+                aria-label="Excluir cômodo"
+                className="p-3 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-900/20 transition-colors disabled:opacity-40"
               >
                 {deletingId === room.id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -99,6 +114,16 @@ export function RoomManager({ projectId, initialRooms }: RoomManagerProps) {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="Excluir cômodo?"
+        description="Esta ação não pode ser desfeita."
+        actionLabel="Excluir"
+        onConfirm={() => roomToDelete && handleDelete(roomToDelete)}
+        onCancel={() => setShowDeleteDialog(false)}
+        isLoading={deletingId !== null}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "ReForma — Gestão de Obra",
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className="bg-stone-50 dark:bg-zinc-900 text-stone-900 dark:text-zinc-100 antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
+          <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>
     </html>

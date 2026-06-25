@@ -64,6 +64,7 @@ export default function FornecedoresPage() {
         <h1 className="text-xl font-bold dark:text-zinc-100 text-stone-900">Fornecedores</h1>
         <Link
           href="/fornecedores/novo"
+          aria-label="Novo fornecedor"
           className="flex items-center justify-center h-11 w-11 rounded-full bg-orange-700 hover:bg-orange-600 transition-colors"
         >
           <Plus className="h-5 w-5 text-white" />
