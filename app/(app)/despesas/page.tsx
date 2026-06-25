@@ -55,6 +55,7 @@ export default function DespesasPage() {
     isPaid?: boolean | null;
   }>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -90,9 +91,13 @@ export default function DespesasPage() {
 
       setExpenses((expData ?? []) as Expense[]);
       setCategories(catData ?? []);
+      setError(null);
       setLoading(false);
     } catch (error) {
       console.error("Error loading despesas:", error);
+      const message = error instanceof Error ? error.message : "Erro ao carregar despesas. Verifique sua conexão.";
+      setError(message);
+      setExpenses([]);
       setLoading(false);
     }
   }, []);
@@ -213,6 +218,12 @@ export default function DespesasPage() {
           </button>
         ))}
       </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3 pt-2">

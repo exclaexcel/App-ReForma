@@ -14,6 +14,7 @@ export default function FornecedoresPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -42,8 +43,11 @@ export default function FornecedoresPage() {
 
       if (error) throw error;
       setSuppliers((data ?? []) as Supplier[]);
+      setError(null);
     } catch (error) {
       console.error("Error loading suppliers:", error);
+      const message = error instanceof Error ? error.message : "Erro ao carregar fornecedores. Verifique sua conexão.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -80,6 +84,12 @@ export default function FornecedoresPage() {
           className="pl-9"
         />
       </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-3 pt-2">

@@ -19,7 +19,10 @@ export async function createClient() {
           cookiesToSet.forEach(({ name, value, options }) =>
             cookieStore.set(name, value, options)
           );
-        } catch {}
+        } catch (error) {
+          console.error("[Supabase] Erro ao sincronizar cookies de sessão:", error);
+          throw error;
+        }
       },
     },
   });

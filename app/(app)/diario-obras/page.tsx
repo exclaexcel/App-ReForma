@@ -30,6 +30,7 @@ export default function DiarioObrasPage() {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<TaskStatus | "all">("all");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -58,8 +59,11 @@ export default function DiarioObrasPage() {
 
       if (error) throw error;
       setTasks((data ?? []) as Task[]);
+      setError(null);
     } catch (err) {
       console.error("Error loading tasks:", err);
+      const message = err instanceof Error ? err.message : "Erro ao carregar tarefas. Verifique sua conexão.";
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -158,6 +162,12 @@ export default function DiarioObrasPage() {
               );
             })}
           </div>
+        </div>
+      )}
+
+      {error && (
+        <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          {error}
         </div>
       )}
 

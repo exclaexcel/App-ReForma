@@ -86,6 +86,7 @@ export default function ComprovantesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [signedUrls, setSignedUrls] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -137,9 +138,12 @@ export default function ComprovantesPage() {
         }
       }
 
+      setError(null);
       setLoading(false);
     } catch (error) {
       console.error("Error loading comprovantes:", error);
+      const message = error instanceof Error ? error.message : "Erro ao carregar comprovantes. Verifique sua conexão.";
+      setError(message);
       setLoading(false);
     }
   }, []);
@@ -156,6 +160,12 @@ export default function ComprovantesPage() {
         <FolderOpen className="h-5 w-5 text-orange-700 dark:text-orange-500" />
         <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Pasta Digital</h1>
       </div>
+
+      {error && (
+        <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3">

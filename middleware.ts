@@ -32,14 +32,14 @@ export async function middleware(request: NextRequest) {
   );
 
   let user = null;
+  let authError = false;
   try {
     const {
       data: { user: authUser },
     } = await supabase.auth.getUser();
     user = authUser;
   } catch (error) {
-    // If getUser fails, let the request proceed
-    // The layout will handle the auth error
+    authError = true;
   }
 
   const isLoginOrSignup =
@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/recuperar-senha") ||
     request.nextUrl.pathname.startsWith("/atualizar-senha");
 
-  if (!user && !isLoginOrSignup && !isPublicPage) {
+  if ((authError || !user) && !isLoginOrSignup && !isPublicPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
