@@ -1,0 +1,2 @@
+﻿-- This migration was created via Supabase UI and applied to the remote database
+-- Migration ID: 20260522025117

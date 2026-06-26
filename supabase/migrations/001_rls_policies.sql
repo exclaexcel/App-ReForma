@@ -11,6 +11,11 @@
 -- -------------------------------------------------------------
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "projects: select próprio" ON projects;
+DROP POLICY IF EXISTS "projects: insert próprio" ON projects;
+DROP POLICY IF EXISTS "projects: update próprio" ON projects;
+DROP POLICY IF EXISTS "projects: delete próprio" ON projects;
+
 CREATE POLICY "projects: select próprio" ON projects
   FOR SELECT USING (auth.uid() = user_id);
 
@@ -29,6 +34,11 @@ CREATE POLICY "projects: delete próprio" ON projects
 -- Acesso restrito a categorias cujo project_id pertence ao usuário.
 -- -------------------------------------------------------------
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "categories: select próprio" ON categories;
+DROP POLICY IF EXISTS "categories: insert próprio" ON categories;
+DROP POLICY IF EXISTS "categories: update próprio" ON categories;
+DROP POLICY IF EXISTS "categories: delete próprio" ON categories;
 
 CREATE POLICY "categories: select próprio" ON categories
   FOR SELECT USING (
@@ -57,6 +67,11 @@ CREATE POLICY "categories: delete próprio" ON categories
 -- -------------------------------------------------------------
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "expenses: select próprio" ON expenses;
+DROP POLICY IF EXISTS "expenses: insert próprio" ON expenses;
+DROP POLICY IF EXISTS "expenses: update próprio" ON expenses;
+DROP POLICY IF EXISTS "expenses: delete próprio" ON expenses;
+
 CREATE POLICY "expenses: select próprio" ON expenses
   FOR SELECT USING (
     project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
@@ -83,6 +98,11 @@ CREATE POLICY "expenses: delete próprio" ON expenses
 -- Acesso restrito a cômodos cujo project_id pertence ao usuário.
 -- -------------------------------------------------------------
 ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "rooms: select próprio" ON rooms;
+DROP POLICY IF EXISTS "rooms: insert próprio" ON rooms;
+DROP POLICY IF EXISTS "rooms: update próprio" ON rooms;
+DROP POLICY IF EXISTS "rooms: delete próprio" ON rooms;
 
 CREATE POLICY "rooms: select próprio" ON rooms
   FOR SELECT USING (
@@ -111,6 +131,11 @@ CREATE POLICY "rooms: delete próprio" ON rooms
 -- -------------------------------------------------------------
 ALTER TABLE schedule_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "schedule_events: select próprio" ON schedule_events;
+DROP POLICY IF EXISTS "schedule_events: insert próprio" ON schedule_events;
+DROP POLICY IF EXISTS "schedule_events: update próprio" ON schedule_events;
+DROP POLICY IF EXISTS "schedule_events: delete próprio" ON schedule_events;
+
 CREATE POLICY "schedule_events: select próprio" ON schedule_events
   FOR SELECT USING (
     project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
@@ -137,6 +162,11 @@ CREATE POLICY "schedule_events: delete próprio" ON schedule_events
 -- Aplicar em: Storage > Policies > receipts
 -- Usuário só acessa arquivos sob o seu próprio user_id como prefixo.
 -- -------------------------------------------------------------
+
+DROP POLICY IF EXISTS "receipts: select próprio" ON storage.objects;
+DROP POLICY IF EXISTS "receipts: insert próprio" ON storage.objects;
+DROP POLICY IF EXISTS "receipts: update próprio" ON storage.objects;
+DROP POLICY IF EXISTS "receipts: delete próprio" ON storage.objects;
 
 -- Visualizar/download (signed URLs e leitura direta)
 CREATE POLICY "receipts: select próprio" ON storage.objects
