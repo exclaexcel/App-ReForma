@@ -22,7 +22,6 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 type ScheduleViewProps = {
   events: ScheduleEvent[];
   projectId: string;
-  userId: string;
 };
 
 const EVENT_ICONS: Record<EventType, LucideIcon> = {
@@ -69,7 +68,7 @@ function groupEventsByWeek(
   };
 
   events.forEach((event) => {
-    const week = getWeekLabel(event.event_date);
+    const week = getWeekLabel(event.start_date);
     if (grouped[week]) {
       grouped[week].push(event);
     }
@@ -81,7 +80,6 @@ function groupEventsByWeek(
 export function ScheduleView({
   events,
   projectId,
-  userId,
 }: ScheduleViewProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -170,8 +168,8 @@ export function ScheduleView({
               ) : (
                 <div className="space-y-3">
                   {weekEvents.map((event) => {
-                    const IconComponent = EVENT_ICONS[event.event_type];
-                    const eventDateObj = new Date(event.event_date);
+                    const IconComponent = event.event_type ? EVENT_ICONS[event.event_type as EventType] : CalendarDays;
+                    const eventDateObj = new Date(event.start_date);
                     const dayOfWeek = eventDateObj.toLocaleDateString("pt-BR", {
                       weekday: "short",
                     });
@@ -201,9 +199,11 @@ export function ScheduleView({
                                   dayOfWeek.slice(1)}{" "}
                                 • {formattedDate}
                               </span>
-                              <span className="px-2 py-1 rounded text-xs bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400">
-                                {EVENT_TYPE_LABELS[event.event_type]}
-                              </span>
+                              {event.event_type && (
+                                <span className="px-2 py-1 rounded text-xs bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400">
+                                  {EVENT_TYPE_LABELS[event.event_type as EventType]}
+                                </span>
+                              )}
                             </div>
 
                             {event.notes && (
@@ -252,7 +252,6 @@ export function ScheduleView({
       {isFormOpen && (
         <ScheduleEventForm
           projectId={projectId}
-          userId={userId}
           initialEvent={editingEvent ?? undefined}
           onClose={closeForm}
         />

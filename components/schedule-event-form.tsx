@@ -11,14 +11,12 @@ import { EventType, EVENT_TYPE_LABELS, ScheduleEvent } from "@/lib/types";
 
 type ScheduleEventFormProps = {
   projectId: string;
-  userId: string;
   onClose: () => void;
   initialEvent?: ScheduleEvent;
 };
 
 export function ScheduleEventForm({
   projectId,
-  userId,
   onClose,
   initialEvent,
 }: ScheduleEventFormProps) {
@@ -26,10 +24,10 @@ export function ScheduleEventForm({
   const isEditing = !!initialEvent;
 
   const [title, setTitle] = useState(initialEvent?.title ?? "");
-  const [eventType, setEventType] = useState<EventType>(
-    initialEvent?.event_type ?? "entrega_material"
+  const [eventType, setEventType] = useState<string>(
+    (initialEvent?.event_type as string) ?? "entrega_material"
   );
-  const [eventDate, setEventDate] = useState(initialEvent?.event_date ?? "");
+  const [eventDate, setEventDate] = useState(initialEvent?.start_date ?? "");
   const [notes, setNotes] = useState(initialEvent?.notes ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,17 +64,16 @@ export function ScheduleEventForm({
           .update({
             title,
             event_type: eventType,
-            event_date: eventDate,
+            start_date: eventDate,
             notes: notes || null,
           })
           .eq("id", initialEvent.id);
       } else {
         await supabase.from("schedule_events").insert({
           project_id: projectId,
-          user_id: userId,
           title,
           event_type: eventType,
-          event_date: eventDate,
+          start_date: eventDate,
           notes: notes || null,
         });
       }

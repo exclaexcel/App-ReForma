@@ -127,27 +127,6 @@ export type Supplier = {
   created_at: string;
 };
 
-export type TaskStatus = "pendente" | "em_andamento" | "concluido";
-
-export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  pendente: "Pendente",
-  em_andamento: "Em Andamento",
-  concluido: "Concluído",
-};
-
-export type Task = {
-  id: string;
-  project_id: string;
-  room_id: string | null;
-  title: string;
-  notes: string | null;
-  status: TaskStatus;
-  sequence_order: number | null;
-  created_at: string;
-  updated_at: string | null;
-  rooms?: { id: string; name: string } | null;
-};
-
 export type EventType =
   | "entrega_material"
   | "servico_mao_obra"
@@ -163,11 +142,11 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
 
 export type ScheduleEvent = {
   id: string;
-  project_id: string;
-  user_id: string;
+  project_id: string | null;
   title: string;
-  event_type: EventType;
-  event_date: string;
+  event_type: string | null;
+  start_date: string;
+  end_date: string | null;
   notes: string | null;
-  created_at: string;
+  created_at: string | null;
 };

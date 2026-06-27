@@ -24,14 +24,13 @@ export default async function AgendaPage() {
     .from("schedule_events")
     .select("*")
     .eq("project_id", project.id)
-    .order("event_date", { ascending: true });
+    .order("start_date", { ascending: true });
 
   return (
     <div className="px-4 pt-6 pb-4">
       <ScheduleView
         events={events || []}
         projectId={project.id}
-        userId={user.id}
       />
     </div>
   );

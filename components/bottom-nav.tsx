@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ClipboardList, ClipboardCheck, Users, Plus } from "lucide-react";
+import { Home, ClipboardList, Calendar, Users, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", icon: Home, label: "Início" },
   { href: "/despesas", icon: ClipboardList, label: "Despesas" },
   { href: "/novo", icon: null, label: "Novo" },
-  { href: "/diario-obras", icon: ClipboardCheck, label: "Diário" },
+  { href: "/agenda", icon: Calendar, label: "Agenda" },
   { href: "/fornecedores", icon: Users, label: "Fornecedores" },
 ];
 
