@@ -51,12 +51,14 @@ export function AdvancedFiltersModal({
   return (
     <>
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 z-40"
+      <button
+        className="fixed inset-0 bg-black/50 z-40 cursor-default"
         onClick={onClose}
+        aria-label="Fechar filtros"
+        type="button"
       />
       {/* Modal */}
-      <div className="fixed bottom-24 left-0 right-0 z-50 rounded-t-2xl bg-stone-900 dark:bg-zinc-900 border-t border-stone-200 dark:border-zinc-800 max-w-md mx-auto p-6 space-y-5 max-h-96 overflow-y-auto">
+      <div className="fixed bottom-24 left-0 right-0 z-50 rounded-t-2xl bg-stone-900 dark:bg-zinc-900 border-t border-stone-200 dark:border-zinc-800 max-w-md mx-auto p-6 space-y-5 max-h-[70vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-stone-100">Filtros Avançados</h2>
           <button
@@ -73,8 +75,11 @@ export function AdvancedFiltersModal({
             <Label>Período</Label>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-stone-600 dark:text-zinc-400">De</label>
+                <label htmlFor="dateFrom" className="text-xs text-stone-600 dark:text-zinc-400">
+                  De
+                </label>
                 <Input
+                  id="dateFrom"
                   type="date"
                   value={local.dateFrom ?? ""}
                   onChange={(e) => setLocal({ ...local, dateFrom: e.target.value || undefined })}
@@ -82,8 +87,11 @@ export function AdvancedFiltersModal({
                 />
               </div>
               <div>
-                <label className="text-xs text-stone-600 dark:text-zinc-400">Até</label>
+                <label htmlFor="dateTo" className="text-xs text-stone-600 dark:text-zinc-400">
+                  Até
+                </label>
                 <Input
+                  id="dateTo"
                   type="date"
                   value={local.dateTo ?? ""}
                   onChange={(e) => setLocal({ ...local, dateTo: e.target.value || undefined })}
@@ -98,8 +106,11 @@ export function AdvancedFiltersModal({
             <Label>Valor (R$)</Label>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs text-stone-600 dark:text-zinc-400">Mínimo</label>
+                <label htmlFor="amountMin" className="text-xs text-stone-600 dark:text-zinc-400">
+                  Mínimo
+                </label>
                 <Input
+                  id="amountMin"
                   type="number"
                   inputMode="decimal"
                   placeholder="0,00"
@@ -115,8 +126,11 @@ export function AdvancedFiltersModal({
                 />
               </div>
               <div>
-                <label className="text-xs text-stone-600 dark:text-zinc-400">Máximo</label>
+                <label htmlFor="amountMax" className="text-xs text-stone-600 dark:text-zinc-400">
+                  Máximo
+                </label>
                 <Input
+                  id="amountMax"
                   type="number"
                   inputMode="decimal"
                   placeholder="999.999,99"

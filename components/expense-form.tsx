@@ -4,7 +4,17 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
-import { Category, Room, Expense, PaymentMethod, PAYMENT_METHOD_LABELS, ExpenseType, EXPENSE_TYPES, EXPENSE_TYPE_LABELS, Supplier } from "@/lib/types";
+import {
+  Category,
+  Room,
+  Expense,
+  PaymentMethod,
+  PAYMENT_METHOD_LABELS,
+  ExpenseType,
+  EXPENSE_TYPES,
+  EXPENSE_TYPE_LABELS,
+  Supplier,
+} from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,7 +39,14 @@ type ExpenseFormProps = {
   initialSignedUrl?: string | null;
 };
 
-export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [], initialExpense, initialSignedUrl }: ExpenseFormProps) {
+export function ExpenseForm({
+  projectId,
+  categories,
+  rooms = [],
+  suppliers = [],
+  initialExpense,
+  initialSignedUrl,
+}: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
@@ -53,9 +70,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
-  const [receiptPreview, setReceiptPreview] = useState<string | null>(
-    initialSignedUrl ?? null
-  );
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(initialSignedUrl ?? null);
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
   const [invoicePreview, setInvoicePreview] = useState<string | null>(
     initialExpense?.invoice_url ?? null
@@ -96,7 +111,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
 
     try {
       const supabase = createClient();
-      const parsedAmount = parseFloat(amount.replace(",", "."));
+      const parsedAmount = Math.round(parseFloat(amount.replace(",", ".")) * 100) / 100;
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         setError("Informe um valor válido.");
         toast.dismiss(toastId);
@@ -117,6 +132,10 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         }
 
         if (receiptFile) {
+          // Delete old receipt if replacing
+          if (initialExpense?.receipt_url) {
+            await supabase.storage.from("receipts").remove([initialExpense.receipt_url]);
+          }
           const fileName = `${user.id}/${Date.now()}-receipt-${receiptFile.name}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from("receipts")
@@ -126,6 +145,10 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         }
 
         if (invoiceFile) {
+          // Delete old invoice if replacing
+          if (initialExpense?.invoice_url) {
+            await supabase.storage.from("receipts").remove([initialExpense.invoice_url]);
+          }
           const fileName = `${user.id}/${Date.now()}-invoice-${invoiceFile.name}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from("receipts")
@@ -136,7 +159,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
       }
 
       const parsedInvoiceValue = invoiceValue
-        ? parseFloat(invoiceValue.replace(",", "."))
+        ? Math.round(parseFloat(invoiceValue.replace(",", ".")) * 100) / 100
         : null;
 
       const payload = {
@@ -246,7 +269,6 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
             placeholder="0,00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            autoFocus={!isEditing}
             required
             className="text-2xl font-bold h-14"
           />
@@ -310,7 +332,8 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
                 <SelectItem value="">Sem fornecedor</SelectItem>
                 {suppliers.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
-                    {s.name}{s.specialty ? ` · ${s.specialty}` : ""}
+                    {s.name}
+                    {s.specialty ? ` · ${s.specialty}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -382,11 +405,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
         </div>
 
         <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
-          <Checkbox
-            id="is_paid"
-            checked={isPaid}
-            onCheckedChange={(v) => setIsPaid(Boolean(v))}
-          />
+          <Checkbox id="is_paid" checked={isPaid} onCheckedChange={(v) => setIsPaid(Boolean(v))} />
           <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
             Já está pago
           </Label>
@@ -422,11 +441,7 @@ export function ExpenseForm({ projectId, categories, rooms = [], suppliers = [],
           {receiptPreview ? (
             <div className="relative rounded-xl overflow-hidden border border-stone-200/60 dark:border-zinc-700/60 shadow-sm">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={receiptPreview}
-                alt="Comprovante"
-                className="w-full h-40 object-cover"
-              />
+              <img src={receiptPreview} alt="Comprovante" className="w-full h-40 object-cover" />
               <button
                 type="button"
                 onClick={() => {

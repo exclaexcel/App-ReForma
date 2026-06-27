@@ -51,7 +51,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
     const path = getStoragePath(expense.receipt_url);
     const { data: signedData } = await supabase.storage
       .from("receipts")
-      .createSignedUrl(path, 3600);
+      .createSignedUrl(path, 60 * 60 * 24 * 7);
     initialSignedUrl = signedData?.signedUrl ?? null;
   }
 

@@ -10,9 +10,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   const isMissingConfig =
-    error.message?.includes("URL and API key") ||
-    error.message?.includes("SUPABASE") ||
-    error.digest === "864801373";
+    error.message?.includes("URL and API key") || error.message?.includes("SUPABASE");
 
   return (
     <html lang="pt-BR">
@@ -31,7 +29,9 @@ export default function GlobalError({
           {isMissingConfig ? (
             <>
               <div>
-                <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Configuração necessária</h1>
+                <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">
+                  Configuração necessária
+                </h1>
                 <p className="text-sm text-stone-600 dark:text-zinc-400 mt-2">
                   As variáveis do Supabase não estão configuradas no Vercel.
                 </p>
@@ -60,7 +60,9 @@ export default function GlobalError({
           ) : (
             <>
               <div>
-                <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Algo deu errado</h1>
+                <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">
+                  Algo deu errado
+                </h1>
                 <p className="text-sm text-stone-600 dark:text-zinc-400 mt-2">
                   {error.message || "Erro inesperado no servidor."}
                 </p>

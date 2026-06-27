@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, ArrowLeft, Trash2, Star } from "lucide-react";
+import { Loader2, ArrowLeft, Trash2, Star, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -51,11 +51,24 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
     try {
       const supabase = createClient();
 
+      // Validate budget URL if provided
+      const trimmedBudgetUrl = budgetUrl.trim();
+      if (trimmedBudgetUrl) {
+        try {
+          new URL(trimmedBudgetUrl);
+        } catch {
+          setError("Link do orçamento inválido. Use uma URL completa (ex: https://...)");
+          toast.dismiss(toastId);
+          setLoading(false);
+          return;
+        }
+      }
+
       const payload = {
         name: name.trim(),
         specialty: specialty || null,
         whatsapp: whatsapp.trim() || null,
-        budget_url: budgetUrl.trim() || null,
+        budget_url: trimmedBudgetUrl || null,
         rating,
         notes: notes.trim() || null,
       };
@@ -148,7 +161,6 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
             placeholder="Ex: João Elétrica"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoFocus={!isEditing}
             required
             className="text-2xl font-bold h-14"
           />
@@ -156,10 +168,7 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
 
         <div className="space-y-2">
           <Label>Especialidade</Label>
-          <Select
-            value={specialty}
-            onValueChange={(v) => setSpecialty(v as SupplierSpecialty)}
-          >
+          <Select value={specialty} onValueChange={(v) => setSpecialty(v as SupplierSpecialty)}>
             <SelectTrigger>
               <SelectValue placeholder="Selecionar especialidade" />
             </SelectTrigger>
@@ -178,6 +187,7 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
           <Input
             id="whatsapp"
             type="tel"
+            pattern="[\d\s\(\)\-\+]{10,15}"
             placeholder="Ex: (11) 99999-9999"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
@@ -186,13 +196,27 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
 
         <div className="space-y-2">
           <Label htmlFor="budget_url">Link do Orçamento</Label>
-          <Input
-            id="budget_url"
-            type="url"
-            placeholder="Ex: https://drive.google.com/..."
-            value={budgetUrl}
-            onChange={(e) => setBudgetUrl(e.target.value)}
-          />
+          <div className="flex gap-2">
+            <Input
+              id="budget_url"
+              type="url"
+              placeholder="Ex: https://drive.google.com/..."
+              value={budgetUrl}
+              onChange={(e) => setBudgetUrl(e.target.value)}
+            />
+            {budgetUrl && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(budgetUrl, "_blank")}
+                aria-label="Abrir orçamento em nova aba"
+                className="px-3"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">

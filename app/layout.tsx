@@ -11,20 +11,18 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
   themeColor: "#18181b",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="bg-stone-50 dark:bg-zinc-900 text-stone-900 dark:text-zinc-100 antialiased">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          {children}
+          <a href="#main-content" className="sr-only focus:not-sr-only">
+            Ir para o conteúdo
+          </a>
+          <div id="main-content">{children}</div>
           <Toaster position="top-center" richColors />
         </ThemeProvider>
       </body>

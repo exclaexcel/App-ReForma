@@ -25,7 +25,9 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">{expense.description}</p>
+        <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">
+          {expense.description}
+        </p>
         <p className="text-xs dark:text-zinc-500 text-stone-500 truncate">
           {expense.categories?.name ?? "Sem categoria"}
           {expense.suppliers?.name && (
@@ -40,11 +42,15 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
         </span>
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-1">
-            <span className="text-xs dark:text-zinc-500 text-stone-500">{formatDate(expense.expense_date)}</span>
+            <span className="text-xs dark:text-zinc-500 text-stone-500">
+              {formatDate(expense.expense_date)}
+            </span>
             <span
               className={cn(
                 "text-xs font-medium flex items-center gap-0.5",
-                expense.is_paid ? "text-emerald-400" : "text-orange-400"
+                expense.is_paid
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-orange-600 dark:text-orange-400"
               )}
             >
               {expense.is_paid ? (
@@ -59,15 +65,17 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
             <span
               className={cn(
                 "text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1",
-                docStatus === "completo" && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                docStatus === "completo" &&
+                  "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
                 docStatus === "pendente" && "bg-amber-500/20 text-amber-600 dark:text-amber-400",
-                docStatus === "sem_comprovante" && "bg-orange-500/20 text-orange-600 dark:text-orange-400",
+                docStatus === "sem_comprovante" &&
+                  "bg-orange-500/20 text-orange-600 dark:text-orange-400",
                 docStatus === "divergencia" && "bg-red-500/20 text-red-600 dark:text-red-400"
               )}
             >
-              {(docStatus === "pendente" || docStatus === "divergencia" || docStatus === "sem_comprovante") && (
-                <AlertCircle className="h-3 w-3" />
-              )}
+              {(docStatus === "pendente" ||
+                docStatus === "divergencia" ||
+                docStatus === "sem_comprovante") && <AlertCircle className="h-3 w-3" />}
               {DOC_STATUS_LABELS[docStatus]}
             </span>
           )}

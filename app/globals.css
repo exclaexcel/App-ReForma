@@ -29,7 +29,9 @@ body {
   max-width: 430px;
   margin: 0 auto;
   min-height: 100dvh;
-  transition: background-color 200ms, color 200ms;
+  transition:
+    background-color 200ms,
+    color 200ms;
 }
 
 @layer utilities {
@@ -38,5 +40,14 @@ body {
   }
   .pb-safe {
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
