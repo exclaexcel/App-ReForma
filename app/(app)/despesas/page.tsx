@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
 import { Expense, Category, ExpenseType } from "@/lib/types";
-import { Search, SlidersHorizontal, ClipboardList, Download, RotateCcw } from "lucide-react";
+import { Search, SlidersHorizontal, ClipboardList, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
@@ -148,33 +148,18 @@ export default function DespesasPage() {
   const paginated = filtered.slice(0, visibleCount);
   const hasMore = visibleCount < filtered.length;
 
+  // Formatação
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Filtros ativos
+  const hasAdvancedFilters = Object.keys(advancedFilters).some(key => advancedFilters[key as keyof typeof advancedFilters] !== undefined);
+
   return (
     <div className="px-4 pt-6 space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Despesas</h1>
-        <div className="flex items-center gap-3">
-          {filtered.length > 0 && (
-            <button
-              onClick={() => exportToCsv(filtered)}
-              title="Exportar CSV"
-              className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
-            >
-              <Download className="h-5 w-5" />
-            </button>
-          )}
-          <button
-            onClick={() => setShowAdvancedFilters(true)}
-            title="Filtros avançados"
-            className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors"
-          >
-            <SlidersHorizontal className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500 dark:text-zinc-500 pointer-events-none" />
           <Input
             placeholder="Buscar despesa..."
             value={search}
@@ -182,7 +167,19 @@ export default function DespesasPage() {
             className="pl-9"
           />
         </div>
-        {(search || filterCategory !== "all" || Object.keys(advancedFilters).length > 0) && (
+        <button
+          onClick={() => setShowAdvancedFilters(true)}
+          title="Filtros avançados"
+          className={`relative p-2 rounded-lg text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100 hover:bg-stone-200 dark:hover:bg-zinc-700 transition-colors ${
+            hasAdvancedFilters ? "bg-orange-900/30 text-orange-600 dark:text-orange-400" : ""
+          }`}
+        >
+          <SlidersHorizontal className="h-5 w-5" />
+          {hasAdvancedFilters && (
+            <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full" />
+          )}
+        </button>
+        {(search || filterCategory !== "all" || hasAdvancedFilters) && (
           <button
             onClick={() => {
               setSearch("");
@@ -234,6 +231,20 @@ export default function DespesasPage() {
         ))}
       </div>
 
+      {!loading && filtered.length > 0 && (
+        <div className="flex justify-between items-center py-2 border-b border-zinc-800 text-xs text-zinc-500">
+          <span>{filtered.length} {filtered.length === 1 ? "despesa" : "despesas"}</span>
+          <div className="flex gap-4">
+            <span className="tabular-nums font-mono">{formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}</span>
+            {filtered.filter(e => !e.is_paid).length > 0 && (
+              <span className="text-orange-400 tabular-nums font-mono">
+                ⏱ {formatCurrency(filtered.filter(e => !e.is_paid).reduce((s, e) => s + e.amount, 0))} a pagar
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
           {error}
@@ -279,6 +290,7 @@ export default function DespesasPage() {
         onClose={() => setShowAdvancedFilters(false)}
         filters={advancedFilters}
         onFiltersChange={setAdvancedFilters}
+        onExport={() => exportToCsv(filtered)}
       />
     </div>
   );

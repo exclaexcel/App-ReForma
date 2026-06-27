@@ -21,6 +21,7 @@ type AdvancedFiltersModalProps = {
     semComprovante?: boolean;
   };
   onFiltersChange: (filters: AdvancedFiltersModalProps["filters"]) => void;
+  onExport?: () => void;
 };
 
 export function AdvancedFiltersModal({
@@ -28,6 +29,7 @@ export function AdvancedFiltersModal({
   onClose,
   filters,
   onFiltersChange,
+  onExport,
 }: AdvancedFiltersModalProps) {
   const [local, setLocal] = useState(filters);
 
@@ -215,6 +217,17 @@ export function AdvancedFiltersModal({
             Aplicar Filtros
           </Button>
         </div>
+        {onExport && (
+          <button
+            onClick={() => {
+              onExport();
+              onClose();
+            }}
+            className="w-full text-xs text-amber-400 hover:text-amber-300 underline text-center py-2"
+          >
+            ↓ Exportar resultado atual como CSV
+          </button>
+        )}
       </div>
     </>
   );
