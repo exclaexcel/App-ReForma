@@ -9,9 +9,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
-import { Expense, Category, ExpenseType } from "@/lib/types";
+import { Expense, ExpenseType } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, RotateCcw } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
 
@@ -47,9 +46,7 @@ function exportToCsv(expenses: Expense[]) {
 
 export default function DespesasPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
-  const [filterCategory, setFilterCategory] = useState<string>("all");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<{
     dateFrom?: string;
@@ -83,22 +80,17 @@ export default function DespesasPage() {
 
     if (!project) return;
 
-    const [{ data: expData, error: expError }, { data: catData, error: catError }] = await Promise.all([
-      supabase
-        .from("expenses")
-        .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
-        .eq("project_id", project.id)
-        .eq("status", "ativo")
-        .order("expense_date", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
-    ]);
+    const { data: expData, error: expError } = await supabase
+      .from("expenses")
+      .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
+      .eq("project_id", project.id)
+      .eq("status", "ativo")
+      .order("expense_date", { ascending: false })
+      .order("created_at", { ascending: false });
 
     if (expError) throw expError;
-    if (catError) throw catError;
 
       setExpenses((expData ?? []) as Expense[]);
-      setCategories(catData ?? []);
       setError(null);
       setLoading(false);
     } catch (error) {
@@ -116,11 +108,10 @@ export default function DespesasPage() {
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [search, filterCategory, advancedFilters]);
+  }, [search, advancedFilters]);
 
   const filtered = expenses.filter((e) => {
     const matchSearch = e.description.toLowerCase().includes(search.toLowerCase());
-    const matchCat = filterCategory === "all" || e.category_id === filterCategory;
 
     // Advanced filters
     const matchDateFrom = !advancedFilters.dateFrom || e.expense_date >= advancedFilters.dateFrom;
@@ -137,7 +128,6 @@ export default function DespesasPage() {
 
     return (
       matchSearch &&
-      matchCat &&
       matchDateFrom &&
       matchDateTo &&
       matchAmountMin &&
@@ -182,11 +172,10 @@ export default function DespesasPage() {
             <span className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full" />
           )}
         </button>
-        {(search || filterCategory !== "all" || hasAdvancedFilters) && (
+        {(search || hasAdvancedFilters) && (
           <button
             onClick={() => {
               setSearch("");
-              setFilterCategory("all");
               setAdvancedFilters({});
             }}
             title="Limpar filtros"
@@ -195,43 +184,6 @@ export default function DespesasPage() {
             <RotateCcw className="h-5 w-5" />
           </button>
         )}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-        <button
-          onClick={() => setFilterCategory("all")}
-          className={cn(
-            "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-            filterCategory === "all"
-              ? "bg-stone-400 dark:bg-zinc-600 text-white"
-              : "bg-stone-200 dark:bg-zinc-800 text-stone-600 dark:text-zinc-400 hover:bg-stone-300 dark:hover:bg-zinc-700"
-          )}
-        >
-          Todas categorias
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setFilterCategory(cat.id === filterCategory ? "all" : cat.id)}
-            className={cn(
-              "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors flex items-center gap-1.5",
-              filterCategory === cat.id
-                ? "text-white"
-                : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
-            )}
-            style={
-              filterCategory === cat.id
-                ? { backgroundColor: cat.color_hex }
-                : undefined
-            }
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: cat.color_hex }}
-            />
-            {cat.name}
-          </button>
-        ))}
       </div>
 
       {!loading && filtered.length > 0 && (
@@ -264,7 +216,7 @@ export default function DespesasPage() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <ClipboardList className="h-10 w-10 text-zinc-600" />
           <p className="text-sm text-zinc-500">Nenhuma despesa encontrada.</p>
-          {!search && !filterCategory && !advancedFilters.dateFrom && !advancedFilters.dateTo && advancedFilters.amountMin === undefined && advancedFilters.amountMax === undefined && !advancedFilters.expenseType && advancedFilters.isPaid === undefined && (
+          {!search && !advancedFilters.dateFrom && !advancedFilters.dateTo && advancedFilters.amountMin === undefined && advancedFilters.amountMax === undefined && !advancedFilters.expenseType && advancedFilters.isPaid === undefined && (
             <Link href="/novo" className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium">
               Lançar primeira despesa
             </Link>
