@@ -15,7 +15,20 @@ import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
 
 function exportToCsv(expenses: Expense[]) {
-  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Fornecedor", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante", "Tipo de Despesa", "Nº da Nota", "Valor da Nota (R$)"];
+  const headers = [
+    "Data",
+    "Descrição",
+    "Categoria",
+    "Cômodo",
+    "Fornecedor",
+    "Valor (R$)",
+    "Forma de Pagamento",
+    "Status",
+    "Comprovante",
+    "Tipo de Despesa",
+    "Nº da Nota",
+    "Valor da Nota (R$)",
+  ];
   const rows = expenses.map((e) => [
     e.expense_date,
     e.description,
@@ -70,32 +83,35 @@ export default function DespesasPage() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-    const { data: project } = await supabase
-      .from("projects")
-      .select("id")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      const { data: project } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (!project) return;
+      if (!project) return;
 
-    const { data: expData, error: expError } = await supabase
-      .from("expenses")
-      .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
-      .eq("project_id", project.id)
-      .eq("status", "ativo")
-      .order("expense_date", { ascending: false })
-      .order("created_at", { ascending: false });
+      const { data: expData, error: expError } = await supabase
+        .from("expenses")
+        .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
+        .eq("project_id", project.id)
+        .eq("status", "ativo")
+        .order("expense_date", { ascending: false })
+        .order("created_at", { ascending: false });
 
-    if (expError) throw expError;
+      if (expError) throw expError;
 
       setExpenses((expData ?? []) as Expense[]);
       setError(null);
       setLoading(false);
     } catch (error) {
       console.error("Error loading despesas:", error);
-      const message = error instanceof Error ? error.message : "Erro ao carregar despesas. Verifique sua conexão.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao carregar despesas. Verifique sua conexão.";
       setError(message);
       setExpenses([]);
       setLoading(false);
@@ -116,15 +132,17 @@ export default function DespesasPage() {
     // Advanced filters
     const matchDateFrom = !advancedFilters.dateFrom || e.expense_date >= advancedFilters.dateFrom;
     const matchDateTo = !advancedFilters.dateTo || e.expense_date <= advancedFilters.dateTo;
-    const matchAmountMin = advancedFilters.amountMin === undefined || e.amount >= advancedFilters.amountMin;
-    const matchAmountMax = advancedFilters.amountMax === undefined || e.amount <= advancedFilters.amountMax;
-    const matchExpenseType = !advancedFilters.expenseType || e.expense_type === advancedFilters.expenseType;
+    const matchAmountMin =
+      advancedFilters.amountMin === undefined || e.amount >= advancedFilters.amountMin;
+    const matchAmountMax =
+      advancedFilters.amountMax === undefined || e.amount <= advancedFilters.amountMax;
+    const matchExpenseType =
+      !advancedFilters.expenseType || e.expense_type === advancedFilters.expenseType;
     const matchAdvancedPaid =
       advancedFilters.isPaid === undefined ||
       advancedFilters.isPaid === null ||
       e.is_paid === advancedFilters.isPaid;
-    const matchSemComprovante = !advancedFilters.semComprovante ||
-      (e.is_paid && !e.receipt_url);
+    const matchSemComprovante = !advancedFilters.semComprovante || (e.is_paid && !e.receipt_url);
 
     return (
       matchSearch &&
@@ -146,7 +164,9 @@ export default function DespesasPage() {
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   // Filtros ativos
-  const hasAdvancedFilters = Object.keys(advancedFilters).some(key => advancedFilters[key as keyof typeof advancedFilters] !== undefined);
+  const hasAdvancedFilters = Object.keys(advancedFilters).some(
+    (key) => advancedFilters[key as keyof typeof advancedFilters] !== undefined
+  );
 
   return (
     <div className="px-4 pt-6 space-y-4">
@@ -186,14 +206,37 @@ export default function DespesasPage() {
         )}
       </div>
 
+      {/* Mini-sumário */}
+      <div className="space-y-1 text-sm text-stone-600 dark:text-zinc-400">
+        <p>
+          {filtered.length} despesa{filtered.length !== 1 ? "s" : ""} ·{" "}
+          {formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}
+        </p>
+        {filtered.filter((e) => !e.is_paid).length > 0 && (
+          <p>
+            ⏱ {formatCurrency(filtered.filter((e) => !e.is_paid).reduce((s, e) => s + e.amount, 0))}{" "}
+            a pagar · {filtered.filter((e) => !e.is_paid).length} despesa
+            {filtered.filter((e) => !e.is_paid).length !== 1 ? "s" : ""}
+          </p>
+        )}
+      </div>
+
       {!loading && filtered.length > 0 && (
         <div className="flex justify-between items-center py-2 border-b border-zinc-800 text-xs text-zinc-500">
-          <span>{filtered.length} {filtered.length === 1 ? "despesa" : "despesas"}</span>
+          <span>
+            {filtered.length} {filtered.length === 1 ? "despesa" : "despesas"}
+          </span>
           <div className="flex gap-4">
-            <span className="tabular-nums font-mono">{formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}</span>
-            {filtered.filter(e => !e.is_paid).length > 0 && (
+            <span className="tabular-nums font-mono">
+              {formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}
+            </span>
+            {filtered.filter((e) => !e.is_paid).length > 0 && (
               <span className="text-orange-400 tabular-nums font-mono">
-                ⏱ {formatCurrency(filtered.filter(e => !e.is_paid).reduce((s, e) => s + e.amount, 0))} a pagar
+                ⏱{" "}
+                {formatCurrency(
+                  filtered.filter((e) => !e.is_paid).reduce((s, e) => s + e.amount, 0)
+                )}{" "}
+                a pagar
               </span>
             )}
           </div>
@@ -216,22 +259,35 @@ export default function DespesasPage() {
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <ClipboardList className="h-10 w-10 text-zinc-600" />
           <p className="text-sm text-zinc-500">Nenhuma despesa encontrada.</p>
-          {!search && !advancedFilters.dateFrom && !advancedFilters.dateTo && advancedFilters.amountMin === undefined && advancedFilters.amountMax === undefined && !advancedFilters.expenseType && advancedFilters.isPaid === undefined && (
-            <Link href="/novo" className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium">
-              Lançar primeira despesa
-            </Link>
-          )}
+          {!search &&
+            !advancedFilters.dateFrom &&
+            !advancedFilters.dateTo &&
+            advancedFilters.amountMin === undefined &&
+            advancedFilters.amountMax === undefined &&
+            !advancedFilters.expenseType &&
+            advancedFilters.isPaid === undefined && (
+              <Link
+                href="/novo"
+                className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium"
+              >
+                Lançar primeira despesa
+              </Link>
+            )}
         </div>
       ) : (
         <div className="space-y-4">
           <div className="divide-y divide-zinc-800">
             {paginated.map((expense) => (
-              <ExpenseListItem key={expense.id} expense={expense} href={`/despesas/${expense.id}/editar`} />
+              <ExpenseListItem
+                key={expense.id}
+                expense={expense}
+                href={`/despesas/${expense.id}/editar`}
+              />
             ))}
           </div>
           {hasMore && (
             <button
-              onClick={() => setVisibleCount(c => c + PAGE_SIZE)}
+              onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
               className="w-full py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors"
             >
               Carregar mais ({filtered.length - visibleCount} restantes)
