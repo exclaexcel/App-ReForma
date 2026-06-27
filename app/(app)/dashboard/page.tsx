@@ -1,10 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { KpiCard } from "@/components/kpi-card";
 import { ExpenseListItem } from "@/components/expense-list-item";
-import { CountdownBanner } from "@/components/countdown-banner";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { Wallet, TrendingDown, CheckCircle2, Clock, HardHat, FolderOpen, Settings, Users, ClipboardList, AlertCircle } from "lucide-react";
+import { HardHat, Settings, AlertCircle } from "lucide-react";
 import { Expense } from "@/lib/types";
 import { getDocStatus } from "@/lib/utils";
 import Link from "next/link";
@@ -43,11 +41,12 @@ export default async function DashboardPage() {
   const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);
   const totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
   const toPay = totalCommitted - totalPaid;
-  const recentExpenses = allExpenses.slice(0, 5);
+  const recentExpenses = allExpenses.slice(0, 3);
 
   const pendenteDocs = allExpenses.filter((e) => getDocStatus(e) === "pendente").length;
   const semComprovanteDocs = allExpenses.filter((e) => getDocStatus(e) === "sem_comprovante").length;
   const divergenciaDocs = allExpenses.filter((e) => getDocStatus(e) === "divergencia").length;
+  const totalAlertas = pendenteDocs + semComprovanteDocs + divergenciaDocs;
 
   const daysUntilEnd = project.end_date
     ? Math.ceil(
@@ -55,103 +54,104 @@ export default async function DashboardPage() {
       )
     : null;
 
+  // Formatação de moeda
+  const formatCurrency = (v: number) =>
+    v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Saldo disponível e barra de progresso
+  const saldoDisponivel = project.total_budget - totalCommitted;
+  const pctUsado = project.total_budget > 0
+    ? Math.min((totalCommitted / project.total_budget) * 100, 100)
+    : 0;
+  const barColor = pctUsado >= 100 ? "bg-red-500" : pctUsado >= 80 ? "bg-amber-500" : "bg-emerald-500";
+  const toPayCount = allExpenses.filter((e) => !e.is_paid).length;
+
+  // Timeline consolidada
+  const timelineText = (() => {
+    const now = Date.now();
+    const startStr = project.start_date
+      ? new Date(project.start_date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+      : null;
+    const endStr = project.end_date
+      ? new Date(project.end_date + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+      : null;
+    const daysFromStart = project.start_date
+      ? Math.floor((now - new Date(project.start_date + "T00:00:00").getTime()) / 86400000)
+      : null;
+    const parts: string[] = [];
+    if (startStr) parts.push(`Iniciada ${startStr}`);
+    if (endStr) parts.push(`Prazo ${endStr}`);
+    if (daysUntilEnd !== null) {
+      if (daysUntilEnd > 0) parts.push(`${daysUntilEnd} dias restantes`);
+      else if (daysUntilEnd === 0) parts.push("Prazo hoje");
+      else parts.push(`${Math.abs(daysUntilEnd)} dias em atraso`);
+    } else if (daysFromStart !== null) {
+      parts.push(`${daysFromStart} dias em andamento`);
+    }
+    return parts.join(" · ");
+  })();
+
+  const timelineColor =
+    daysUntilEnd !== null && daysUntilEnd < 0 ? "text-red-400"
+    : daysUntilEnd !== null && daysUntilEnd <= 7 ? "text-amber-400"
+    : "text-zinc-500";
+
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
-      <div>
-        <p className="text-sm text-stone-500 dark:text-zinc-500">Resumo Financeiro</p>
-        <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">{project.name}</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-stone-500 dark:text-zinc-500">Resumo Financeiro</p>
+          <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">{project.name}</h1>
+          {timelineText && (
+            <p className={`text-xs mt-1 ${timelineColor}`}>{timelineText}</p>
+          )}
+        </div>
+        <Link href="/projeto/editar" className="p-2 rounded-lg text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800">
+          <Settings className="h-5 w-5" />
+        </Link>
       </div>
 
-      {daysUntilEnd !== null && (
-        <CountdownBanner days={daysUntilEnd} />
-      )}
-
-      {project.start_date && (
-        <div className="rounded-xl bg-zinc-800/50 px-4 py-3 flex justify-between items-center border border-zinc-700/50">
-          <span className="text-sm text-zinc-400">Obra iniciada em</span>
-          <span className="text-sm font-semibold text-zinc-100">
-            {new Date(project.start_date + "T00:00:00").toLocaleDateString("pt-BR")}
-            {" · "}
-            {Math.floor((Date.now() - new Date(project.start_date + "T00:00:00").getTime()) / 86400000)} dias
+      <div className="space-y-3">
+        <div>
+          <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">Saldo Disponível</p>
+          <p className={`text-3xl font-bold ${saldoDisponivel < 0 ? "text-red-400" : "text-zinc-100"}`}>
+            {formatCurrency(Math.abs(saldoDisponivel))}
+            {saldoDisponivel < 0 && <span className="text-base font-medium text-red-400 ml-2">estourado</span>}
+          </p>
+          <div className="mt-2 h-2 w-full rounded-full bg-zinc-700">
+            <div className={`h-2 rounded-full transition-all ${barColor}`} style={{ width: `${pctUsado}%` }} />
+          </div>
+          <p className="text-xs text-zinc-500 mt-1">
+            {pctUsado.toFixed(0)}% do orçamento · de {formatCurrency(project.total_budget)} orçados
+          </p>
+        </div>
+        <div className="flex gap-4 text-sm">
+          <span className="text-zinc-400">Comprometido <span className="text-zinc-100 font-semibold">{formatCurrency(totalCommitted)}</span></span>
+          <span className="text-zinc-400">A Pagar <span className="text-orange-400 font-semibold">{formatCurrency(toPay)}</span>
+            {toPayCount > 0 && <span className="text-zinc-500 ml-1">· {toPayCount} despesa{toPayCount > 1 ? "s" : ""}</span>}
           </span>
         </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-3">
-        <KpiCard
-          label="Total Orçado"
-          value={project.total_budget}
-          icon={Wallet}
-          variant="primary"
-        />
-        <KpiCard
-          label="Total Comprometido"
-          value={totalCommitted}
-          icon={TrendingDown}
-          variant="default"
-        />
-        <KpiCard
-          label="Efetivamente Pago"
-          value={totalPaid}
-          icon={CheckCircle2}
-          variant="success"
-        />
-        <KpiCard
-          label="A Pagar (Agendado)"
-          value={toPay}
-          icon={Clock}
-          variant="warning"
-        />
       </div>
 
-      {(pendenteDocs > 0 || semComprovanteDocs > 0 || divergenciaDocs > 0) && (
-        <div className="space-y-2">
-          {pendenteDocs > 0 && (
-            <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/40 px-4 py-3 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
-                  {pendenteDocs} {pendenteDocs === 1 ? "despesa" : "despesas"} com documentação incompleta
-                </p>
-                <p className="text-xs text-amber-800 dark:text-amber-200 mt-0.5">
-                  Verifique se comprovantes e notas fiscais foram anexados.
-                </p>
-              </div>
-            </div>
-          )}
-          {semComprovanteDocs > 0 && (
-            <div className="rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 px-4 py-3 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-orange-900 dark:text-orange-100">
-                  {semComprovanteDocs} {semComprovanteDocs === 1 ? "despesa" : "despesas"} paga sem comprovante
-                </p>
-                <p className="text-xs text-orange-800 dark:text-orange-200 mt-0.5">
-                  Anexe o comprovante de pagamento para completar a documentação.
-                </p>
-              </div>
-            </div>
-          )}
-          {divergenciaDocs > 0 && (
-            <div className="rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/40 px-4 py-3 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-red-900 dark:text-red-100">
-                  {divergenciaDocs} {divergenciaDocs === 1 ? "despesa" : "despesas"} com divergência de valor
-                </p>
-                <p className="text-xs text-red-800 dark:text-red-200 mt-0.5">
-                  O valor da nota fiscal é diferente do valor pago.
-                </p>
-              </div>
-            </div>
-          )}
+      {totalAlertas > 0 && (
+        <div className="rounded-xl border border-amber-800/40 bg-amber-900/20 px-4 py-3 space-y-2">
+          <p className="text-sm font-semibold text-amber-200 flex items-center gap-2">
+            <AlertCircle className="h-4 w-4" />
+            {totalAlertas} {totalAlertas === 1 ? "item precisa" : "itens precisam"} de atenção
+          </p>
+          <ul className="space-y-1 text-xs text-amber-300/80 pl-6">
+            {semComprovanteDocs > 0 && <li>· {semComprovanteDocs} despesa{semComprovanteDocs > 1 ? "s" : ""} paga{semComprovanteDocs > 1 ? "s" : ""} sem comprovante</li>}
+            {pendenteDocs > 0 && <li>· {pendenteDocs} com documentação incompleta</li>}
+            {divergenciaDocs > 0 && <li>· {divergenciaDocs} com divergência de valor na nota</li>}
+          </ul>
+          <Link href="/despesas" className="text-xs text-amber-400 underline">Ver despesas →</Link>
         </div>
       )}
 
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-stone-700 dark:text-zinc-300">Últimas Despesas</h2>
-          {allExpenses.length > 5 && (
+          {allExpenses.length > 3 && (
             <Link href="/despesas" className="text-xs text-orange-700 dark:text-orange-500 hover:text-orange-600 dark:hover:text-orange-400">
               Ver todas
             </Link>
@@ -176,37 +176,6 @@ export default async function DashboardPage() {
             ))}
           </div>
         )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2 pt-4">
-        <Link
-          href="/comprovantes"
-          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
-        >
-          <FolderOpen className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
-          Pasta Digital
-        </Link>
-        <Link
-          href="/projeto/editar"
-          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
-        >
-          <Settings className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
-          Editar Obra
-        </Link>
-        <Link
-          href="/fornecedores"
-          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
-        >
-          <Users className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
-          Fornecedores
-        </Link>
-        <Link
-          href="/diario-obras"
-          className="flex items-center gap-2 rounded-xl bg-white dark:bg-zinc-800 border border-stone-200 dark:border-zinc-700 px-3 py-3 text-sm font-medium text-stone-900 dark:text-zinc-100 hover:bg-stone-50 dark:hover:bg-zinc-700 transition-colors"
-        >
-          <ClipboardList className="h-4 w-4 text-orange-700 dark:text-orange-500 shrink-0" />
-          Diário de Obras
-        </Link>
       </div>
     </div>
   );
