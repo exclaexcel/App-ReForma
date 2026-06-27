@@ -108,7 +108,6 @@ export default async function DashboardPage() {
     <div className="px-4 pt-6 pb-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-stone-500 dark:text-zinc-500">Resumo Financeiro</p>
           <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">{project.name}</h1>
           {timelineText && <p className={`text-xs mt-1 ${timelineColor}`}>{timelineText}</p>}
         </div>
