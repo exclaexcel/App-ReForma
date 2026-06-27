@@ -9,6 +9,8 @@ import { Expense } from "@/lib/types";
 import { formatCurrency, getStoragePath } from "@/lib/utils";
 import { FolderOpen, FileText, Download } from "lucide-react";
 
+const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
+
 function groupByMonth(expenses: Expense[]): Map<string, Expense[]> {
   const groups = new Map<string, Expense[]>();
   for (const expense of expenses) {
@@ -126,7 +128,7 @@ export default function ComprovantesPage() {
         const paths = withReceipts.map((e) => getStoragePath(e.receipt_url!));
         const { data: signedData } = await supabase.storage
           .from("receipts")
-          .createSignedUrls(paths, 3600);
+          .createSignedUrls(paths, SIGNED_URL_TTL);
 
         if (signedData) {
           const urlMap = new Map<string, string>();

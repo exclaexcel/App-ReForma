@@ -72,7 +72,7 @@ export function CreateFirstProject({ userId }: { userId: string }) {
           <Label htmlFor="name">Nome da obra</Label>
           <Input
             id="name"
-            placeholder="Ex: Reforma Ap Dany"
+            placeholder="Ex: Reforma Apartamento Centro"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required

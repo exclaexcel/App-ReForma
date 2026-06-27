@@ -16,7 +16,7 @@ import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
 
 function exportToCsv(expenses: Expense[]) {
-  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Fornecedor", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante"];
+  const headers = ["Data", "Descrição", "Categoria", "Cômodo", "Fornecedor", "Valor (R$)", "Forma de Pagamento", "Status", "Comprovante", "Tipo de Despesa", "Nº da Nota", "Valor da Nota (R$)"];
   const rows = expenses.map((e) => [
     e.expense_date,
     e.description,
@@ -27,6 +27,9 @@ function exportToCsv(expenses: Expense[]) {
     PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
     e.is_paid ? "Pago" : "A Pagar",
     e.receipt_url ?? "",
+    e.expense_type,
+    e.invoice_number ?? "",
+    e.invoice_value ? e.invoice_value.toFixed(2).replace(".", ",") : "",
   ]);
 
   const csvContent = [headers, ...rows]
