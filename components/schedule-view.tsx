@@ -104,6 +104,9 @@ export function ScheduleView({
     setDeletingId(event.id);
     const toastId = toast.loading("Deletando...");
     try {
+      if (event.photo_url) {
+        await supabase.storage.from("receipts").remove([event.photo_url]);
+      }
       const { error } = await supabase.from("schedule_events").delete().eq("id", event.id);
       if (error) throw error;
       toast.success("Evento deletado", { id: toastId });
