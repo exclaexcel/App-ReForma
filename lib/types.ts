@@ -22,22 +22,11 @@ export type Room = {
   created_at: string;
 };
 
-export type PaymentMethod =
-  | "pix"
-  | "cartao_credito"
-  | "cartao_debito"
-  | "dinheiro"
-  | "boleto";
+export type PaymentMethod = "pix" | "cartao_credito" | "cartao_debito" | "dinheiro" | "boleto";
 
 export type ExpenseType = "mao_obra" | "material" | "loja" | "servico" | "outro";
 
-export const EXPENSE_TYPES: ExpenseType[] = [
-  "mao_obra",
-  "material",
-  "loja",
-  "servico",
-  "outro",
-];
+export const EXPENSE_TYPES: ExpenseType[] = ["mao_obra", "material", "loja", "servico", "outro"];
 
 export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
   mao_obra: "Mão de Obra",
@@ -76,6 +65,9 @@ export type Expense = {
   supplier_id: string | null;
   status: "ativo" | "cancelado";
   created_at: string;
+  installment_count: number;
+  installment_number: number;
+  parent_expense_id: string | null;
   categories?: Category | null;
   rooms?: Room | null;
   suppliers?: { id: string; name: string } | null;
@@ -127,11 +119,7 @@ export type Supplier = {
   created_at: string;
 };
 
-export type EventType =
-  | "entrega_material"
-  | "servico_mao_obra"
-  | "pagamento"
-  | "visita_tecnica";
+export type EventType = "entrega_material" | "servico_mao_obra" | "pagamento" | "visita_tecnica";
 
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   entrega_material: "Entrega de Material",
@@ -139,6 +127,8 @@ export const EVENT_TYPE_LABELS: Record<EventType, string> = {
   pagamento: "Pagamento",
   visita_tecnica: "Visita Técnica",
 };
+
+export type EventStatus = "pendente" | "confirmado" | "concluído";
 
 export type ScheduleEvent = {
   id: string;
@@ -149,4 +139,12 @@ export type ScheduleEvent = {
   end_date: string | null;
   notes: string | null;
   created_at: string | null;
+  expense_id: string | null;
+  supplier_id: string | null;
+  room_id: string | null;
+  status: EventStatus;
+  photo_url: string | null;
+  expenses?: { amount: number; description: string } | null;
+  suppliers?: { name: string } | null;
+  rooms?: { name: string } | null;
 };

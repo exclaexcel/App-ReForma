@@ -36,8 +36,7 @@ export function formatDate(dateStr: string): string {
 }
 
 export function getDocStatus(expense: Expense): DocStatus {
-  const { expense_type, is_paid, receipt_url, invoice_url, invoice_value, amount } =
-    expense;
+  const { expense_type, is_paid, receipt_url, invoice_url, invoice_value, amount } = expense;
 
   if (expense_type === "mao_obra") {
     if (is_paid && !receipt_url) return "sem_comprovante";
@@ -47,8 +46,7 @@ export function getDocStatus(expense: Expense): DocStatus {
   if (expense_type === "material" || expense_type === "loja") {
     if (!invoice_url) return "pendente";
     if (is_paid && !receipt_url) return "sem_comprovante";
-    if (invoice_value && Math.abs(invoice_value - amount) > 0.01)
-      return "divergencia";
+    if (invoice_value && Math.abs(invoice_value - amount) > 0.01) return "divergencia";
     return "completo";
   }
 
@@ -59,4 +57,10 @@ export function getDocStatus(expense: Expense): DocStatus {
   }
 
   return "sem_regra";
+}
+
+export function addMonths(dateStr: string, months: number): string {
+  const date = new Date(dateStr + "T00:00:00");
+  date.setMonth(date.getMonth() + months);
+  return date.toISOString().split("T")[0];
 }

@@ -13,15 +13,21 @@ import {
   Trash2,
   Loader2,
   LucideIcon,
+  X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ScheduleEvent, EventType, EVENT_TYPE_LABELS } from "@/lib/types";
+import { ScheduleEvent, EventType, EVENT_TYPE_LABELS, Room, Supplier, Expense } from "@/lib/types";
 import { ScheduleEventForm } from "@/components/schedule-event-form";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 type ScheduleViewProps = {
   events: ScheduleEvent[];
   projectId: string;
+  suppliers?: Supplier[];
+  rooms?: Room[];
+  expenses?: Expense[];
 };
 
 const EVENT_ICONS: Record<EventType, LucideIcon> = {
@@ -57,9 +63,7 @@ function getWeekLabel(eventDate: string): string {
   return "Futuro";
 }
 
-function groupEventsByWeek(
-  events: ScheduleEvent[]
-): Record<string, ScheduleEvent[]> {
+function groupEventsByWeek(events: ScheduleEvent[]): Record<string, ScheduleEvent[]> {
   const grouped: Record<string, ScheduleEvent[]> = {
     "Esta Semana": [],
     "Próxima Semana": [],
@@ -80,6 +84,9 @@ function groupEventsByWeek(
 export function ScheduleView({
   events,
   projectId,
+  suppliers = [],
+  rooms = [],
+  expenses = [],
 }: ScheduleViewProps) {
   const router = useRouter();
   const supabase = createClient();
@@ -88,23 +95,16 @@ export function ScheduleView({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [eventToDelete, setEventToDelete] = useState<ScheduleEvent | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [photoModal, setPhotoModal] = useState<string | null>(null);
 
   const grouped = groupEventsByWeek(events);
-  const weeks = [
-    "Esta Semana",
-    "Próxima Semana",
-    "Nas Próximas 3 Semanas",
-    "Futuro",
-  ];
+  const weeks = ["Esta Semana", "Próxima Semana", "Nas Próximas 3 Semanas", "Futuro"];
 
   async function handleDelete(event: ScheduleEvent) {
     setDeletingId(event.id);
     const toastId = toast.loading("Deletando...");
     try {
-      const { error } = await supabase
-        .from("schedule_events")
-        .delete()
-        .eq("id", event.id);
+      const { error } = await supabase.from("schedule_events").delete().eq("id", event.id);
       if (error) throw error;
       toast.success("Evento deletado", { id: toastId });
       router.refresh();
@@ -168,15 +168,21 @@ export function ScheduleView({
               ) : (
                 <div className="space-y-3">
                   {weekEvents.map((event) => {
-                    const IconComponent = event.event_type ? EVENT_ICONS[event.event_type as EventType] : CalendarDays;
+                    const IconComponent = event.event_type
+                      ? EVENT_ICONS[event.event_type as EventType]
+                      : CalendarDays;
                     const eventDateObj = new Date(event.start_date);
                     const dayOfWeek = eventDateObj.toLocaleDateString("pt-BR", {
                       weekday: "short",
                     });
-                    const formattedDate = eventDateObj.toLocaleDateString(
-                      "pt-BR",
-                      { day: "2-digit", month: "2-digit" }
-                    );
+                    const formattedDate = eventDateObj.toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    });
+
+                    const expenseName = event.expenses?.description;
+                    const supplierName = event.suppliers?.name;
+                    const roomName = event.rooms?.name;
 
                     return (
                       <div
@@ -193,15 +199,45 @@ export function ScheduleView({
                               {event.title}
                             </h3>
 
+                            {(supplierName || roomName || expenseName) && (
+                              <div className="text-xs text-stone-500 dark:text-zinc-400 mt-1">
+                                {supplierName && <span>{supplierName}</span>}
+                                {supplierName && roomName && <span> · </span>}
+                                {roomName && <span>{roomName}</span>}
+                                {(supplierName || roomName) && event.expenses?.amount && (
+                                  <span> · </span>
+                                )}
+                                {event.expenses?.amount && (
+                                  <span className="font-medium text-stone-700 dark:text-zinc-300">
+                                    {formatCurrency(event.expenses.amount)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
                             <div className="flex flex-wrap items-center gap-2 mt-2">
                               <span className="text-xs text-stone-500 dark:text-zinc-400">
-                                {dayOfWeek.charAt(0).toUpperCase() +
-                                  dayOfWeek.slice(1)}{" "}
-                                • {formattedDate}
+                                {dayOfWeek.charAt(0).toUpperCase() + dayOfWeek.slice(1)} •{" "}
+                                {formattedDate}
                               </span>
                               {event.event_type && (
                                 <span className="px-2 py-1 rounded text-xs bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400">
                                   {EVENT_TYPE_LABELS[event.event_type as EventType]}
+                                </span>
+                              )}
+                              {event.status && (
+                                <span
+                                  className={cn(
+                                    "px-2 py-1 rounded text-xs font-medium",
+                                    event.status === "pendente" &&
+                                      "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400",
+                                    event.status === "confirmado" &&
+                                      "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400",
+                                    event.status === "concluído" &&
+                                      "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
+                                  )}
+                                >
+                                  {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
                                 </span>
                               )}
                             </div>
@@ -213,30 +249,45 @@ export function ScheduleView({
                             )}
                           </div>
 
-                          <div className="flex gap-2 shrink-0">
-                            <button
-                              onClick={() => handleEdit(event)}
-                              disabled={deletingId === event.id}
-                              aria-label="Editar evento"
-                              className="p-2 rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors disabled:opacity-40"
-                            >
-                              <Edit2 className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                setEventToDelete(event);
-                                setShowDeleteDialog(true);
-                              }}
-                              disabled={deletingId === event.id}
-                              aria-label="Deletar evento"
-                              className="p-2 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
-                            >
-                              {deletingId === event.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
-                            </button>
+                          <div className="flex flex-col gap-2 shrink-0">
+                            {event.photo_url && (
+                              <button
+                                onClick={() => setPhotoModal(event.photo_url)}
+                                className="relative w-16 h-16 rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-700 hover:opacity-80 transition-opacity"
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={event.photo_url}
+                                  alt="Foto do evento"
+                                  className="w-full h-full object-cover"
+                                />
+                              </button>
+                            )}
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handleEdit(event)}
+                                disabled={deletingId === event.id}
+                                aria-label="Editar evento"
+                                className="p-2 rounded-lg text-zinc-500 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors disabled:opacity-40"
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setEventToDelete(event);
+                                  setShowDeleteDialog(true);
+                                }}
+                                disabled={deletingId === event.id}
+                                aria-label="Deletar evento"
+                                className="p-2 rounded-lg text-zinc-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors disabled:opacity-40"
+                              >
+                                {deletingId === event.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -254,7 +305,43 @@ export function ScheduleView({
           projectId={projectId}
           initialEvent={editingEvent ?? undefined}
           onClose={closeForm}
+          suppliers={suppliers}
+          rooms={rooms}
+          expenses={expenses}
         />
+      )}
+
+      {photoModal && (
+        <button
+          type="button"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setPhotoModal(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") setPhotoModal(null);
+          }}
+          aria-label="Fechar foto"
+        >
+          <div
+            className="relative max-w-2xl max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+            role="presentation"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoModal}
+              alt="Foto ampliada"
+              className="w-full h-full object-contain rounded-xl"
+            />
+            <button
+              type="button"
+              onClick={() => setPhotoModal(null)}
+              className="absolute top-4 right-4 rounded-full bg-white/20 hover:bg-white/30 p-2 text-white transition-colors"
+              aria-label="Fechar"
+            >
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+        </button>
       )}
 
       <ConfirmDialog

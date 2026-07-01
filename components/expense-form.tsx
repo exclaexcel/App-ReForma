@@ -29,6 +29,7 @@ import {
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { addMonths, formatCurrency } from "@/lib/utils";
 
 type ExpenseFormProps = {
   projectId: string;
@@ -69,6 +70,7 @@ export function ExpenseForm({
   const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
+  const [installmentCount, setInstallmentCount] = useState(initialExpense?.installment_count ?? 1);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(initialSignedUrl ?? null);
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
@@ -186,6 +188,39 @@ export function ExpenseForm({
           .eq("id", initialExpense.id);
         if (updateError) throw updateError;
         toast.success("Despesa atualizada", { id: toastId });
+        router.push("/despesas");
+        router.refresh();
+      } else if (installmentCount > 1) {
+        const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
+        const lastAmount =
+          Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
+
+        const rows = Array.from({ length: installmentCount }, (_, i) => ({
+          ...payload,
+          project_id: projectId,
+          description: `${description} (${i + 1}/${installmentCount})`,
+          amount: i === installmentCount - 1 ? lastAmount : baseAmount,
+          expense_date: addMonths(date, i),
+          installment_count: installmentCount,
+          installment_number: i + 1,
+        }));
+
+        const { data: first, error: firstError } = await supabase
+          .from("expenses")
+          .insert(rows[0])
+          .select()
+          .single();
+
+        if (firstError) throw firstError;
+
+        if (installmentCount > 1) {
+          const { error: restError } = await supabase
+            .from("expenses")
+            .insert(rows.slice(1).map((r) => ({ ...r, parent_expense_id: first.id })));
+          if (restError) throw restError;
+        }
+
+        toast.success(`Despesa lançada em ${installmentCount} parcelas`, { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else {
@@ -320,6 +355,39 @@ export function ExpenseForm({
             </Select>
           </div>
         </div>
+
+        {!isEditing && (
+          <div className="space-y-3">
+            <Label htmlFor="installmentCount">Parcelas</Label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="installmentCount"
+                type="number"
+                min="1"
+                value={installmentCount}
+                onChange={(e) => setInstallmentCount(Math.max(1, parseInt(e.target.value) || 1))}
+                className="h-12 text-lg font-semibold flex-1"
+              />
+              <span className="text-stone-500 dark:text-zinc-400 font-medium">x</span>
+            </div>
+            {installmentCount > 1 && amount && (
+              <div className="text-sm text-stone-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-3">
+                {(() => {
+                  const parsedAmount = Math.round(parseFloat(amount.replace(",", ".")) * 100) / 100;
+                  const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
+                  const lastAmount =
+                    Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
+
+                  if (baseAmount === lastAmount) {
+                    return `${installmentCount}x de ${formatCurrency(baseAmount)}`;
+                  } else {
+                    return `${installmentCount - 1}x de ${formatCurrency(baseAmount)} + última ${formatCurrency(lastAmount)}`;
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+        )}
 
         {suppliers.length > 0 && (
           <div className="space-y-2">

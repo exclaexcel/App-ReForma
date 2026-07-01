@@ -1,26 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { toast } from "sonner";
+import { X, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
-import { EventType, EVENT_TYPE_LABELS, ScheduleEvent } from "@/lib/types";
+import {
+  EventType,
+  EVENT_TYPE_LABELS,
+  ScheduleEvent,
+  EventStatus,
+  Room,
+  Supplier,
+  Expense,
+} from "@/lib/types";
 
 type ScheduleEventFormProps = {
   projectId: string;
   onClose: () => void;
   initialEvent?: ScheduleEvent;
+  suppliers?: Supplier[];
+  rooms?: Room[];
+  expenses?: Expense[];
 };
 
 export function ScheduleEventForm({
   projectId,
   onClose,
   initialEvent,
+  suppliers = [],
+  rooms = [],
+  expenses = [],
 }: ScheduleEventFormProps) {
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = !!initialEvent;
 
   const [title, setTitle] = useState(initialEvent?.title ?? "");
@@ -29,6 +52,12 @@ export function ScheduleEventForm({
   );
   const [eventDate, setEventDate] = useState(initialEvent?.start_date ?? "");
   const [notes, setNotes] = useState(initialEvent?.notes ?? "");
+  const [supplierId, setSupplierId] = useState(initialEvent?.supplier_id ?? "");
+  const [roomId, setRoomId] = useState(initialEvent?.room_id ?? "");
+  const [expenseId, setExpenseId] = useState(initialEvent?.expense_id ?? "");
+  const [status, setStatus] = useState<EventStatus>(initialEvent?.status ?? "pendente");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(initialEvent?.photo_url ?? null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +67,22 @@ export function ScheduleEventForm({
     "pagamento",
     "visita_tecnica",
   ];
+
+  const statusOptions: EventStatus[] = ["pendente", "confirmado", "concluído"];
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("O arquivo deve ter no máximo 5 MB.");
+      e.target.value = "";
+      return;
+    }
+    setError(null);
+    const url = URL.createObjectURL(file);
+    setPhotoFile(file);
+    setPhotoPreview(url);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,38 +99,63 @@ export function ScheduleEventForm({
     }
 
     setLoading(true);
+    const toastId = toast.loading("Salvando...");
 
     try {
       const supabase = createClient();
+      let photoUrl: string | null = initialEvent?.photo_url ?? null;
+
+      if (photoFile) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) {
+          setError("Sessão expirada. Por favor, faça login novamente.");
+          toast.dismiss(toastId);
+          return;
+        }
+
+        if (initialEvent?.photo_url) {
+          await supabase.storage.from("receipts").remove([initialEvent.photo_url]);
+        }
+
+        const fileName = `${user.id}/${Date.now()}-photo-${photoFile.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("receipts")
+          .upload(fileName, photoFile);
+        if (uploadError) throw uploadError;
+        photoUrl = uploadData.path;
+      }
+
+      const payload = {
+        title,
+        event_type: eventType,
+        start_date: eventDate,
+        notes: notes || null,
+        supplier_id: supplierId || null,
+        room_id: roomId || null,
+        expense_id: expenseId || null,
+        status,
+        photo_url: photoUrl,
+      };
 
       if (isEditing && initialEvent) {
-        await supabase
-          .from("schedule_events")
-          .update({
-            title,
-            event_type: eventType,
-            start_date: eventDate,
-            notes: notes || null,
-          })
-          .eq("id", initialEvent.id);
+        await supabase.from("schedule_events").update(payload).eq("id", initialEvent.id);
+        toast.success("Evento atualizado", { id: toastId });
       } else {
         await supabase.from("schedule_events").insert({
           project_id: projectId,
-          title,
-          event_type: eventType,
-          start_date: eventDate,
-          notes: notes || null,
+          ...payload,
         });
+        toast.success("Evento criado com sucesso", { id: toastId });
       }
 
       router.refresh();
       onClose();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao salvar evento. Tente novamente."
-      );
+      const message = err instanceof Error ? err.message : "Erro ao salvar evento.";
+      setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setLoading(false);
     }
@@ -110,9 +180,7 @@ export function ScheduleEventForm({
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">
-                Título
-              </Label>
+              <Label className="text-sm dark:text-zinc-300 text-stone-700">Título</Label>
               <Input
                 type="text"
                 placeholder="Ex: Entrega de Pisos"
@@ -124,9 +192,7 @@ export function ScheduleEventForm({
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">
-                Tipo de Evento
-              </Label>
+              <Label className="text-sm dark:text-zinc-300 text-stone-700">Tipo de Evento</Label>
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {eventTypes.map((type) => (
                   <button
@@ -147,9 +213,7 @@ export function ScheduleEventForm({
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">
-                Data
-              </Label>
+              <Label className="text-sm dark:text-zinc-300 text-stone-700">Data</Label>
               <Input
                 type="date"
                 value={eventDate}
@@ -157,6 +221,127 @@ export function ScheduleEventForm({
                 disabled={loading}
                 className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600 dark:text-zinc-100 text-stone-900"
               />
+            </div>
+
+            {suppliers.length > 0 && (
+              <div>
+                <Label className="text-sm dark:text-zinc-300 text-stone-700">
+                  Fornecedor (opcional)
+                </Label>
+                <Select value={supplierId} onValueChange={setSupplierId}>
+                  <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
+                    <SelectValue placeholder="Selecionar fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem fornecedor</SelectItem>
+                    {suppliers.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {rooms.length > 0 && (
+              <div>
+                <Label className="text-sm dark:text-zinc-300 text-stone-700">
+                  Cômodo (opcional)
+                </Label>
+                <Select value={roomId} onValueChange={setRoomId}>
+                  <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
+                    <SelectValue placeholder="Selecionar cômodo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem cômodo</SelectItem>
+                    {rooms.map((r) => (
+                      <SelectItem key={r.id} value={r.id}>
+                        {r.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {expenses.length > 0 && (
+              <div>
+                <Label className="text-sm dark:text-zinc-300 text-stone-700">
+                  Despesa (opcional)
+                </Label>
+                <Select value={expenseId} onValueChange={setExpenseId}>
+                  <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
+                    <SelectValue placeholder="Selecionar despesa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Sem despesa</SelectItem>
+                    {expenses.map((exp) => (
+                      <SelectItem key={exp.id} value={exp.id}>
+                        {exp.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div>
+              <Label className="text-sm dark:text-zinc-300 text-stone-700">Status</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {statusOptions.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => setStatus(s)}
+                    disabled={loading}
+                    className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors border ${
+                      status === s
+                        ? "border-orange-600 bg-orange-700/20 text-orange-500 dark:text-orange-400"
+                        : "border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-700 text-stone-600 dark:text-zinc-400 hover:border-orange-400 dark:hover:border-orange-600"
+                    }`}
+                  >
+                    {s.charAt(0).toUpperCase() + s.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm dark:text-zinc-300 text-stone-700">Foto (opcional)</Label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              {photoPreview ? (
+                <div className="relative rounded-lg overflow-hidden border border-stone-200 dark:border-zinc-700 mt-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={photoPreview} alt="Foto" className="w-full h-32 object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                    className="absolute top-1 right-1 rounded-full bg-stone-900/80 dark:bg-zinc-900/80 p-1 text-stone-100 dark:text-zinc-300 text-xs hover:bg-stone-900 dark:hover:bg-zinc-900 transition-colors duration-150"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full mt-1 flex items-center justify-center gap-2 rounded-lg border border-dashed border-stone-300 dark:border-zinc-700 bg-stone-100/50 dark:bg-zinc-800/50 py-4 text-sm text-stone-400 dark:text-zinc-500 hover:border-stone-400 dark:hover:border-zinc-600 transition-colors"
+                >
+                  <Camera className="h-4 w-4" />
+                  Adicionar foto
+                </button>
+              )}
             </div>
 
             <div>
