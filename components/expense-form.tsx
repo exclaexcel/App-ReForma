@@ -182,11 +182,52 @@ export function ExpenseForm({
       };
 
       if (isEditing && initialExpense) {
-        const { error: updateError } = await supabase
-          .from("expenses")
-          .update(payload)
-          .eq("id", initialExpense.id);
-        if (updateError) throw updateError;
+        if (initialExpense.installment_count && initialExpense.installment_count > 1) {
+          const baseAmount =
+            Math.floor((parsedAmount / initialExpense.installment_count) * 100) / 100;
+          const lastAmount =
+            Math.round((parsedAmount - baseAmount * (initialExpense.installment_count - 1)) * 100) /
+            100;
+
+          await supabase
+            .from("expenses")
+            .update({
+              ...payload,
+              description,
+              amount: baseAmount,
+              expense_date: date,
+              installment_count: initialExpense.installment_count,
+              installment_number: 1,
+            })
+            .eq("id", initialExpense.id);
+
+          const { data: childExpenses } = await supabase
+            .from("expenses")
+            .select("id")
+            .eq("parent_expense_id", initialExpense.id);
+
+          if (childExpenses && childExpenses.length > 0) {
+            for (let i = 0; i < childExpenses.length; i++) {
+              const isLast = i === childExpenses.length - 1;
+              await supabase
+                .from("expenses")
+                .update({
+                  ...payload,
+                  description: `${description} (${i + 2}/${initialExpense.installment_count})`,
+                  amount: isLast ? lastAmount : baseAmount,
+                  expense_date: addMonths(date, i + 1),
+                  installment_number: i + 2,
+                })
+                .eq("id", childExpenses[i].id);
+            }
+          }
+        } else {
+          const { error: updateError } = await supabase
+            .from("expenses")
+            .update(payload)
+            .eq("id", initialExpense.id);
+          if (updateError) throw updateError;
+        }
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
