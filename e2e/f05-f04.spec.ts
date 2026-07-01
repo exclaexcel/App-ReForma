@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("F-05: Parcelamento de Despesas", () => {
+test.describe("F-05: Parcelamento de Despesas @critical", () => {
+  test.use({ storageState: "e2e/.auth/user.json" });
+
   test.beforeEach(async ({ page }) => {
     // Go to expenses page
     await page.goto("/despesas");
@@ -122,7 +124,9 @@ test.describe("F-05: Parcelamento de Despesas", () => {
   });
 });
 
-test.describe("F-04: Agenda com Vínculos Financeiros", () => {
+test.describe("F-04: Agenda com Vínculos Financeiros @critical", () => {
+  test.use({ storageState: "e2e/.auth/user.json" });
+
   test.beforeEach(async ({ page }) => {
     // Go to agenda page
     await page.goto("/agenda");
@@ -239,7 +243,9 @@ test.describe("F-04: Agenda com Vínculos Financeiros", () => {
   });
 });
 
-test.describe("Dashboard", () => {
+test.describe("Dashboard @critical", () => {
+  test.use({ storageState: "e2e/.auth/user.json" });
+
   test("abrir dashboard sem erro", async ({ page }) => {
     // Go to home/dashboard
     await page.goto("/");
