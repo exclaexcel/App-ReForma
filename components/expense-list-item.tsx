@@ -29,7 +29,7 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
           <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">
             {expense.description}
           </p>
-          {expense.installment_count > 1 && (
+          {expense.installment_count && expense.installment_count > 1 && (
             <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium">
               {expense.installment_number}/{expense.installment_count}
             </span>

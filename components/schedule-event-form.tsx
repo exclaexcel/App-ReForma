@@ -55,7 +55,7 @@ export function ScheduleEventForm({
   const [supplierId, setSupplierId] = useState(initialEvent?.supplier_id ?? "");
   const [roomId, setRoomId] = useState(initialEvent?.room_id ?? "");
   const [expenseId, setExpenseId] = useState(initialEvent?.expense_id ?? "");
-  const [status, setStatus] = useState<EventStatus>(initialEvent?.status ?? "pendente");
+  const [status, setStatus] = useState<EventStatus | null>(initialEvent?.status ?? "pendente");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(initialEvent?.photo_url ?? null);
   const [loading, setLoading] = useState(false);

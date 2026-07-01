@@ -65,8 +65,8 @@ export type Expense = {
   supplier_id: string | null;
   status: "ativo" | "cancelado";
   created_at: string;
-  installment_count: number;
-  installment_number: number;
+  installment_count: number | null;
+  installment_number: number | null;
   parent_expense_id: string | null;
   categories?: Category | null;
   rooms?: Room | null;
@@ -142,7 +142,7 @@ export type ScheduleEvent = {
   expense_id: string | null;
   supplier_id: string | null;
   room_id: string | null;
-  status: EventStatus;
+  status: EventStatus | null;
   photo_url: string | null;
   expenses?: { amount: number; description: string } | null;
   suppliers?: { name: string } | null;
