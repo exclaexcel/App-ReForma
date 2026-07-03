@@ -24,6 +24,8 @@ export type Room = {
 
 export type PaymentMethod = "pix" | "cartao_credito" | "cartao_debito" | "dinheiro" | "boleto";
 
+export type InstallmentStatus = "pending" | "paid" | "overdue";
+
 export type ExpenseType = "mao_obra" | "material" | "loja" | "servico" | "outro";
 
 export const EXPENSE_TYPES: ExpenseType[] = ["mao_obra", "material", "loja", "servico", "outro"];
@@ -37,6 +39,23 @@ export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
 };
 
 export type DocStatus = "completo" | "pendente" | "sem_comprovante" | "divergencia" | "sem_regra";
+
+export type Installment = {
+  id: string;
+  expense_id: string;
+  installment_number: number;
+  total_installments: number;
+  amount: number;
+  due_date: string;
+  status: InstallmentStatus;
+  payment_method: PaymentMethod;
+  paid_at: string | null;
+  invoice_url: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ExpensePaymentStatus = "paid" | "partial" | "pending";
 
 export const DOC_STATUS_LABELS: Record<DocStatus, string> = {
   completo: "Documentado",
@@ -55,19 +74,50 @@ export type Expense = {
   description: string;
   amount: number;
   expense_date: string;
+  /** @deprecated use installments/derived payment status; kept for compat during migration */
   payment_method: PaymentMethod;
+  /** @deprecated use derived expense_payment_status */
   is_paid: boolean;
   receipt_url: string | null;
   invoice_url: string | null;
   invoice_number: string | null;
   invoice_value: number | null;
+  /** @deprecated */
   paid_at: string | null;
   supplier_id: string | null;
   status: "ativo" | "cancelado";
   created_at: string;
-  installment_count: number | null;
-  installment_number: number | null;
-  parent_expense_id: string | null;
+  categories?: Category | null;
+  rooms?: Room | null;
+  suppliers?: { id: string; name: string } | null;
+};
+
+export type ExpenseInstallmentRow = {
+  installment_id: string;
+  expense_id: string;
+  installment_number: number;
+  total_installments: number;
+  amount: number;
+  due_date: string;
+  installment_status: InstallmentStatus;
+  payment_method: PaymentMethod;
+  paid_at: string | null;
+  installment_invoice_url: string | null;
+  is_overdue: boolean;
+  project_id: string;
+  category_id: string | null;
+  room_id: string | null;
+  supplier_id: string | null;
+  expense_type: ExpenseType;
+  description: string;
+  expense_total_amount: number;
+  expense_date: string;
+  receipt_url: string | null;
+  expense_invoice_url: string | null;
+  invoice_number: string | null;
+  invoice_value: number | null;
+  expense_status: "ativo" | "cancelado";
+  created_at: string;
   categories?: Category | null;
   rooms?: Room | null;
   suppliers?: { id: string; name: string } | null;
@@ -80,6 +130,22 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   dinheiro: "Dinheiro",
   boleto: "Boleto",
 };
+
+export const INSTALLMENT_STATUS_LABELS: Record<InstallmentStatus, string> = {
+  pending: "Pendente",
+  paid: "Pago",
+  overdue: "Atrasado",
+};
+
+export function deriveExpensePaymentStatus(
+  installments: { status: InstallmentStatus }[]
+): ExpensePaymentStatus {
+  if (installments.length === 0) return "pending";
+  const paidCount = installments.filter((i) => i.status === "paid").length;
+  if (paidCount === installments.length) return "paid";
+  if (paidCount === 0) return "pending";
+  return "partial";
+}
 
 export const DEFAULT_CATEGORIES = [
   { name: "Mão de Obra", color_hex: "#C84B31" },

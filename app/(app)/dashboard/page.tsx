@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { CreateFirstProject } from "@/components/create-first-project";
 import { HardHat, Settings, AlertCircle } from "lucide-react";
-import { Expense } from "@/lib/types";
+import { ExpenseInstallmentRow } from "@/lib/types";
 import { getDocStatus } from "@/lib/utils";
 import Link from "next/link";
 
@@ -27,27 +27,57 @@ export default async function DashboardPage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  const { data: expenses, error: expensesError } = await supabase
-    .from("expenses")
+  const { data: installmentsData, error: expensesError } = await supabase
+    .from("expense_installments_view")
     .select("*, categories(id, name, color_hex)")
-    .eq("project_id", project.id)
-    .eq("status", "ativo")
-    .order("expense_date", { ascending: false })
-    .order("created_at", { ascending: false });
+    .eq("project_id", project.id);
 
   if (expensesError) throw expensesError;
 
-  const allExpenses = (expenses ?? []) as Expense[];
-  const totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
+  const allInstallments = (installmentsData ?? []) as ExpenseInstallmentRow[];
+  const totalCommitted = allInstallments.reduce((sum, i) => sum + i.amount, 0);
+  const totalPaid = allInstallments
+    .filter((i) => i.installment_status === "paid")
+    .reduce((sum, i) => sum + i.amount, 0);
   const toPay = totalCommitted - totalPaid;
-  const recentExpenses = allExpenses.slice(0, 3);
+  const recentExpenses = allInstallments.slice(0, 3);
 
-  const pendenteDocs = allExpenses.filter((e) => getDocStatus(e) === "pendente").length;
-  const semComprovanteDocs = allExpenses.filter(
-    (e) => getDocStatus(e) === "sem_comprovante"
+  const uniqueExpenses = Array.from(
+    new Map(allInstallments.map((i) => [i.expense_id, i])).values()
+  ) as ExpenseInstallmentRow[];
+  const pendenteDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "pendente"
   ).length;
-  const divergenciaDocs = allExpenses.filter((e) => getDocStatus(e) === "divergencia").length;
+  const semComprovanteDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "sem_comprovante"
+  ).length;
+  const divergenciaDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "divergencia"
+  ).length;
   const totalAlertas = pendenteDocs + semComprovanteDocs + divergenciaDocs;
 
   const daysUntilEnd = project.end_date
@@ -64,7 +94,7 @@ export default async function DashboardPage() {
     project.total_budget > 0 ? Math.min((totalCommitted / project.total_budget) * 100, 100) : 0;
   const barColor =
     pctUsado >= 100 ? "bg-red-500" : pctUsado >= 80 ? "bg-amber-500" : "bg-emerald-500";
-  const toPayCount = allExpenses.filter((e) => !e.is_paid).length;
+  const toPayCount = allInstallments.filter((i) => i.installment_status !== "paid").length;
 
   // Timeline consolidada
   const timelineText = (() => {
@@ -183,7 +213,7 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-semibold text-stone-700 dark:text-zinc-300">
             Últimas Despesas
           </h2>
-          {allExpenses.length > 3 && (
+          {allInstallments.length > 3 && (
             <Link
               href="/despesas"
               className="text-xs text-orange-700 dark:text-orange-500 hover:text-orange-600 dark:hover:text-orange-400"
@@ -209,8 +239,8 @@ export default async function DashboardPage() {
           </div>
         ) : (
           <div className="divide-y divide-stone-100 dark:divide-zinc-800">
-            {recentExpenses.map((expense) => (
-              <ExpenseListItem key={expense.id} expense={expense} />
+            {recentExpenses.map((row) => (
+              <ExpenseListItem key={row.installment_id} expense={row} />
             ))}
           </div>
         )}

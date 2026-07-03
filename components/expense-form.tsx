@@ -29,7 +29,7 @@ import {
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { addMonths, formatCurrency } from "@/lib/utils";
+import { addMonths, formatCurrency, splitAmountCentavos } from "@/lib/utils";
 
 type ExpenseFormProps = {
   projectId: string;
@@ -70,7 +70,7 @@ export function ExpenseForm({
   const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
-  const [installmentCount, setInstallmentCount] = useState(initialExpense?.installment_count ?? 1);
+  const [installmentCount, setInstallmentCount] = useState(1);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(initialSignedUrl ?? null);
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
@@ -164,112 +164,111 @@ export function ExpenseForm({
         ? Math.round(parseFloat(invoiceValue.replace(",", ".")) * 100) / 100
         : null;
 
-      const payload = {
-        category_id: categoryId || null,
-        room_id: roomId || null,
-        supplier_id: supplierId || null,
-        expense_type: expenseType,
-        description,
-        amount: parsedAmount,
-        expense_date: date,
-        payment_method: paymentMethod,
-        is_paid: isPaid,
-        paid_at: isPaid ? paidAt : null,
-        receipt_url: receiptUrl,
-        invoice_url: invoiceUrl,
-        invoice_number: invoiceNumber || null,
-        invoice_value: parsedInvoiceValue,
-      };
-
       if (isEditing && initialExpense) {
-        if (initialExpense.installment_count && initialExpense.installment_count > 1) {
-          const baseAmount =
-            Math.floor((parsedAmount / initialExpense.installment_count) * 100) / 100;
-          const lastAmount =
-            Math.round((parsedAmount - baseAmount * (initialExpense.installment_count - 1)) * 100) /
-            100;
-
-          await supabase
-            .from("expenses")
-            .update({
-              ...payload,
-              description,
-              amount: baseAmount,
-              expense_date: date,
-              installment_count: initialExpense.installment_count,
-              installment_number: 1,
-            })
-            .eq("id", initialExpense.id);
-
-          const { data: childExpenses } = await supabase
-            .from("expenses")
-            .select("id")
-            .eq("parent_expense_id", initialExpense.id);
-
-          if (childExpenses && childExpenses.length > 0) {
-            for (let i = 0; i < childExpenses.length; i++) {
-              const isLast = i === childExpenses.length - 1;
-              await supabase
-                .from("expenses")
-                .update({
-                  ...payload,
-                  description: `${description} (${i + 2}/${initialExpense.installment_count})`,
-                  amount: isLast ? lastAmount : baseAmount,
-                  expense_date: addMonths(date, i + 1),
-                  installment_number: i + 2,
-                })
-                .eq("id", childExpenses[i].id);
-            }
-          }
-        } else {
-          const { error: updateError } = await supabase
-            .from("expenses")
-            .update(payload)
-            .eq("id", initialExpense.id);
-          if (updateError) throw updateError;
-        }
+        const { error: updateError } = await supabase
+          .from("expenses")
+          .update({
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: parsedAmount,
+            expense_date: date,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+          })
+          .eq("id", initialExpense.id);
+        if (updateError) throw updateError;
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else if (installmentCount > 1) {
-        const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
-        const lastAmount =
-          Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
-
-        const rows = Array.from({ length: installmentCount }, (_, i) => ({
-          ...payload,
-          project_id: projectId,
-          description: `${description} (${i + 1}/${installmentCount})`,
-          amount: i === installmentCount - 1 ? lastAmount : baseAmount,
-          expense_date: addMonths(date, i),
-          installment_count: installmentCount,
-          installment_number: i + 1,
-        }));
-
-        const { data: first, error: firstError } = await supabase
+        const { data: expense, error: expenseError } = await supabase
           .from("expenses")
-          .insert(rows[0])
+          .insert({
+            project_id: projectId,
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: parsedAmount,
+            expense_date: date,
+            payment_method: paymentMethod,
+            is_paid: false,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+          })
           .select()
           .single();
 
-        if (firstError) throw firstError;
+        if (expenseError) throw expenseError;
 
-        if (installmentCount > 1) {
-          const { error: restError } = await supabase
-            .from("expenses")
-            .insert(rows.slice(1).map((r) => ({ ...r, parent_expense_id: first.id })));
-          if (restError) throw restError;
-        }
+        const amounts = splitAmountCentavos(parsedAmount, installmentCount);
+        const installmentRows = amounts.map((amt, i) => ({
+          expense_id: expense.id,
+          installment_number: i + 1,
+          total_installments: installmentCount,
+          amount: amt,
+          due_date: addMonths(date, i),
+          status: i === 0 && isPaid ? "paid" : "pending",
+          payment_method: paymentMethod,
+          paid_at: i === 0 && isPaid ? paidAt : null,
+          invoice_url: invoiceUrl,
+        }));
+
+        const { error: installmentsError } = await supabase
+          .from("installments")
+          .insert(installmentRows);
+
+        if (installmentsError) throw installmentsError;
 
         toast.success(`Despesa lançada em ${installmentCount} parcelas`, { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else {
-        const { error: insertError } = await supabase.from("expenses").insert({
-          project_id: projectId,
-          ...payload,
+        const { data: expense, error: expenseError } = await supabase
+          .from("expenses")
+          .insert({
+            project_id: projectId,
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: parsedAmount,
+            expense_date: date,
+            payment_method: paymentMethod,
+            is_paid: isPaid,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+          })
+          .select()
+          .single();
+
+        if (expenseError) throw expenseError;
+
+        const { error: installmentError } = await supabase.from("installments").insert({
+          expense_id: expense.id,
+          installment_number: 1,
+          total_installments: 1,
+          amount: parsedAmount,
+          due_date: date,
+          status: isPaid ? "paid" : "pending",
+          payment_method: paymentMethod,
+          paid_at: isPaid ? paidAt : null,
+          invoice_url: invoiceUrl,
         });
-        if (insertError) throw insertError;
+
+        if (installmentError) throw installmentError;
+
         toast.success("Despesa lançada com sucesso", { id: toastId });
         router.push("/despesas");
         router.refresh();
@@ -415,14 +414,13 @@ export function ExpenseForm({
               <div className="text-sm text-stone-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-3">
                 {(() => {
                   const parsedAmount = Math.round(parseFloat(amount.replace(",", ".")) * 100) / 100;
-                  const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
-                  const lastAmount =
-                    Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
+                  const amounts = splitAmountCentavos(parsedAmount, installmentCount);
+                  const allSame = amounts.every((a) => a === amounts[0]);
 
-                  if (baseAmount === lastAmount) {
-                    return `${installmentCount}x de ${formatCurrency(baseAmount)}`;
+                  if (allSame) {
+                    return `${installmentCount}x de ${formatCurrency(amounts[0])}`;
                   } else {
-                    return `${installmentCount - 1}x de ${formatCurrency(baseAmount)} + última ${formatCurrency(lastAmount)}`;
+                    return `${installmentCount - 1}x de ${formatCurrency(amounts[0])} + última ${formatCurrency(amounts[installmentCount - 1])}`;
                   }
                 })()}
               </div>

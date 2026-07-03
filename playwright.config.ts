@@ -9,27 +9,22 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: "html",
+  // globalSetup is handled via e2e/helpers/auth.ts instead
   use: {
     baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
+    storageState: "e2e/.auth/user.json",
   },
 
   projects: [
     {
-      name: "setup",
-      testMatch: "**/global.setup.ts",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
       name: "desktop",
       use: { ...devices["Desktop Chrome"] },
-      dependencies: ["setup"],
     },
     {
       name: "mobile",
       use: { ...devices["iPhone 13"] },
-      dependencies: ["setup"],
     },
   ],
 

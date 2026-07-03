@@ -6,8 +6,8 @@ import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PlusCircle, Settings, AlertCircle, HardHat as HatIcon } from "lucide-react";
 import Link from "next/link";
+import { ExpenseInstallmentRow } from "@/lib/types";
 import { formatCurrency, getDocStatus } from "@/lib/utils";
-import type { Expense } from "@/lib/types";
 
 function LandingPage() {
   return (
@@ -63,25 +63,22 @@ export default async function HomePage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  // Fetch expenses
-  const { data: allExpensesData } = await supabase
-    .from("expenses")
+  // Fetch installments via view
+  const { data: allInstallmentsData } = await supabase
+    .from("expense_installments_view")
     .select("*, categories(id, name, color_hex)")
-    .eq("project_id", project.id)
-    .eq("status", "ativo")
-    .order("expense_date", { ascending: false })
-    .order("created_at", { ascending: false });
+    .eq("project_id", project.id);
 
-  const allExpenses = (allExpensesData ?? []) as Expense[];
+  const allInstallments = (allInstallmentsData ?? []) as ExpenseInstallmentRow[];
 
-  // Calculate financials
-  const totalCommitted = allExpenses.reduce((sum: number, e: Expense) => sum + e.amount, 0);
-  const totalPaid = allExpenses.reduce(
-    (sum: number, e: Expense) => (e.is_paid ? sum + e.amount : sum),
+  // Calculate financials based on installments
+  const totalCommitted = allInstallments.reduce((sum: number, i) => sum + i.amount, 0);
+  const totalPaid = allInstallments.reduce(
+    (sum: number, i) => (i.installment_status === "paid" ? sum + i.amount : sum),
     0
   );
   const toPay = totalCommitted - totalPaid;
-  const toPayCount = allExpenses.filter((e: Expense) => !e.is_paid).length;
+  const toPayCount = allInstallments.filter((i) => i.installment_status !== "paid").length;
   const saldoDisponivel = project.total_budget - totalCommitted;
   const pctUsado = Math.min((totalCommitted / project.total_budget) * 100, 100);
   const barColor =
@@ -129,18 +126,47 @@ export default async function HomePage() {
         ? "text-amber-600 dark:text-amber-400"
         : "text-zinc-500";
 
-  // Document alerts
-  const semComprovanteDocs = allExpenses.filter(
-    (e: Expense) => getDocStatus(e) === "sem_comprovante"
+  // Document alerts (aggregate by expense, not by installment)
+  const uniqueExpenses = Array.from(
+    new Map(allInstallments.map((i) => [i.expense_id, i])).values()
+  ) as typeof allInstallments;
+  const semComprovanteDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "sem_comprovante"
   ).length;
-  const pendenteDocs = allExpenses.filter((e: Expense) => getDocStatus(e) === "pendente").length;
-  const divergenciaDocs = allExpenses.filter(
-    (e: Expense) => getDocStatus(e) === "divergencia"
+  const pendenteDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "pendente"
+  ).length;
+  const divergenciaDocs = uniqueExpenses.filter(
+    (e) =>
+      getDocStatus({
+        ...e,
+        id: e.expense_id,
+        is_paid: e.installment_status === "paid",
+        amount: e.expense_total_amount,
+        invoice_url: e.expense_invoice_url,
+        status: e.expense_status,
+      }) === "divergencia"
   ).length;
   const totalAlertas = semComprovanteDocs + pendenteDocs + divergenciaDocs;
 
-  // Recent expenses
-  const recentExpenses = allExpenses.slice(0, 3);
+  // Recent expenses (first 3 rows from allInstallments, but keep as is)
+  const recentExpenses = allInstallments.slice(0, 3);
 
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
@@ -287,8 +313,8 @@ export default async function HomePage() {
           </div>
         ) : (
           <div className="divide-y divide-stone-200 dark:divide-zinc-800 rounded-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
-            {recentExpenses.map((expense: Expense) => (
-              <ExpenseListItem key={expense.id} expense={expense} />
+            {recentExpenses.map((row) => (
+              <ExpenseListItem key={row.installment_id} expense={row} />
             ))}
           </div>
         )}

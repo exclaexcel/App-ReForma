@@ -64,3 +64,11 @@ export function addMonths(dateStr: string, months: number): string {
   date.setMonth(date.getMonth() + months);
   return date.toISOString().split("T")[0];
 }
+
+export function splitAmountCentavos(totalReais: number, n: number): number[] {
+  if (n <= 0) throw new Error("n must be >= 1");
+  const totalCents = Math.round(totalReais * 100);
+  const baseCents = Math.floor(totalCents / n);
+  const remainder = totalCents - baseCents * n;
+  return Array.from({ length: n }, (_, i) => (baseCents + (i < remainder ? 1 : 0)) / 100);
+}
