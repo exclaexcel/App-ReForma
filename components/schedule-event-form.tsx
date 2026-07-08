@@ -228,12 +228,15 @@ export function ScheduleEventForm({
                 <Label className="text-sm dark:text-zinc-300 text-stone-700">
                   Fornecedor (opcional)
                 </Label>
-                <Select value={supplierId} onValueChange={setSupplierId}>
+                <Select
+                  value={supplierId}
+                  onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}
+                >
                   <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
                     <SelectValue placeholder="Selecionar fornecedor" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem fornecedor</SelectItem>
+                    <SelectItem value="none">Sem fornecedor</SelectItem>
                     {suppliers.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
@@ -249,12 +252,12 @@ export function ScheduleEventForm({
                 <Label className="text-sm dark:text-zinc-300 text-stone-700">
                   Cômodo (opcional)
                 </Label>
-                <Select value={roomId} onValueChange={setRoomId}>
+                <Select value={roomId} onValueChange={(v) => setRoomId(v === "none" ? "" : v)}>
                   <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
                     <SelectValue placeholder="Selecionar cômodo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem cômodo</SelectItem>
+                    <SelectItem value="none">Sem cômodo</SelectItem>
                     {rooms.map((r) => (
                       <SelectItem key={r.id} value={r.id}>
                         {r.name}
@@ -270,12 +273,15 @@ export function ScheduleEventForm({
                 <Label className="text-sm dark:text-zinc-300 text-stone-700">
                   Despesa (opcional)
                 </Label>
-                <Select value={expenseId} onValueChange={setExpenseId}>
+                <Select
+                  value={expenseId}
+                  onValueChange={(v) => setExpenseId(v === "none" ? "" : v)}
+                >
                   <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
                     <SelectValue placeholder="Selecionar despesa" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Sem despesa</SelectItem>
+                    <SelectItem value="none">Sem despesa</SelectItem>
                     {expenses.map((exp) => (
                       <SelectItem key={exp.id} value={exp.id}>
                         {exp.description}

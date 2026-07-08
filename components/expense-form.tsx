@@ -431,12 +431,12 @@ export function ExpenseForm({
         {suppliers.length > 0 && (
           <div className="space-y-2">
             <Label>Fornecedor</Label>
-            <Select value={supplierId} onValueChange={setSupplierId}>
+            <Select value={supplierId} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar fornecedor (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem fornecedor</SelectItem>
+                <SelectItem value="none">Sem fornecedor</SelectItem>
                 {suppliers.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
