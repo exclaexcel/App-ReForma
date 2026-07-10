@@ -13,6 +13,7 @@ import { ExpenseInstallmentRow, ExpenseType } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, RotateCcw } from "lucide-react";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
+import { getLocalDateString } from "@/lib/utils";
 
 function exportToCsv(expenses: ExpenseInstallmentRow[]) {
   const headers = [
@@ -56,7 +57,7 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `despesas_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `despesas_${getLocalDateString()}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -293,6 +294,7 @@ export default function DespesasPage() {
                 key={expense.installment_id}
                 expense={expense}
                 href={`/despesas/${expense.expense_id}/editar`}
+                onUpdate={fetchData}
               />
             ))}
           </div>

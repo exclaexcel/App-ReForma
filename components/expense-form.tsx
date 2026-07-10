@@ -29,7 +29,23 @@ import {
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { addMonths, formatCurrency, splitAmountCentavos } from "@/lib/utils";
+import {
+  addMonths,
+  formatCurrency,
+  splitAmountCentavos,
+  getLocalDateString,
+  formatDateBR,
+  cn,
+} from "@/lib/utils";
+
+type InstallmentSummary = {
+  id: string;
+  amount: number;
+  status: string;
+  due_date: string;
+  installment_number: number;
+  paid_at: string | null;
+};
 
 type ExpenseFormProps = {
   projectId: string;
@@ -38,6 +54,7 @@ type ExpenseFormProps = {
   suppliers?: Supplier[];
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
+  initialInstallments?: InstallmentSummary[];
 };
 
 export function ExpenseForm({
@@ -47,12 +64,14 @@ export function ExpenseForm({
   suppliers = [],
   initialExpense,
   initialSignedUrl,
+  initialInstallments = [],
 }: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
+  const hasPaidInstallment = isEditing && initialInstallments.some((i) => i.status === "paid");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
   const [amount, setAmount] = useState(
     initialExpense ? String(initialExpense.amount).replace(".", ",") : ""
@@ -85,6 +104,33 @@ export function ExpenseForm({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Valores derivados para o card "Situação do pagamento"
+  const totalInstallments = initialInstallments.length;
+  const paidInstallmentsCount = initialInstallments.filter((i) => i.status === "paid").length;
+  const isAvista = totalInstallments <= 1;
+
+  const paymentStatusLabel = isAvista
+    ? isPaid
+      ? "Pago"
+      : "A pagar"
+    : paidInstallmentsCount === 0
+      ? "A pagar"
+      : paidInstallmentsCount === totalInstallments
+        ? "Pago"
+        : "Parcialmente pago";
+
+  const nextDueInstallment = !isAvista
+    ? [...initialInstallments]
+        .filter((i) => i.status !== "paid")
+        .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]
+    : undefined;
+
+  const lastPaidInstallment = !isAvista
+    ? [...initialInstallments]
+        .filter((i) => i.status === "paid" && i.paid_at)
+        .sort((a, b) => (b.paid_at as string).localeCompare(a.paid_at as string))[0]
+    : undefined;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, field: "receipt" | "invoice") {
     const file = e.target.files?.[0];
@@ -165,6 +211,8 @@ export function ExpenseForm({
         : null;
 
       if (isEditing && initialExpense) {
+        const finalAmount = hasPaidInstallment ? initialExpense.amount : parsedAmount;
+
         const { error: updateError } = await supabase
           .from("expenses")
           .update({
@@ -173,15 +221,40 @@ export function ExpenseForm({
             supplier_id: supplierId || null,
             expense_type: expenseType,
             description,
-            amount: parsedAmount,
+            amount: finalAmount,
             expense_date: date,
             receipt_url: receiptUrl,
             invoice_url: invoiceUrl,
             invoice_number: invoiceNumber || null,
             invoice_value: parsedInvoiceValue,
+            is_paid: isPaid,
           })
           .eq("id", initialExpense.id);
         if (updateError) throw updateError;
+
+        if (!hasPaidInstallment && finalAmount !== initialExpense.amount) {
+          const newAmounts = splitAmountCentavos(finalAmount, initialInstallments.length);
+          for (let i = 0; i < initialInstallments.length; i++) {
+            const { error: installmentUpdateError } = await supabase
+              .from("installments")
+              .update({ amount: newAmounts[i] })
+              .eq("id", initialInstallments[i].id);
+            if (installmentUpdateError) throw installmentUpdateError;
+          }
+        }
+
+        // Atualizar status da installment se despesa à vista (1 installment) e isPaid mudou
+        if (initialInstallments.length === 1 && isPaid !== initialExpense.is_paid) {
+          const { error: installmentStatusError } = await supabase
+            .from("installments")
+            .update({
+              status: isPaid ? "paid" : "pending",
+              paid_at: isPaid ? paidAt : null,
+            })
+            .eq("id", initialInstallments[0].id);
+          if (installmentStatusError) throw installmentStatusError;
+        }
+
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
@@ -345,8 +418,15 @@ export function ExpenseForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
-            className="text-2xl font-bold h-14"
+            disabled={hasPaidInstallment}
+            className="text-2xl font-bold h-14 disabled:opacity-60"
           />
+          {hasPaidInstallment && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Esta despesa já possui parcela paga. Para preservar o histórico financeiro, o valor
+              total não pode mais ser alterado.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -511,12 +591,77 @@ export function ExpenseForm({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
-          <Checkbox id="is_paid" checked={isPaid} onCheckedChange={(v) => setIsPaid(Boolean(v))} />
-          <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
-            Já está pago
-          </Label>
-        </div>
+        {isEditing && (
+          <div className="rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 space-y-1.5">
+            <p className="text-sm font-semibold dark:text-zinc-100 text-stone-900">
+              Situação do pagamento
+            </p>
+            <p className="text-base font-semibold dark:text-zinc-100 text-stone-900">
+              {PAYMENT_METHOD_LABELS[paymentMethod] || "Forma não informada"}
+            </p>
+            <p className="text-sm text-stone-600 dark:text-zinc-400">
+              {isAvista ? "À vista" : `Parcelado em ${totalInstallments}x`}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {!isAvista && (
+                <span className="text-sm text-stone-600 dark:text-zinc-400">
+                  {paidInstallmentsCount} de {totalInstallments} parcelas pagas
+                </span>
+              )}
+              <span
+                className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                  paymentStatusLabel === "Pago" &&
+                    "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                  paymentStatusLabel === "A pagar" &&
+                    "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+                  paymentStatusLabel === "Parcialmente pago" &&
+                    "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                )}
+              >
+                {paymentStatusLabel}
+              </span>
+            </div>
+            {lastPaidInstallment && lastPaidInstallment.paid_at && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">
+                Último pagamento:{" "}
+                {formatDateBR(getLocalDateString(new Date(lastPaidInstallment.paid_at)))}
+              </p>
+            )}
+            {nextDueInstallment && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">
+                Próximo vencimento: {formatDateBR(nextDueInstallment.due_date)}
+              </p>
+            )}
+            {!isAvista && !nextDueInstallment && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">Todas as parcelas pagas</p>
+            )}
+          </div>
+        )}
+
+        {(!isEditing || initialInstallments.length === 1) && (
+          <div>
+            <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
+              <Checkbox
+                id="is_paid"
+                checked={isPaid}
+                onCheckedChange={(v) => setIsPaid(Boolean(v))}
+              />
+              <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
+                Já está pago
+              </Label>
+            </div>
+          </div>
+        )}
+
+        {isEditing && initialInstallments.length > 1 && (
+          <div className="rounded-xl border border-amber-200/60 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              Baixa individual de parcelas em desenvolvimento. Por enquanto, o status das parcelas é
+              apenas informativo.
+            </p>
+          </div>
+        )}
 
         {isPaid && (
           <div className="space-y-2">
