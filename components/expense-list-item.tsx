@@ -7,6 +7,7 @@ import Link from "next/link";
 type ExpenseListItemProps = {
   expense: ExpenseInstallmentRow;
   href?: string;
+  onUpdate?: () => Promise<void>;
 };
 
 export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {

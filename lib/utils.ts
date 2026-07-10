@@ -72,3 +72,20 @@ export function splitAmountCentavos(totalReais: number, n: number): number[] {
   const remainder = totalCents - baseCents * n;
   return Array.from({ length: n }, (_, i) => (baseCents + (i < remainder ? 1 : 0)) / 100);
 }
+
+export function getLocalDateString(date?: Date): string {
+  const d = date || new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+export function formatDateBR(dateStr: string): string {
+  const date = new Date(dateStr + "T00:00:00");
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(date);
+}
