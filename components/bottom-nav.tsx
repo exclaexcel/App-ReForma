@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, ClipboardList, Calendar, Users, Plus } from "lucide-react";
+import { Home, ClipboardList, Calendar, Users, Plus, BarChart3, Grid } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,6 +10,8 @@ const navItems = [
   { href: "/despesas", icon: ClipboardList, label: "Despesas" },
   { href: "/novo", icon: null, label: "Novo" },
   { href: "/agenda", icon: Calendar, label: "Agenda" },
+  { href: "/graficos", icon: BarChart3, label: "Gráficos" },
+  { href: "/comodos", icon: Grid, label: "Cômodos" },
   { href: "/fornecedores", icon: Users, label: "Fornecedores" },
 ];
 
