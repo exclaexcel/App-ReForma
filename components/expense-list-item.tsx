@@ -1,17 +1,24 @@
-import { Expense, DOC_STATUS_LABELS } from "@/lib/types";
+import { ExpenseInstallmentRow, DOC_STATUS_LABELS } from "@/lib/types";
 import { formatCurrency, formatDate, getDocStatus } from "@/lib/utils";
 import { Hammer, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 type ExpenseListItemProps = {
-  expense: Expense;
+  expense: ExpenseInstallmentRow;
   href?: string;
 };
 
 export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
   const categoryColor = expense.categories?.color_hex ?? "#C84B31";
-  const docStatus = getDocStatus(expense);
+  const docStatus = getDocStatus({
+    ...expense,
+    id: expense.expense_id,
+    is_paid: expense.installment_status === "paid",
+    amount: expense.expense_total_amount,
+    invoice_url: expense.expense_invoice_url,
+    status: expense.expense_status,
+  });
   const sharedClass =
     "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 border-stone-200/40 dark:hover:bg-zinc-800/50 light:hover:bg-stone-100/30 dark:active:bg-zinc-800 light:active:bg-stone-100";
 
@@ -29,9 +36,9 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
           <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">
             {expense.description}
           </p>
-          {expense.installment_count && expense.installment_count > 1 && (
+          {expense.total_installments && expense.total_installments > 1 && (
             <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium">
-              {expense.installment_number}/{expense.installment_count}
+              {expense.installment_number}/{expense.total_installments}
             </span>
           )}
         </div>
@@ -50,22 +57,30 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
         <div className="flex flex-col items-end gap-1">
           <div className="flex items-center gap-1">
             <span className="text-xs dark:text-zinc-500 text-stone-500">
-              {formatDate(expense.expense_date)}
+              {formatDate(expense.due_date)}
             </span>
             <span
               className={cn(
                 "text-xs font-medium flex items-center gap-0.5",
-                expense.is_paid
+                expense.installment_status === "paid"
                   ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-orange-600 dark:text-orange-400"
+                  : expense.is_overdue
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-orange-600 dark:text-orange-400"
               )}
             >
-              {expense.is_paid ? (
+              {expense.installment_status === "paid" ? (
                 <CheckCircle2 className="h-3 w-3" />
+              ) : expense.is_overdue ? (
+                <AlertCircle className="h-3 w-3" />
               ) : (
                 <Clock className="h-3 w-3" />
               )}
-              {expense.is_paid ? "Pago" : "A Pagar"}
+              {expense.installment_status === "paid"
+                ? "Pago"
+                : expense.is_overdue
+                  ? "Atrasado"
+                  : "A Pagar"}
             </span>
           </div>
           {docStatus !== "sem_regra" && (
@@ -91,9 +106,13 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
     </>
   );
 
-  if (href) {
+  const finalHref = href
+    ? href.replace(/\/despesas\/[^/]+/, `/despesas/${expense.expense_id}`)
+    : undefined;
+
+  if (finalHref) {
     return (
-      <Link href={href} className={sharedClass}>
+      <Link href={finalHref} className={sharedClass}>
         {content}
       </Link>
     );

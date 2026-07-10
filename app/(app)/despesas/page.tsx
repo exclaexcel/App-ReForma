@@ -9,21 +9,24 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
-import { Expense, ExpenseType } from "@/lib/types";
+import { ExpenseInstallmentRow, ExpenseType } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, RotateCcw } from "lucide-react";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
+import { getLocalDateString } from "@/lib/utils";
 
-function exportToCsv(expenses: Expense[]) {
+function exportToCsv(expenses: ExpenseInstallmentRow[]) {
   const headers = [
     "Data",
     "Descrição",
+    "Parcela",
     "Categoria",
     "Cômodo",
     "Fornecedor",
     "Valor (R$)",
     "Forma de Pagamento",
     "Status",
+    "Data de Vencimento",
     "Comprovante",
     "Tipo de Despesa",
     "Nº da Nota",
@@ -32,12 +35,14 @@ function exportToCsv(expenses: Expense[]) {
   const rows = expenses.map((e) => [
     e.expense_date,
     e.description,
+    `${e.installment_number}/${e.total_installments}`,
     e.categories?.name ?? "",
     e.rooms?.name ?? "",
     e.suppliers?.name ?? "",
     e.amount.toFixed(2).replace(".", ","),
     PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
-    e.is_paid ? "Pago" : "A Pagar",
+    e.installment_status === "paid" ? "Pago" : e.is_overdue ? "Atrasado" : "A Pagar",
+    e.due_date,
     e.receipt_url ?? "",
     e.expense_type,
     e.invoice_number ?? "",
@@ -52,13 +57,13 @@ function exportToCsv(expenses: Expense[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `despesas_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.download = `despesas_${getLocalDateString()}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
 
 export default function DespesasPage() {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expenses, setExpenses] = useState<ExpenseInstallmentRow[]>([]);
   const [search, setSearch] = useState("");
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<{
@@ -94,16 +99,15 @@ export default function DespesasPage() {
       if (!project) return;
 
       const { data: expData, error: expError } = await supabase
-        .from("expenses")
+        .from("expense_installments_view")
         .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
         .eq("project_id", project.id)
-        .eq("status", "ativo")
-        .order("expense_date", { ascending: false })
+        .order("due_date", { ascending: false })
         .order("created_at", { ascending: false });
 
       if (expError) throw expError;
 
-      setExpenses((expData ?? []) as Expense[]);
+      setExpenses((expData ?? []) as ExpenseInstallmentRow[]);
       setError(null);
       setLoading(false);
     } catch (error) {
@@ -141,8 +145,9 @@ export default function DespesasPage() {
     const matchAdvancedPaid =
       advancedFilters.isPaid === undefined ||
       advancedFilters.isPaid === null ||
-      e.is_paid === advancedFilters.isPaid;
-    const matchSemComprovante = !advancedFilters.semComprovante || (e.is_paid && !e.receipt_url);
+      (e.installment_status === "paid") === advancedFilters.isPaid;
+    const matchSemComprovante =
+      !advancedFilters.semComprovante || (e.installment_status === "paid" && !e.receipt_url);
 
     return (
       matchSearch &&
@@ -209,14 +214,19 @@ export default function DespesasPage() {
       {/* Mini-sumário */}
       <div className="space-y-1 text-sm text-stone-600 dark:text-zinc-400">
         <p>
-          {filtered.length} despesa{filtered.length !== 1 ? "s" : ""} ·{" "}
+          {filtered.length} parcela{filtered.length !== 1 ? "s" : ""} ·{" "}
           {formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}
         </p>
-        {filtered.filter((e) => !e.is_paid).length > 0 && (
+        {filtered.filter((e) => e.installment_status !== "paid").length > 0 && (
           <p>
-            ⏱ {formatCurrency(filtered.filter((e) => !e.is_paid).reduce((s, e) => s + e.amount, 0))}{" "}
-            a pagar · {filtered.filter((e) => !e.is_paid).length} despesa
-            {filtered.filter((e) => !e.is_paid).length !== 1 ? "s" : ""}
+            ⏱{" "}
+            {formatCurrency(
+              filtered
+                .filter((e) => e.installment_status !== "paid")
+                .reduce((s, e) => s + e.amount, 0)
+            )}{" "}
+            a pagar · {filtered.filter((e) => e.installment_status !== "paid").length} parcela
+            {filtered.filter((e) => e.installment_status !== "paid").length !== 1 ? "s" : ""}
           </p>
         )}
       </div>
@@ -224,17 +234,19 @@ export default function DespesasPage() {
       {!loading && filtered.length > 0 && (
         <div className="flex justify-between items-center py-2 border-b border-zinc-800 text-xs text-zinc-500">
           <span>
-            {filtered.length} {filtered.length === 1 ? "despesa" : "despesas"}
+            {filtered.length} {filtered.length === 1 ? "parcela" : "parcelas"}
           </span>
           <div className="flex gap-4">
             <span className="tabular-nums font-mono">
               {formatCurrency(filtered.reduce((s, e) => s + e.amount, 0))}
             </span>
-            {filtered.filter((e) => !e.is_paid).length > 0 && (
+            {filtered.filter((e) => e.installment_status !== "paid").length > 0 && (
               <span className="text-orange-400 tabular-nums font-mono">
                 ⏱{" "}
                 {formatCurrency(
-                  filtered.filter((e) => !e.is_paid).reduce((s, e) => s + e.amount, 0)
+                  filtered
+                    .filter((e) => e.installment_status !== "paid")
+                    .reduce((s, e) => s + e.amount, 0)
                 )}{" "}
                 a pagar
               </span>
@@ -279,9 +291,10 @@ export default function DespesasPage() {
           <div className="divide-y divide-zinc-800">
             {paginated.map((expense) => (
               <ExpenseListItem
-                key={expense.id}
+                key={expense.installment_id}
                 expense={expense}
-                href={`/despesas/${expense.id}/editar`}
+                href={`/despesas/${expense.expense_id}/editar`}
+                onUpdate={fetchData}
               />
             ))}
           </div>

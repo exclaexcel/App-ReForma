@@ -46,6 +46,14 @@ export default async function EditExpensePage({ params }: { params: { id: string
   if (roomError) throw roomError;
   if (supError) throw supError;
 
+  const { data: installments, error: installmentsError } = await supabase
+    .from("installments")
+    .select("id, amount, status, due_date, installment_number, paid_at")
+    .eq("expense_id", expense.id)
+    .order("installment_number", { ascending: true });
+
+  if (installmentsError) throw installmentsError;
+
   let initialSignedUrl: string | null = null;
   if (expense.receipt_url) {
     const path = getStoragePath(expense.receipt_url);
@@ -63,6 +71,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
       suppliers={suppliers ?? []}
       initialExpense={expense}
       initialSignedUrl={initialSignedUrl}
+      initialInstallments={installments ?? []}
     />
   );
 }

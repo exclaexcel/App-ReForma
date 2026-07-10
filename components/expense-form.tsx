@@ -29,7 +29,23 @@ import {
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { addMonths, formatCurrency } from "@/lib/utils";
+import {
+  addMonths,
+  formatCurrency,
+  splitAmountCentavos,
+  getLocalDateString,
+  formatDateBR,
+  cn,
+} from "@/lib/utils";
+
+type InstallmentSummary = {
+  id: string;
+  amount: number;
+  status: string;
+  due_date: string;
+  installment_number: number;
+  paid_at: string | null;
+};
 
 type ExpenseFormProps = {
   projectId: string;
@@ -38,6 +54,7 @@ type ExpenseFormProps = {
   suppliers?: Supplier[];
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
+  initialInstallments?: InstallmentSummary[];
 };
 
 export function ExpenseForm({
@@ -47,12 +64,14 @@ export function ExpenseForm({
   suppliers = [],
   initialExpense,
   initialSignedUrl,
+  initialInstallments = [],
 }: ExpenseFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditing = Boolean(initialExpense);
+  const hasPaidInstallment = isEditing && initialInstallments.some((i) => i.status === "paid");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = getLocalDateString();
 
   const [amount, setAmount] = useState(
     initialExpense ? String(initialExpense.amount).replace(".", ",") : ""
@@ -70,7 +89,7 @@ export function ExpenseForm({
   const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
-  const [installmentCount, setInstallmentCount] = useState(initialExpense?.installment_count ?? 1);
+  const [installmentCount, setInstallmentCount] = useState(1);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(initialSignedUrl ?? null);
   const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
@@ -85,6 +104,33 @@ export function ExpenseForm({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  // Valores derivados para o card "Situação do pagamento"
+  const totalInstallments = initialInstallments.length;
+  const paidInstallmentsCount = initialInstallments.filter((i) => i.status === "paid").length;
+  const isAvista = totalInstallments <= 1;
+
+  const paymentStatusLabel = isAvista
+    ? isPaid
+      ? "Pago"
+      : "A pagar"
+    : paidInstallmentsCount === 0
+      ? "A pagar"
+      : paidInstallmentsCount === totalInstallments
+        ? "Pago"
+        : "Parcialmente pago";
+
+  const nextDueInstallment = !isAvista
+    ? [...initialInstallments]
+        .filter((i) => i.status !== "paid")
+        .sort((a, b) => a.due_date.localeCompare(b.due_date))[0]
+    : undefined;
+
+  const lastPaidInstallment = !isAvista
+    ? [...initialInstallments]
+        .filter((i) => i.status === "paid" && i.paid_at)
+        .sort((a, b) => (b.paid_at as string).localeCompare(a.paid_at as string))[0]
+    : undefined;
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>, field: "receipt" | "invoice") {
     const file = e.target.files?.[0];
@@ -164,112 +210,138 @@ export function ExpenseForm({
         ? Math.round(parseFloat(invoiceValue.replace(",", ".")) * 100) / 100
         : null;
 
-      const payload = {
-        category_id: categoryId || null,
-        room_id: roomId || null,
-        supplier_id: supplierId || null,
-        expense_type: expenseType,
-        description,
-        amount: parsedAmount,
-        expense_date: date,
-        payment_method: paymentMethod,
-        is_paid: isPaid,
-        paid_at: isPaid ? paidAt : null,
-        receipt_url: receiptUrl,
-        invoice_url: invoiceUrl,
-        invoice_number: invoiceNumber || null,
-        invoice_value: parsedInvoiceValue,
-      };
-
       if (isEditing && initialExpense) {
-        if (initialExpense.installment_count && initialExpense.installment_count > 1) {
-          const baseAmount =
-            Math.floor((parsedAmount / initialExpense.installment_count) * 100) / 100;
-          const lastAmount =
-            Math.round((parsedAmount - baseAmount * (initialExpense.installment_count - 1)) * 100) /
-            100;
+        const finalAmount = hasPaidInstallment ? initialExpense.amount : parsedAmount;
 
-          await supabase
-            .from("expenses")
-            .update({
-              ...payload,
-              description,
-              amount: baseAmount,
-              expense_date: date,
-              installment_count: initialExpense.installment_count,
-              installment_number: 1,
-            })
-            .eq("id", initialExpense.id);
+        const { error: updateError } = await supabase
+          .from("expenses")
+          .update({
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: finalAmount,
+            expense_date: date,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+            is_paid: isPaid,
+          })
+          .eq("id", initialExpense.id);
+        if (updateError) throw updateError;
 
-          const { data: childExpenses } = await supabase
-            .from("expenses")
-            .select("id")
-            .eq("parent_expense_id", initialExpense.id);
-
-          if (childExpenses && childExpenses.length > 0) {
-            for (let i = 0; i < childExpenses.length; i++) {
-              const isLast = i === childExpenses.length - 1;
-              await supabase
-                .from("expenses")
-                .update({
-                  ...payload,
-                  description: `${description} (${i + 2}/${initialExpense.installment_count})`,
-                  amount: isLast ? lastAmount : baseAmount,
-                  expense_date: addMonths(date, i + 1),
-                  installment_number: i + 2,
-                })
-                .eq("id", childExpenses[i].id);
-            }
+        if (!hasPaidInstallment && finalAmount !== initialExpense.amount) {
+          const newAmounts = splitAmountCentavos(finalAmount, initialInstallments.length);
+          for (let i = 0; i < initialInstallments.length; i++) {
+            const { error: installmentUpdateError } = await supabase
+              .from("installments")
+              .update({ amount: newAmounts[i] })
+              .eq("id", initialInstallments[i].id);
+            if (installmentUpdateError) throw installmentUpdateError;
           }
-        } else {
-          const { error: updateError } = await supabase
-            .from("expenses")
-            .update(payload)
-            .eq("id", initialExpense.id);
-          if (updateError) throw updateError;
         }
+
+        // Atualizar status da installment se despesa à vista (1 installment) e isPaid mudou
+        if (initialInstallments.length === 1 && isPaid !== initialExpense.is_paid) {
+          const { error: installmentStatusError } = await supabase
+            .from("installments")
+            .update({
+              status: isPaid ? "paid" : "pending",
+              paid_at: isPaid ? paidAt : null,
+            })
+            .eq("id", initialInstallments[0].id);
+          if (installmentStatusError) throw installmentStatusError;
+        }
+
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else if (installmentCount > 1) {
-        const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
-        const lastAmount =
-          Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
-
-        const rows = Array.from({ length: installmentCount }, (_, i) => ({
-          ...payload,
-          project_id: projectId,
-          description: `${description} (${i + 1}/${installmentCount})`,
-          amount: i === installmentCount - 1 ? lastAmount : baseAmount,
-          expense_date: addMonths(date, i),
-          installment_count: installmentCount,
-          installment_number: i + 1,
-        }));
-
-        const { data: first, error: firstError } = await supabase
+        const { data: expense, error: expenseError } = await supabase
           .from("expenses")
-          .insert(rows[0])
+          .insert({
+            project_id: projectId,
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: parsedAmount,
+            expense_date: date,
+            payment_method: paymentMethod,
+            is_paid: false,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+          })
           .select()
           .single();
 
-        if (firstError) throw firstError;
+        if (expenseError) throw expenseError;
 
-        if (installmentCount > 1) {
-          const { error: restError } = await supabase
-            .from("expenses")
-            .insert(rows.slice(1).map((r) => ({ ...r, parent_expense_id: first.id })));
-          if (restError) throw restError;
-        }
+        const amounts = splitAmountCentavos(parsedAmount, installmentCount);
+        const installmentRows = amounts.map((amt, i) => ({
+          expense_id: expense.id,
+          installment_number: i + 1,
+          total_installments: installmentCount,
+          amount: amt,
+          due_date: addMonths(date, i),
+          status: i === 0 && isPaid ? "paid" : "pending",
+          payment_method: paymentMethod,
+          paid_at: i === 0 && isPaid ? paidAt : null,
+          invoice_url: invoiceUrl,
+        }));
+
+        const { error: installmentsError } = await supabase
+          .from("installments")
+          .insert(installmentRows);
+
+        if (installmentsError) throw installmentsError;
 
         toast.success(`Despesa lançada em ${installmentCount} parcelas`, { id: toastId });
         router.push("/despesas");
         router.refresh();
       } else {
-        const { error: insertError } = await supabase.from("expenses").insert({
-          project_id: projectId,
-          ...payload,
+        const { data: expense, error: expenseError } = await supabase
+          .from("expenses")
+          .insert({
+            project_id: projectId,
+            category_id: categoryId || null,
+            room_id: roomId || null,
+            supplier_id: supplierId || null,
+            expense_type: expenseType,
+            description,
+            amount: parsedAmount,
+            expense_date: date,
+            payment_method: paymentMethod,
+            is_paid: isPaid,
+            receipt_url: receiptUrl,
+            invoice_url: invoiceUrl,
+            invoice_number: invoiceNumber || null,
+            invoice_value: parsedInvoiceValue,
+          })
+          .select()
+          .single();
+
+        if (expenseError) throw expenseError;
+
+        const { error: installmentError } = await supabase.from("installments").insert({
+          expense_id: expense.id,
+          installment_number: 1,
+          total_installments: 1,
+          amount: parsedAmount,
+          due_date: date,
+          status: isPaid ? "paid" : "pending",
+          payment_method: paymentMethod,
+          paid_at: isPaid ? paidAt : null,
+          invoice_url: invoiceUrl,
         });
-        if (insertError) throw insertError;
+
+        if (installmentError) throw installmentError;
+
         toast.success("Despesa lançada com sucesso", { id: toastId });
         router.push("/despesas");
         router.refresh();
@@ -346,8 +418,15 @@ export function ExpenseForm({
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             required
-            className="text-2xl font-bold h-14"
+            disabled={hasPaidInstallment}
+            className="text-2xl font-bold h-14 disabled:opacity-60"
           />
+          {hasPaidInstallment && (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              Esta despesa já possui parcela paga. Para preservar o histórico financeiro, o valor
+              total não pode mais ser alterado.
+            </p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -415,14 +494,13 @@ export function ExpenseForm({
               <div className="text-sm text-stone-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-3">
                 {(() => {
                   const parsedAmount = Math.round(parseFloat(amount.replace(",", ".")) * 100) / 100;
-                  const baseAmount = Math.floor((parsedAmount / installmentCount) * 100) / 100;
-                  const lastAmount =
-                    Math.round((parsedAmount - baseAmount * (installmentCount - 1)) * 100) / 100;
+                  const amounts = splitAmountCentavos(parsedAmount, installmentCount);
+                  const allSame = amounts.every((a) => a === amounts[0]);
 
-                  if (baseAmount === lastAmount) {
-                    return `${installmentCount}x de ${formatCurrency(baseAmount)}`;
+                  if (allSame) {
+                    return `${installmentCount}x de ${formatCurrency(amounts[0])}`;
                   } else {
-                    return `${installmentCount - 1}x de ${formatCurrency(baseAmount)} + última ${formatCurrency(lastAmount)}`;
+                    return `${installmentCount - 1}x de ${formatCurrency(amounts[0])} + última ${formatCurrency(amounts[installmentCount - 1])}`;
                   }
                 })()}
               </div>
@@ -433,12 +511,12 @@ export function ExpenseForm({
         {suppliers.length > 0 && (
           <div className="space-y-2">
             <Label>Fornecedor</Label>
-            <Select value={supplierId} onValueChange={setSupplierId}>
+            <Select value={supplierId} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecionar fornecedor (opcional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Sem fornecedor</SelectItem>
+                <SelectItem value="none">Sem fornecedor</SelectItem>
                 {suppliers.map((s) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.name}
@@ -513,12 +591,77 @@ export function ExpenseForm({
           </div>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
-          <Checkbox id="is_paid" checked={isPaid} onCheckedChange={(v) => setIsPaid(Boolean(v))} />
-          <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
-            Já está pago
-          </Label>
-        </div>
+        {isEditing && (
+          <div className="rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 space-y-1.5">
+            <p className="text-sm font-semibold dark:text-zinc-100 text-stone-900">
+              Situação do pagamento
+            </p>
+            <p className="text-base font-semibold dark:text-zinc-100 text-stone-900">
+              {PAYMENT_METHOD_LABELS[paymentMethod] || "Forma não informada"}
+            </p>
+            <p className="text-sm text-stone-600 dark:text-zinc-400">
+              {isAvista ? "À vista" : `Parcelado em ${totalInstallments}x`}
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {!isAvista && (
+                <span className="text-sm text-stone-600 dark:text-zinc-400">
+                  {paidInstallmentsCount} de {totalInstallments} parcelas pagas
+                </span>
+              )}
+              <span
+                className={cn(
+                  "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium",
+                  paymentStatusLabel === "Pago" &&
+                    "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                  paymentStatusLabel === "A pagar" &&
+                    "bg-amber-500/20 text-amber-600 dark:text-amber-400",
+                  paymentStatusLabel === "Parcialmente pago" &&
+                    "bg-blue-500/20 text-blue-600 dark:text-blue-400"
+                )}
+              >
+                {paymentStatusLabel}
+              </span>
+            </div>
+            {lastPaidInstallment && lastPaidInstallment.paid_at && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">
+                Último pagamento:{" "}
+                {formatDateBR(getLocalDateString(new Date(lastPaidInstallment.paid_at)))}
+              </p>
+            )}
+            {nextDueInstallment && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">
+                Próximo vencimento: {formatDateBR(nextDueInstallment.due_date)}
+              </p>
+            )}
+            {!isAvista && !nextDueInstallment && (
+              <p className="text-xs text-stone-500 dark:text-zinc-500">Todas as parcelas pagas</p>
+            )}
+          </div>
+        )}
+
+        {(!isEditing || initialInstallments.length === 1) && (
+          <div>
+            <div className="flex items-center gap-3 rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 shadow-sm transition-all duration-200">
+              <Checkbox
+                id="is_paid"
+                checked={isPaid}
+                onCheckedChange={(v) => setIsPaid(Boolean(v))}
+              />
+              <Label htmlFor="is_paid" className="cursor-pointer dark:text-zinc-100 text-stone-900">
+                Já está pago
+              </Label>
+            </div>
+          </div>
+        )}
+
+        {isEditing && initialInstallments.length > 1 && (
+          <div className="rounded-xl border border-amber-200/60 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+            <p className="text-sm text-amber-800 dark:text-amber-200">
+              Baixa individual de parcelas em desenvolvimento. Por enquanto, o status das parcelas é
+              apenas informativo.
+            </p>
+          </div>
+        )}
 
         {isPaid && (
           <div className="space-y-2">
