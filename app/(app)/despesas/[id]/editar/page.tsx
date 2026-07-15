@@ -48,7 +48,9 @@ export default async function EditExpensePage({ params }: { params: { id: string
 
   const { data: installments, error: installmentsError } = await supabase
     .from("installments")
-    .select("id, amount, status, due_date, installment_number, paid_at")
+    .select(
+      "id, amount, status, due_date, installment_number, paid_at, payment_method, total_installments"
+    )
     .eq("expense_id", expense.id)
     .order("installment_number", { ascending: true });
 

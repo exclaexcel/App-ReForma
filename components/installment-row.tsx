@@ -4,14 +4,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
-  Installment,
+  InstallmentStatus,
   INSTALLMENT_STATUS_LABELS,
   PAYMENT_METHOD_LABELS,
   PaymentMethod,
 } from "@/lib/types";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate, formatDateBR, getLocalDateString } from "@/lib/utils";
 import { CheckCircle2, Clock, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -21,8 +22,19 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
+type InstallmentRowInfo = {
+  id: string;
+  installment_number: number;
+  total_installments: number;
+  amount: number;
+  due_date: string;
+  status: InstallmentStatus;
+  payment_method: PaymentMethod;
+  paid_at: string | null;
+};
+
 type InstallmentRowProps = {
-  installment: Installment;
+  installment: InstallmentRowInfo;
   onUpdate?: () => void;
 };
 
@@ -30,10 +42,13 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [status, setStatus] = useState(installment.status);
   const [paymentMethod, setPaymentMethod] = useState(installment.payment_method);
+  const [paidAtInput, setPaidAtInput] = useState(
+    installment.paid_at ? getLocalDateString(new Date(installment.paid_at)) : getLocalDateString()
+  );
 
   const isOverdue = installment.status === "pending" && new Date(installment.due_date) < new Date();
 
-  async function handleStatusChange(newStatus: typeof status) {
+  async function handleStatusChange(newStatus: typeof status, paidDate?: string) {
     setIsUpdating(true);
     try {
       const supabase = createClient();
@@ -41,7 +56,7 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
         .from("installments")
         .update({
           status: newStatus,
-          paid_at: newStatus === "paid" ? new Date().toISOString() : null,
+          paid_at: newStatus === "paid" ? paidDate : null,
         })
         .eq("id", installment.id);
 
@@ -137,7 +152,7 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
         <Select
           value={paymentMethod}
           onValueChange={handlePaymentMethodChange}
-          disabled={isUpdating}
+          disabled={isUpdating || status === "paid"}
         >
           <SelectTrigger className="h-9 text-sm">
             <SelectValue />
@@ -154,35 +169,37 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
         </Select>
       </div>
 
-      {/* Status toggle buttons */}
-      <div className="flex gap-2 pt-2">
-        <Button
-          size="sm"
-          variant={status === "paid" ? "default" : "outline"}
-          onClick={() => handleStatusChange("paid")}
-          disabled={isUpdating}
-          className="flex-1"
-        >
-          {isUpdating && status === "paid" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Marcar Pago"
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant={status !== "paid" ? "default" : "outline"}
-          onClick={() => handleStatusChange("pending")}
-          disabled={isUpdating}
-          className="flex-1"
-        >
-          {isUpdating && status !== "paid" ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Marcar Pendente"
-          )}
-        </Button>
-      </div>
+      {/* Data do pagamento */}
+      {status === "paid" ? (
+        <p className="text-xs dark:text-zinc-400 text-stone-600">
+          Pago em {formatDateBR(paidAtInput)}
+        </p>
+      ) : (
+        <div className="space-y-1">
+          <p className="text-xs font-medium dark:text-zinc-400 text-stone-600">Data do Pagamento</p>
+          <Input
+            type="date"
+            value={paidAtInput}
+            onChange={(e) => setPaidAtInput(e.target.value)}
+            disabled={isUpdating}
+            className="h-9 text-sm"
+          />
+        </div>
+      )}
+
+      {/* Status toggle button */}
+      {status !== "paid" && (
+        <div className="flex gap-2 pt-2">
+          <Button
+            size="sm"
+            onClick={() => handleStatusChange("paid", paidAtInput)}
+            disabled={isUpdating}
+            className="flex-1"
+          >
+            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Marcar Pago"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

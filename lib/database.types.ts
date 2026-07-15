@@ -1,4 +1,4 @@
-﻿export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -166,6 +166,59 @@ export type Database = {
             columns: ["supplier_id"];
             isOneToOne: false;
             referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      installments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          due_date: string;
+          expense_id: string;
+          id: string;
+          installment_number: number;
+          invoice_url: string | null;
+          paid_at: string | null;
+          payment_method: string;
+          status: string;
+          total_installments: number;
+          updated_at: string;
+        };
+        Insert: {
+          amount: number;
+          created_at?: string;
+          due_date: string;
+          expense_id: string;
+          id?: string;
+          installment_number: number;
+          invoice_url?: string | null;
+          paid_at?: string | null;
+          payment_method: string;
+          status?: string;
+          total_installments: number;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          due_date?: string;
+          expense_id?: string;
+          id?: string;
+          installment_number?: number;
+          invoice_url?: string | null;
+          paid_at?: string | null;
+          payment_method?: string;
+          status?: string;
+          total_installments?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "installments_expense_id_fkey";
+            columns: ["expense_id"];
+            isOneToOne: false;
+            referencedRelation: "expenses";
             referencedColumns: ["id"];
           },
         ];
@@ -403,10 +456,96 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      expense_installments_view: {
+        Row: {
+          amount: number | null;
+          category_id: string | null;
+          created_at: string | null;
+          description: string | null;
+          due_date: string | null;
+          expense_date: string | null;
+          expense_id: string | null;
+          expense_invoice_url: string | null;
+          expense_status: string | null;
+          expense_total_amount: number | null;
+          expense_type: string | null;
+          installment_id: string | null;
+          installment_invoice_url: string | null;
+          installment_number: number | null;
+          installment_status: string | null;
+          invoice_number: string | null;
+          invoice_value: number | null;
+          is_overdue: boolean | null;
+          paid_at: string | null;
+          payment_method: string | null;
+          project_id: string | null;
+          receipt_url: string | null;
+          room_id: string | null;
+          supplier_id: string | null;
+          total_installments: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "expenses_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_supplier_id_fkey";
+            columns: ["supplier_id"];
+            isOneToOne: false;
+            referencedRelation: "suppliers";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "installments_expense_id_fkey";
+            columns: ["expense_id"];
+            isOneToOne: false;
+            referencedRelation: "expenses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Functions: {
-      [_ in never]: never;
+      edit_expense_with_installments: {
+        Args: {
+          p_amount: number;
+          p_category_id: string;
+          p_description: string;
+          p_expense_date: string;
+          p_expense_id: string;
+          p_expense_type: string;
+          p_installment_amounts?: Json;
+          p_invoice_number: string;
+          p_invoice_url: string;
+          p_invoice_value: number;
+          p_is_paid: boolean;
+          p_receipt_url: string;
+          p_room_id: string;
+          p_single_installment_id?: string;
+          p_single_installment_paid_at?: string;
+          p_single_installment_status?: string;
+          p_supplier_id: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

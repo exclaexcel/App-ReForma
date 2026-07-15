@@ -29,6 +29,7 @@ import {
 import { Camera, Loader2, ArrowLeft, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { InstallmentRow } from "@/components/installment-row";
 import {
   addMonths,
   formatCurrency,
@@ -41,9 +42,11 @@ import {
 type InstallmentSummary = {
   id: string;
   amount: number;
-  status: string;
+  status: "pending" | "paid" | "overdue";
   due_date: string;
   installment_number: number;
+  total_installments: number;
+  payment_method: PaymentMethod;
   paid_at: string | null;
 };
 
@@ -213,47 +216,43 @@ export function ExpenseForm({
       if (isEditing && initialExpense) {
         const finalAmount = hasPaidInstallment ? initialExpense.amount : parsedAmount;
 
-        const { error: updateError } = await supabase
-          .from("expenses")
-          .update({
-            category_id: categoryId || null,
-            room_id: roomId || null,
-            supplier_id: supplierId || null,
-            expense_type: expenseType,
-            description,
-            amount: finalAmount,
-            expense_date: date,
-            receipt_url: receiptUrl,
-            invoice_url: invoiceUrl,
-            invoice_number: invoiceNumber || null,
-            invoice_value: parsedInvoiceValue,
-            is_paid: isPaid,
-          })
-          .eq("id", initialExpense.id);
-        if (updateError) throw updateError;
+        const shouldRecalculateInstallments =
+          !hasPaidInstallment && finalAmount !== initialExpense.amount;
+        const shouldUpdateSingleInstallmentStatus =
+          initialInstallments.length === 1 && isPaid !== initialExpense.is_paid;
 
-        if (!hasPaidInstallment && finalAmount !== initialExpense.amount) {
-          const newAmounts = splitAmountCentavos(finalAmount, initialInstallments.length);
-          for (let i = 0; i < initialInstallments.length; i++) {
-            const { error: installmentUpdateError } = await supabase
-              .from("installments")
-              .update({ amount: newAmounts[i] })
-              .eq("id", initialInstallments[i].id);
-            if (installmentUpdateError) throw installmentUpdateError;
-          }
-        }
-
-        // Atualizar status da installment se despesa à vista (1 installment) e isPaid mudou
-        if (initialInstallments.length === 1 && isPaid !== initialExpense.is_paid) {
-          const { error: installmentStatusError } = await supabase
-            .from("installments")
-            .update({
-              status: isPaid ? "paid" : "pending",
-              paid_at: isPaid ? paidAt : null,
-            })
-            .eq("id", initialInstallments[0].id);
-          if (installmentStatusError) throw installmentStatusError;
-        }
+        const { error: rpcError } = await supabase.rpc("edit_expense_with_installments", {
+          p_expense_id: initialExpense.id,
+          p_category_id: categoryId || null,
+          p_room_id: roomId || null,
+          p_supplier_id: supplierId || null,
+          p_expense_type: expenseType,
+          p_description: description,
+          p_amount: finalAmount,
+          p_expense_date: date,
+          p_receipt_url: receiptUrl,
+          p_invoice_url: invoiceUrl,
+          p_invoice_number: invoiceNumber || null,
+          p_invoice_value: parsedInvoiceValue,
+          p_is_paid: isPaid,
+          p_installment_amounts: shouldRecalculateInstallments
+            ? splitAmountCentavos(finalAmount, initialInstallments.length).map((amt, i) => ({
+                id: initialInstallments[i].id,
+                amount: amt,
+              }))
+            : null,
+          p_single_installment_id: shouldUpdateSingleInstallmentStatus
+            ? initialInstallments[0].id
+            : null,
+          p_single_installment_status: shouldUpdateSingleInstallmentStatus
+            ? isPaid
+              ? "paid"
+              : "pending"
+            : null,
+          p_single_installment_paid_at:
+            shouldUpdateSingleInstallmentStatus && isPaid ? paidAt : null,
+        });
+        if (rpcError) throw rpcError;
 
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
@@ -655,11 +654,17 @@ export function ExpenseForm({
         )}
 
         {isEditing && initialInstallments.length > 1 && (
-          <div className="rounded-xl border border-amber-200/60 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 p-4">
-            <p className="text-sm text-amber-800 dark:text-amber-200">
-              Baixa individual de parcelas em desenvolvimento. Por enquanto, o status das parcelas é
-              apenas informativo.
-            </p>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold dark:text-zinc-100 text-stone-900">Parcelas</p>
+            {[...initialInstallments]
+              .sort((a, b) => a.installment_number - b.installment_number)
+              .map((inst) => (
+                <InstallmentRow
+                  key={inst.id}
+                  installment={inst}
+                  onUpdate={() => router.refresh()}
+                />
+              ))}
           </div>
         )}
 
