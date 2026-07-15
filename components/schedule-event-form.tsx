@@ -20,7 +20,6 @@ import {
   EVENT_TYPE_LABELS,
   ScheduleEvent,
   EventStatus,
-  Room,
   Supplier,
   Expense,
 } from "@/lib/types";
@@ -30,7 +29,6 @@ type ScheduleEventFormProps = {
   onClose: () => void;
   initialEvent?: ScheduleEvent;
   suppliers?: Supplier[];
-  rooms?: Room[];
   expenses?: Expense[];
 };
 
@@ -39,7 +37,6 @@ export function ScheduleEventForm({
   onClose,
   initialEvent,
   suppliers = [],
-  rooms = [],
   expenses = [],
 }: ScheduleEventFormProps) {
   const router = useRouter();
@@ -53,7 +50,6 @@ export function ScheduleEventForm({
   const [eventDate, setEventDate] = useState(initialEvent?.start_date ?? "");
   const [notes, setNotes] = useState(initialEvent?.notes ?? "");
   const [supplierId, setSupplierId] = useState(initialEvent?.supplier_id ?? "");
-  const [roomId, setRoomId] = useState(initialEvent?.room_id ?? "");
   const [expenseId, setExpenseId] = useState(initialEvent?.expense_id ?? "");
   const [status, setStatus] = useState<EventStatus | null>(initialEvent?.status ?? "pendente");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -133,7 +129,7 @@ export function ScheduleEventForm({
         start_date: eventDate,
         notes: notes || null,
         supplier_id: supplierId || null,
-        room_id: roomId || null,
+        room_id: initialEvent?.room_id ?? null,
         expense_id: expenseId || null,
         status,
         photo_url: photoUrl,
@@ -240,27 +236,6 @@ export function ScheduleEventForm({
                     {suppliers.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {rooms.length > 0 && (
-              <div>
-                <Label className="text-sm dark:text-zinc-300 text-stone-700">
-                  Cômodo (opcional)
-                </Label>
-                <Select value={roomId} onValueChange={(v) => setRoomId(v === "none" ? "" : v)}>
-                  <SelectTrigger className="mt-1 bg-stone-50 dark:bg-zinc-700 border-stone-200 dark:border-zinc-600">
-                    <SelectValue placeholder="Selecionar cômodo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Sem cômodo</SelectItem>
-                    {rooms.map((r) => (
-                      <SelectItem key={r.id} value={r.id}>
-                        {r.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

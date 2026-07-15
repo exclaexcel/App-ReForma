@@ -24,17 +24,12 @@ export default async function AgendaPage() {
 
   const { data: events = [] } = await supabase
     .from("schedule_events")
-    .select("*, expenses(amount, description), suppliers(name), rooms(name)")
+    .select("*, expenses(amount, description), suppliers(name)")
     .eq("project_id", project.id)
     .order("start_date", { ascending: true });
 
   const { data: suppliers = [] } = await supabase
     .from("suppliers")
-    .select("*")
-    .eq("project_id", project.id);
-
-  const { data: rooms = [] } = await supabase
-    .from("rooms")
     .select("*")
     .eq("project_id", project.id);
 
@@ -51,7 +46,6 @@ export default async function AgendaPage() {
         events={events || []}
         projectId={project.id}
         suppliers={suppliers || []}
-        rooms={rooms || []}
         expenses={expenses || []}
       />
     </div>

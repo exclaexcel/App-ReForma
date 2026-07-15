@@ -21,7 +21,6 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
     "Descrição",
     "Parcela",
     "Categoria",
-    "Cômodo",
     "Fornecedor",
     "Valor (R$)",
     "Forma de Pagamento",
@@ -37,7 +36,6 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
     e.description,
     `${e.installment_number}/${e.total_installments}`,
     e.categories?.name ?? "",
-    e.rooms?.name ?? "",
     e.suppliers?.name ?? "",
     e.amount.toFixed(2).replace(".", ","),
     PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
@@ -100,7 +98,7 @@ export default function DespesasPage() {
 
       const { data: expData, error: expError } = await supabase
         .from("expense_installments_view")
-        .select("*, categories(id, name, color_hex), rooms(id, name), suppliers(id, name)")
+        .select("*, categories(id, name, color_hex), suppliers(id, name)")
         .eq("project_id", project.id)
         .order("due_date", { ascending: false })
         .order("created_at", { ascending: false });

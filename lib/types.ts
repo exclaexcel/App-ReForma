@@ -15,13 +15,6 @@ export type Category = {
   color_hex: string;
 };
 
-export type Room = {
-  id: string;
-  project_id: string;
-  name: string;
-  created_at: string;
-};
-
 export type PaymentMethod = "pix" | "cartao_credito" | "cartao_debito" | "dinheiro" | "boleto";
 
 export type InstallmentStatus = "pending" | "paid" | "overdue";
@@ -88,7 +81,6 @@ export type Expense = {
   status: "ativo" | "cancelado";
   created_at: string;
   categories?: Category | null;
-  rooms?: Room | null;
   suppliers?: { id: string; name: string } | null;
 };
 
@@ -119,7 +111,6 @@ export type ExpenseInstallmentRow = {
   expense_status: "ativo" | "cancelado";
   created_at: string;
   categories?: Category | null;
-  rooms?: Room | null;
   suppliers?: { id: string; name: string } | null;
 };
 
@@ -212,5 +203,4 @@ export type ScheduleEvent = {
   photo_url: string | null;
   expenses?: { amount: number; description: string } | null;
   suppliers?: { name: string } | null;
-  rooms?: { name: string } | null;
 };

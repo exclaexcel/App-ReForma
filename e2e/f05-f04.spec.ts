@@ -157,13 +157,6 @@ test.describe("F-04: Agenda com Vínculos Financeiros @critical", () => {
       await page.click('[role="option"]');
     }
 
-    // Select room if available
-    const roomSelect = page.locator('[placeholder*="Selecionar cômodo"]');
-    if (await roomSelect.isVisible()) {
-      await roomSelect.click();
-      await page.click('[role="option"]');
-    }
-
     // Select status
     await page.click('button:has-text("Pendente")');
 

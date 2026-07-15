@@ -15,26 +15,16 @@ export default async function NovoPage() {
 
   if (!project) redirect("/");
 
-  const [
-    { data: categories, error: catError },
-    { data: rooms, error: roomError },
-    { data: suppliers, error: supError },
-  ] = await Promise.all([
-    supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
-    supabase.from("rooms").select("*").eq("project_id", project.id).order("name"),
-    supabase.from("suppliers").select("*").eq("project_id", project.id).order("name"),
-  ]);
+  const [{ data: categories, error: catError }, { data: suppliers, error: supError }] =
+    await Promise.all([
+      supabase.from("categories").select("*").eq("project_id", project.id).order("name"),
+      supabase.from("suppliers").select("*").eq("project_id", project.id).order("name"),
+    ]);
 
   if (catError) throw catError;
-  if (roomError) throw roomError;
   if (supError) throw supError;
 
   return (
-    <ExpenseForm
-      projectId={project.id}
-      categories={categories ?? []}
-      rooms={rooms ?? []}
-      suppliers={suppliers ?? []}
-    />
+    <ExpenseForm projectId={project.id} categories={categories ?? []} suppliers={suppliers ?? []} />
   );
 }

@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
   Category,
-  Room,
   Expense,
   PaymentMethod,
   PAYMENT_METHOD_LABELS,
@@ -53,7 +52,6 @@ type InstallmentSummary = {
 type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
-  rooms?: Room[];
   suppliers?: Supplier[];
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
@@ -63,7 +61,6 @@ type ExpenseFormProps = {
 export function ExpenseForm({
   projectId,
   categories,
-  rooms = [],
   suppliers = [],
   initialExpense,
   initialSignedUrl,
@@ -82,7 +79,6 @@ export function ExpenseForm({
   const [date, setDate] = useState(initialExpense?.expense_date ?? today);
   const [description, setDescription] = useState(initialExpense?.description ?? "");
   const [categoryId, setCategoryId] = useState(initialExpense?.category_id ?? "");
-  const [roomId, setRoomId] = useState(initialExpense?.room_id ?? "");
   const [expenseType, setExpenseType] = useState<ExpenseType>(
     initialExpense?.expense_type ?? "outro"
   );
@@ -224,7 +220,7 @@ export function ExpenseForm({
         const { error: rpcError } = await supabase.rpc("edit_expense_with_installments", {
           p_expense_id: initialExpense.id,
           p_category_id: categoryId || null,
-          p_room_id: roomId || null,
+          p_room_id: initialExpense.room_id,
           p_supplier_id: supplierId || null,
           p_expense_type: expenseType,
           p_description: description,
@@ -263,7 +259,6 @@ export function ExpenseForm({
           .insert({
             project_id: projectId,
             category_id: categoryId || null,
-            room_id: roomId || null,
             supplier_id: supplierId || null,
             expense_type: expenseType,
             description,
@@ -309,7 +304,6 @@ export function ExpenseForm({
           .insert({
             project_id: projectId,
             category_id: categoryId || null,
-            room_id: roomId || null,
             supplier_id: supplierId || null,
             expense_type: expenseType,
             description,
@@ -549,24 +543,6 @@ export function ExpenseForm({
             {expenseType === "outro" && "Sem requisitos específicos"}
           </p>
         </div>
-
-        {rooms.length > 0 && (
-          <div className="space-y-2">
-            <Label>Cômodo</Label>
-            <Select value={roomId} onValueChange={setRoomId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar cômodo" />
-              </SelectTrigger>
-              <SelectContent>
-                {rooms.map((room) => (
-                  <SelectItem key={room.id} value={room.id}>
-                    {room.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
 
         <div className="space-y-2">
           <Label>Forma de Pagamento</Label>

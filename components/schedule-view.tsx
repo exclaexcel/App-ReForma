@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { ScheduleEvent, EventType, EVENT_TYPE_LABELS, Room, Supplier, Expense } from "@/lib/types";
+import { ScheduleEvent, EventType, EVENT_TYPE_LABELS, Supplier, Expense } from "@/lib/types";
 import { ScheduleEventForm } from "@/components/schedule-event-form";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { formatCurrency } from "@/lib/utils";
@@ -26,7 +26,6 @@ type ScheduleViewProps = {
   events: ScheduleEvent[];
   projectId: string;
   suppliers?: Supplier[];
-  rooms?: Room[];
   expenses?: Expense[];
 };
 
@@ -85,7 +84,6 @@ export function ScheduleView({
   events,
   projectId,
   suppliers = [],
-  rooms = [],
   expenses = [],
 }: ScheduleViewProps) {
   const router = useRouter();
@@ -185,7 +183,6 @@ export function ScheduleView({
 
                     const expenseName = event.expenses?.description;
                     const supplierName = event.suppliers?.name;
-                    const roomName = event.rooms?.name;
 
                     return (
                       <div
@@ -202,14 +199,10 @@ export function ScheduleView({
                               {event.title}
                             </h3>
 
-                            {(supplierName || roomName || expenseName) && (
+                            {(supplierName || expenseName) && (
                               <div className="text-xs text-stone-500 dark:text-zinc-400 mt-1">
                                 {supplierName && <span>{supplierName}</span>}
-                                {supplierName && roomName && <span> · </span>}
-                                {roomName && <span>{roomName}</span>}
-                                {(supplierName || roomName) && event.expenses?.amount && (
-                                  <span> · </span>
-                                )}
+                                {supplierName && event.expenses?.amount && <span> · </span>}
                                 {event.expenses?.amount && (
                                   <span className="font-medium text-stone-700 dark:text-zinc-300">
                                     {formatCurrency(event.expenses.amount)}
@@ -309,7 +302,6 @@ export function ScheduleView({
           initialEvent={editingEvent ?? undefined}
           onClose={closeForm}
           suppliers={suppliers}
-          rooms={rooms}
           expenses={expenses}
         />
       )}

@@ -3,16 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Smoke Tests @smoke @critical", () => {
   test.use({ storageState: "e2e/.auth/user.json" });
 
-  const routes = [
-    "/",
-    "/dashboard",
-    "/despesas",
-    "/novo",
-    "/agenda",
-    "/fornecedores",
-    "/comodos",
-    "/graficos",
-  ];
+  const routes = ["/", "/dashboard", "/despesas", "/novo", "/agenda", "/fornecedores", "/graficos"];
 
   for (const route of routes) {
     test(`rota ${route} carrega sem erro`, async ({ page }) => {
