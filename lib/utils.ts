@@ -158,5 +158,5 @@ export function formatDateBR(dateStr: string): string {
 
 /** Remove sufixo legado "(n/m)" do título — a parcela real vai no badge. */
 export function stripInstallmentSuffix(description: string): string {
-  return description.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/u, "").trimEnd();
+  return description.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, "").trimEnd();
 }
