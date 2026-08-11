@@ -122,6 +122,52 @@ test.describe("F-05: Parcelamento de Despesas @critical", () => {
     const parcelas = page.locator('text="Divisão teste"');
     expect(await parcelas.count()).toBeGreaterThanOrEqual(3);
   });
+
+  test("baixar 1 parcela não marca as demais como pagas", async ({ page }) => {
+    const desc = `Parcela isolada ${Date.now()}`;
+
+    await page.click('button[aria-label="Novo lançamento"]');
+    await page.fill('input[id="amount"]', "300");
+    await page.fill('input[id="description"]', desc);
+    const today = new Date().toISOString().split("T")[0];
+    await page.fill('input[id="date"]', today);
+    await page.fill('input[id="installmentCount"]', "3");
+
+    await page.click('button:has-text("Selecionar")');
+    await page.click('[role="option"]');
+    await page.click('button:has-text("Tipo de Despesa")');
+    await page.click('[role="option"]');
+
+    await page.click('button:has-text("Salvar Lançamento")');
+    await page.waitForLoadState("networkidle");
+
+    // Open edit from first installment row
+    await page.goto("/despesas");
+    await page.waitForLoadState("networkidle");
+    const row = page.locator(`text=${desc}`).first();
+    await expect(row).toBeVisible();
+    await row.click();
+
+    // Prefer direct edit URL if list uses links
+    const editLink = page.locator(`a[href*="/despesas/"][href*="/editar"]`).first();
+    if (await editLink.count()) {
+      await editLink.click();
+    }
+
+    await page.waitForURL(/\/despesas\/.+\/editar/);
+    await expect(page.getByText("Parcelas")).toBeVisible();
+
+    // Mark only first installment as paid
+    const markPaid = page.getByRole("button", { name: "Marcar Pago" }).first();
+    await markPaid.click();
+    await expect(page.getByText("Parcela marcada como paga")).toBeVisible();
+
+    // After refresh, one paid + two pending controls
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("button", { name: "Desfazer pagamento" })).toHaveCount(1);
+    await expect(page.getByRole("button", { name: "Marcar Pago" })).toHaveCount(2);
+    await expect(page.getByText("Parcialmente pago")).toBeVisible();
+  });
 });
 
 test.describe("F-04: Agenda com Vínculos Financeiros @critical", () => {

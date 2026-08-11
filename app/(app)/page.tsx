@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getLatestProject } from "@/lib/queries/getProject";
 import { CreateFirstProject } from "@/components/create-first-project";
-import { ExpenseListItem } from "@/components/expense-list-item";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PlusCircle, Settings, AlertCircle, HardHat as HatIcon, FolderOpen } from "lucide-react";
@@ -165,9 +164,6 @@ export default async function HomePage() {
   ).length;
   const totalAlertas = semComprovanteDocs + pendenteDocs + divergenciaDocs;
 
-  // Recent expenses (first 3 rows from allInstallments, but keep as is)
-  const recentExpenses = allInstallments.slice(0, 3);
-
   return (
     <div className="px-4 pt-6 pb-8 space-y-6">
       {/* Header with project info and controls */}
@@ -300,41 +296,12 @@ export default async function HomePage() {
         Pasta Digital de Comprovantes
       </Link>
 
-      {/* Recent expenses */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">
-            Últimas Despesas
-          </h2>
-          {recentExpenses.length > 0 && (
-            <Link
-              href="/despesas"
-              className="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors"
-            >
-              Ver todas →
-            </Link>
-          )}
-        </div>
-
-        {recentExpenses.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 space-y-3 rounded-xl bg-stone-100 dark:bg-zinc-800/50">
-            <HatIcon className="h-10 w-10 text-stone-400 dark:text-zinc-500" />
-            <p className="text-sm text-stone-600 dark:text-zinc-400">Nenhuma despesa ainda.</p>
-            <Link
-              href="/novo"
-              className="text-sm font-medium text-orange-500 hover:text-orange-400 transition-colors"
-            >
-              Clique aqui para adicionar
-            </Link>
-          </div>
-        ) : (
-          <div className="divide-y divide-stone-200 dark:divide-zinc-800 rounded-xl border border-stone-200 dark:border-zinc-800 overflow-hidden">
-            {recentExpenses.map((row) => (
-              <ExpenseListItem key={row.installment_id} expense={row} />
-            ))}
-          </div>
-        )}
-      </div>
+      <Link
+        href="/despesas"
+        className="flex items-center justify-center gap-2 w-full rounded-xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-stone-700 dark:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-700 active:scale-95 transition-all duration-200"
+      >
+        Ver despesas
+      </Link>
     </div>
   );
 }

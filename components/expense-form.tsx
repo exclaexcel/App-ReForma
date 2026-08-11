@@ -212,6 +212,12 @@ export function ExpenseForm({
       if (isEditing && initialExpense) {
         const finalAmount = hasPaidInstallment ? initialExpense.amount : parsedAmount;
 
+        const allInstallmentsPaid =
+          initialInstallments.length > 0 && initialInstallments.every((i) => i.status === "paid");
+        // Multi-parcela: is_paid da despesa = todas pagas (nunca espelhar checkbox legado).
+        // À vista (1 parcela): checkbox pode alterar a única parcela.
+        const derivedIsPaid = initialInstallments.length > 1 ? allInstallmentsPaid : isPaid;
+
         const shouldRecalculateInstallments =
           !hasPaidInstallment && finalAmount !== initialExpense.amount;
         const shouldUpdateSingleInstallmentStatus =
@@ -230,7 +236,7 @@ export function ExpenseForm({
           p_invoice_url: invoiceUrl,
           p_invoice_number: invoiceNumber || null,
           p_invoice_value: parsedInvoiceValue,
-          p_is_paid: isPaid,
+          p_is_paid: derivedIsPaid,
           p_installment_amounts: shouldRecalculateInstallments
             ? splitAmountCentavos(finalAmount, initialInstallments.length).map((amt, i) => ({
                 id: initialInstallments[i].id,
@@ -637,6 +643,7 @@ export function ExpenseForm({
               .map((inst) => (
                 <InstallmentRow
                   key={inst.id}
+                  expenseId={initialExpense!.id}
                   installment={inst}
                   onUpdate={() => router.refresh()}
                 />

@@ -55,29 +55,17 @@ test.describe("Dashboard @critical", () => {
     expect(await alertBanner.count()).toBeGreaterThanOrEqual(0); // Alert may or may not exist
   });
 
-  test("últimas despesas aparecem na listagem", async ({ page }) => {
+  test("início não lista despesas — só atalho para /despesas", async ({ page }) => {
     await page.goto("/");
     await page.waitForLoadState("networkidle");
 
-    // Look for expense items
-    const expenseItems = page.locator('[role="listitem"], text=/Despesa|Lançamento/i');
-    const count = await expenseItems.count();
+    await expect(page.getByRole("heading", { name: "Últimas Despesas" })).toHaveCount(0);
 
-    // May have 0 items if no expenses exist, but should load without error
-    expect(count).toBeGreaterThanOrEqual(0);
-  });
-
-  test("link 'Ver todas as despesas' navega para /despesas", async ({ page }) => {
-    await page.goto("/");
+    const verDespesas = page.getByRole("link", { name: /Ver despesas/i }).first();
+    await expect(verDespesas).toBeVisible();
+    await verDespesas.click();
     await page.waitForLoadState("networkidle");
-
-    // Look for "Ver todas" or similar link
-    const verTodasLink = page.locator('a, button:has-text("Ver todas")');
-    if (await verTodasLink.isVisible()) {
-      await verTodasLink.click();
-      await page.waitForLoadState("networkidle");
-      expect(page.url()).toContain("/despesas");
-    }
+    expect(page.url()).toContain("/despesas");
   });
 
   test("bottom nav está visível e funcional", async ({ page }) => {

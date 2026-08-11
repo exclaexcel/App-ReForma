@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -35,10 +35,11 @@ type InstallmentRowInfo = {
 
 type InstallmentRowProps = {
   installment: InstallmentRowInfo;
+  expenseId: string;
   onUpdate?: () => void;
 };
 
-export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
+export function InstallmentRow({ installment, expenseId, onUpdate }: InstallmentRowProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [status, setStatus] = useState(installment.status);
   const [paymentMethod, setPaymentMethod] = useState(installment.payment_method);
@@ -46,21 +47,58 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
     installment.paid_at ? getLocalDateString(new Date(installment.paid_at)) : getLocalDateString()
   );
 
-  const isOverdue = installment.status === "pending" && new Date(installment.due_date) < new Date();
+  useEffect(() => {
+    setStatus(installment.status);
+    setPaymentMethod(installment.payment_method);
+    setPaidAtInput(
+      installment.paid_at ? getLocalDateString(new Date(installment.paid_at)) : getLocalDateString()
+    );
+  }, [installment.id, installment.status, installment.payment_method, installment.paid_at]);
 
-  async function handleStatusChange(newStatus: typeof status, paidDate?: string) {
+  const isOverdue = status === "pending" && new Date(installment.due_date) < new Date();
+
+  async function syncExpensePaidFlag(supabase: ReturnType<typeof createClient>) {
+    const { data: rows, error } = await supabase
+      .from("installments")
+      .select("status")
+      .eq("expense_id", expenseId);
+
+    if (error) throw error;
+
+    const allPaid = (rows ?? []).length > 0 && (rows ?? []).every((r) => r.status === "paid");
+    const { error: expenseError } = await supabase
+      .from("expenses")
+      .update({ is_paid: allPaid })
+      .eq("id", expenseId);
+
+    if (expenseError) throw expenseError;
+  }
+
+  async function handleStatusChange(newStatus: InstallmentStatus, paidDate?: string) {
+    if (!installment.id) {
+      toast.error("Parcela inválida — recarregue a página.");
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("installments")
         .update({
           status: newStatus,
-          paid_at: newStatus === "paid" ? paidDate : null,
+          paid_at: newStatus === "paid" ? paidDate || getLocalDateString() : null,
         })
-        .eq("id", installment.id);
+        .eq("id", installment.id)
+        .eq("expense_id", expenseId)
+        .select("id");
 
       if (error) throw error;
+      if (!data || data.length !== 1) {
+        throw new Error("A baixa não foi aplicada só nesta parcela. Tente de novo.");
+      }
+
+      await syncExpensePaidFlag(supabase);
 
       setStatus(newStatus);
       toast.success(
@@ -76,15 +114,25 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
   }
 
   async function handlePaymentMethodChange(newMethod: PaymentMethod) {
+    if (!installment.id) {
+      toast.error("Parcela inválida — recarregue a página.");
+      return;
+    }
+
     setIsUpdating(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("installments")
         .update({ payment_method: newMethod })
-        .eq("id", installment.id);
+        .eq("id", installment.id)
+        .eq("expense_id", expenseId)
+        .select("id");
 
       if (error) throw error;
+      if (!data || data.length !== 1) {
+        throw new Error("Não foi possível atualizar só esta parcela.");
+      }
 
       setPaymentMethod(newMethod);
       toast.success("Forma de pagamento atualizada");
@@ -187,19 +235,39 @@ export function InstallmentRow({ installment, onUpdate }: InstallmentRowProps) {
         </div>
       )}
 
-      {/* Status toggle button */}
-      {status !== "paid" && (
-        <div className="flex gap-2 pt-2">
+      {/* Status toggle button — type=button evita submit do form pai */}
+      <div className="flex gap-2 pt-2">
+        {status !== "paid" ? (
           <Button
+            type="button"
             size="sm"
-            onClick={() => handleStatusChange("paid", paidAtInput)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void handleStatusChange("paid", paidAtInput);
+            }}
             disabled={isUpdating}
             className="flex-1"
           >
             {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Marcar Pago"}
           </Button>
-        </div>
-      )}
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              void handleStatusChange("pending");
+            }}
+            disabled={isUpdating}
+            className="flex-1"
+          >
+            {isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Desfazer pagamento"}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
