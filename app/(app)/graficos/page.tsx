@@ -30,6 +30,7 @@ export default async function GraficosPage() {
 
   if (!project) redirect("/");
 
+  // Full set required for category/trend aggregates (not a list page).
   const { data: installments, error: installmentsError } = await supabase
     .from("expense_installments_view")
     .select("*, categories(id, name, color_hex)")

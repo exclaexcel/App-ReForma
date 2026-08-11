@@ -3,7 +3,15 @@ import { test, expect } from "@playwright/test";
 test.describe("Smoke Tests @smoke @critical", () => {
   test.use({ storageState: "e2e/.auth/user.json" });
 
-  const routes = ["/", "/dashboard", "/despesas", "/novo", "/agenda", "/fornecedores", "/graficos"];
+  const routes = [
+    "/",
+    "/despesas",
+    "/novo",
+    "/agenda",
+    "/fornecedores",
+    "/graficos",
+    "/comprovantes",
+  ];
 
   for (const route of routes) {
     test(`rota ${route} carrega sem erro`, async ({ page }) => {
@@ -25,6 +33,12 @@ test.describe("Smoke Tests @smoke @critical", () => {
       expect(headings).toBeGreaterThan(0);
     });
   }
+
+  test("rota /dashboard redireciona para /", async ({ page }) => {
+    await page.goto("/dashboard");
+    await page.waitForURL((url) => url.pathname === "/");
+    expect(page.url()).toMatch(/\/$/);
+  });
 
   test("página inicial (/) carrega elementos principais", async ({ page }) => {
     await page.goto("/");

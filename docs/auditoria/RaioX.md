@@ -13,27 +13,22 @@ Aqui está o Raio-X para você validar:
 
 1. A Base Tecnológica (Tech Stack)
 
-
 Frontend: Construído em Next.js 14 (App Router) e TypeScript.
 
 Estilização e UI: Tailwind CSS , componentes da biblioteca shadcn/ui (botões, inputs, etc.) e ícones temáticos de construção da lucide-react.
 
 Gráficos: Implementados com a biblioteca Recharts.
 
-Backend e Autenticação: Supabase.
-2. A Base de Dados (Supabase)
+Backend e Autenticação: Supabase. 2. A Base de Dados (Supabase)
 O "cérebro" da aplicação possui 4 tabelas principais totalmente configuradas:
-
 
 projects: Guarda a sua obra, incluindo o orçamento total e as datas recém-adicionadas (start_date e end_date) para a contagem decrescente.
 
 categories: As frentes da obra (ex: Mão de Obra, Acabamento).
 
 rooms: A tabela dedicada aos cômodos/divisões do apartamento (ex: Cozinha, Suíte).
-expenses: O coração do registo financeiro. Inclui os valores, descrições, data, links dos comprovativos (receipt_url) e, agora, as colunas inteligentes room_id (cômodo) e phase ("Estrutura" vs "Mobiliário & Decor").
-3. O Mapeamento das Páginas (Rotas)
+expenses: O coração do registo financeiro. Inclui os valores, descrições, data, links dos comprovativos (receipt_url) e, agora, as colunas inteligentes room_id (cômodo) e phase ("Estrutura" vs "Mobiliário & Decor"). 3. O Mapeamento das Páginas (Rotas)
 O código está estruturado com as seguintes páginas funcionais:
-
 
 A "Portaria" (/): Uma rota inteligente no ficheiro app/(app)/page.tsx que renderiza a Landing Page de Boas-Vindas se o utilizador não estiver logado, ou o "Hub Rápido" (Painel de Controlo) se já tiver a sessão iniciada.
 
@@ -45,9 +40,7 @@ Fluxo de Autenticação: Páginas completas para /login, /signup, /recuperar-sen
 
 /comodos: Ecrã dedicado para adicionar e gerir as divisões da casa.
 
-Gestão de Lançamentos: Rotas para formulários, incluindo /novo (para novas despesas), /projeto/editar (para atualizar as datas e orçamento da obra) e /despesas/[id]/editar (para corrigir faturas já lançadas).
-4. Componentes e Funcionalidades Específicas
-
+Gestão de Lançamentos: Rotas para formulários, incluindo /novo (para novas despesas), /projeto/editar (para atualizar as datas e orçamento da obra) e /despesas/[id]/editar (para corrigir faturas já lançadas). 4. Componentes e Funcionalidades Específicas
 
 Gráficos Inteligentes: Existem componentes criados para o Gráfico de Cascata (waterfall-chart.tsx), Gráfico de Barras Horizontais (horizontal-bar-chart.tsx) e Área (area-chart.tsx). (Nenhum gráfico de pizza/rosca!) .
 

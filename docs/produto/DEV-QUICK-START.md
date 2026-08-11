@@ -63,15 +63,15 @@ middleware.ts            → Guarda de rotas (auth)
 ### Documentação Essencial
 
 ```
-📁 auditoria/
+📁 docs/auditoria/
 ├── AUDITORIA1.MD        → Auditoria técnica completa (2026-06-22)
 ├── backlog-pendencias.md → 33 itens de backlog técnico
 ├── backlog-ux.md        → 19 problemas de UX
 ├── sprint-v0.8-controle-documental.md → Plano detalhado v0.8
 └── implementacao-v0.8-snippets.md     → Snippets de código prontos
 
-SPRINT-ROADMAP.md      → Visão executiva (LEIA PRIMEIRO)
-DEV-QUICK-START.md     → Este arquivo
+docs/produto/SPRINT-ROADMAP.md      → Visão executiva (LEIA PRIMEIRO)
+docs/produto/DEV-QUICK-START.md     → Este arquivo
 ```
 
 ---
@@ -79,23 +79,27 @@ DEV-QUICK-START.md     → Este arquivo
 ## 🔄 Fluxo Típico de Desenvolvimento
 
 ### 1. Começar feature nova
+
 ```bash
 git checkout -b feat/nome-descritivo
 npm run dev  # dev server sempre rodando
 ```
 
 ### 2. Editar código
+
 - Use VSCode — IntelliSense funciona
 - TypeScript catch erros em real-time
 - Salvar → página recarrega automaticamente
 
 ### 3. Validar antes de commitar
+
 ```bash
 npm run build  # TypeScript strict + Next.js
 # Sem erros? Pronto para commit
 ```
 
 ### 4. Commit & Push
+
 ```bash
 git add -A
 git commit -m "feat: descrição curta da feature"
@@ -103,6 +107,7 @@ git push origin feat/nome-descritivo
 ```
 
 ### 5. Criar PR
+
 ```bash
 gh pr create --title "descrição" --body "detalhe"
 # Vercel faz deploy automático (preview URL nos comentários da PR)
@@ -139,6 +144,7 @@ supabase db pull      # Baixar schema do banco
 ## 🐛 Debugging
 
 ### Dev Server não funciona?
+
 ```bash
 # 1. Matar processos Node antigos
 pkill -f "node"
@@ -149,6 +155,7 @@ npm run dev
 ```
 
 ### TypeScript errors?
+
 ```bash
 # Validar tipos
 npx tsc --noEmit
@@ -159,6 +166,7 @@ npm install
 ```
 
 ### Supabase disconnected?
+
 ```bash
 # Verificar variáveis de ambiente
 cat .env.local | grep SUPABASE
@@ -171,16 +179,19 @@ cat .env.local | grep SUPABASE
 ## 📚 Entender Features Implementadas
 
 ### v0.7 (Confiabilidade)
+
 - **Middleware seguro:** vê `middleware.ts` linha 34-43 (flag `authError`)
 - **Logging:** vê `lib/supabase/server.ts` linha 18-25 (`catch` com throw)
 - **Erro visual:** vê `app/(app)/despesas/page.tsx` linha ~224 (estado `error`)
 
 ### v0.6 (UX)
+
 - **Confirmação:** `components/confirm-dialog.tsx` (reutilizável)
 - **Toasts:** procure `toast.loading()` em `expense-form.tsx`
 - **Empty states:** veja `app/(app)/despesas/page.tsx` linha ~223 (com Link)
 
 ### v0.5 (Documentação)
+
 - **Badge status:** `components/expense-list-item.tsx` mostra status
 - **Filtros:** `components/advanced-filters-modal.tsx` + `app/(app)/despesas/page.tsx`
 
@@ -189,13 +200,15 @@ cat .env.local | grep SUPABASE
 ## 🎯 Sprint v0.8 (Próximo)
 
 **Ler antes de começar:**
-1. `SPRINT-ROADMAP.md` (5min overview)
-2. `auditoria/sprint-v0.8-controle-documental.md` (20min detalhe)
-3. `auditoria/implementacao-v0.8-snippets.md` (referência enquanto codifica)
+
+1. `docs/produto/SPRINT-ROADMAP.md` (5min overview)
+2. `docs/auditoria/sprint-v0.8-controle-documental.md` (20min detalhe)
+3. `docs/auditoria/implementacao-v0.8-snippets.md` (referência enquanto codifica)
 
 **Features:**
-- #5  Paginação (2-3h)
-- #9  start_date (30min)
+
+- #5 Paginação (2-3h)
+- #9 start_date (30min)
 - #11 Soft-delete (2h)
 - #18 Badge (45min)
 - #19 Filtro (1-1.5h)
@@ -210,7 +223,7 @@ cat .env.local | grep SUPABASE
 🔧 GitHub:          https://github.com/exclaexcel/App-ReForma
 📊 Vercel:          https://vercel.com/exclaexcel/appreforma
 🗄️  Supabase:       https://app.supabase.com (project: bhsvvpvfbszrcitjwxxl)
-📞 Documentação:    → ./auditoria/ (todos os documentos aqui)
+📞 Documentação:    → ./docs/ (índice em README.md)
 ```
 
 ---

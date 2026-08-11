@@ -21,7 +21,7 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
     status: expense.expense_status,
   });
   const sharedClass =
-    "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 border-stone-200/40 dark:hover:bg-zinc-800/50 light:hover:bg-stone-100/30 dark:active:bg-zinc-800 light:active:bg-stone-100";
+    "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 border-stone-200/40 hover:bg-stone-100/30 dark:hover:bg-zinc-800/50 active:bg-stone-100 dark:active:bg-zinc-800";
 
   const content = (
     <>

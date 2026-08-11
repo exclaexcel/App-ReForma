@@ -1,19 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/bottom-nav";
-import { redirect } from "next/navigation";
 
+/**
+ * Auth gate for app shell.
+ * Guests may render `/` (LandingPage in page.tsx). Middleware still
+ * redirects unauthenticated users away from other (app) routes.
+ */
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
 
   let user = null;
   try {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
     user = authUser;
   } catch {
-    redirect("/login");
+    user = null;
   }
 
-  if (!user) redirect("/login");
+  if (!user) {
+    return (
+      <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900">
+        <main>{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-dvh bg-stone-50 dark:bg-zinc-900">

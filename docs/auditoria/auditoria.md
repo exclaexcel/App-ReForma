@@ -4,15 +4,15 @@ Preciso que você valide toda a estrutura do código, do repositório e do ambie
 
 Contexto do Problema:
 
-Projeto 1 (Alvo original): GitHub: https://github.com/exclaexcel/appchacasanova - vercel - appchacasanova.vercel.app 
+Projeto 1 (Alvo original): GitHub: https://github.com/exclaexcel/appchacasanova - vercel - appchacasanova.vercel.app
 esse é um aplicativo onde contem vários jogos e painel de controle tipo kahoot
 
 Projeto 2 (O projeto intruso/sobreposto): Github: https://github.com/exclaexcel/appreforma - vercel - não definido
-app para gerenciamento de obras 
+app para gerenciamento de obras
 
 Quando ocorreu: 17/05/2026 por volta das 18:00h até o momento
 
-O que aconteceu: 
+O que aconteceu:
 Minhas solicitações em ordem cronológica (não pule etapas):
 
 Atue como um Engenheiro DevOps Investigativo.

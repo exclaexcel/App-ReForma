@@ -8,9 +8,11 @@
 ## 🚀 Próximo Sprint: v0.8 (2026-06-25 a 2026-06-27)
 
 ### Objetivo
+
 Implementar 8 features que completam o núcleo funcional do ReForma: **controle documentado de despesas + paginação para escalabilidade**.
 
 ### Resultado esperado
+
 - ✅ App escalável para >100 despesas (paginação)
 - ✅ Usuário vê "dias corridos de obra" (start_date)
 - ✅ Histórico contábil preservado (soft-delete)
@@ -18,6 +20,7 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 - ✅ Dashboard com saldo e analytics básicas
 
 ### Estimativa
+
 **12h total** (10h desenvolvimento + 2h testes/deploy)
 
 ---
@@ -26,11 +29,11 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 
 ### 🔴 P1 — Bloqueadores (4h)
 
-| # | Feature | Esforço | Impacto |
-|---|---------|---------|--------|
-| #5 | Paginação em 4 listagens | 2-3h | Escalabilidade crítica |
-| #9 | Exibir `start_date` | 30min | Informação central |
-| #11 | Soft-delete com status | 2h | Auditoria/rastreabilidade |
+| #   | Feature                  | Esforço | Impacto                   |
+| --- | ------------------------ | ------- | ------------------------- |
+| #5  | Paginação em 4 listagens | 2-3h    | Escalabilidade crítica    |
+| #9  | Exibir `start_date`      | 30min   | Informação central        |
+| #11 | Soft-delete com status   | 2h      | Auditoria/rastreabilidade |
 
 **Documentação:** `sprint-v0.8-controle-documental.md` seções "Prioridade 1"
 
@@ -38,10 +41,10 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 
 ### 🟠 P2 — Documentação (2.5h)
 
-| # | Feature | Esforço | Impacto |
-|---|---------|---------|--------|
-| #18 | Badge "sem comprovante" | 45min | UX visual |
-| #19 | Filtro "pagos sem comprovante" | 1-1.5h | Identificar falhas |
+| #   | Feature                        | Esforço | Impacto            |
+| --- | ------------------------------ | ------- | ------------------ |
+| #18 | Badge "sem comprovante"        | 45min   | UX visual          |
+| #19 | Filtro "pagos sem comprovante" | 1-1.5h  | Identificar falhas |
 
 **Documentação:** `sprint-v0.8-controle-documental.md` seções "Prioridade 2"
 
@@ -49,11 +52,11 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 
 ### 🔵 P3 — Analytics (2h)
 
-| # | Feature | Esforço | Impacto |
-|---|---------|---------|--------|
-| #21 | Saldo disponível (KPI) | 30min | Dashboard completo |
-| #22 | Total por cômodo | 1h | Breakdown de gastos |
-| #23 | Total por fornecedor | 1h | Análise de fornecedores |
+| #   | Feature                | Esforço | Impacto                 |
+| --- | ---------------------- | ------- | ----------------------- |
+| #21 | Saldo disponível (KPI) | 30min   | Dashboard completo      |
+| #22 | Total por cômodo       | 1h      | Breakdown de gastos     |
+| #23 | Total por fornecedor   | 1h      | Análise de fornecedores |
 
 **Documentação:** `sprint-v0.8-controle-documental.md` seções "Prioridade 3"
 
@@ -62,11 +65,13 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 ## 📚 Como Começar
 
 ### Pré-requisitos
-1. Ler `auditoria/sprint-v0.8-controle-documental.md` (visão completa)
-2. Ler `auditoria/implementacao-v0.8-snippets.md` (código pronto)
+
+1. Ler `docs/auditoria/sprint-v0.8-controle-documental.md` (visão completa)
+2. Ler `docs/auditoria/implementacao-v0.8-snippets.md` (código pronto)
 3. Backup do banco em produção (Supabase Dashboard → Settings → Backups)
 
 ### Fluxo recomendado
+
 1. Começar por #9 (30min, menor risco)
 2. Fazer #5 em paralelo em 4 arquivos
 3. Depois #11 (requer migration + testes)
@@ -74,6 +79,7 @@ Implementar 8 features que completam o núcleo funcional do ReForma: **controle 
 5. #21, #22, #23 juntas
 
 ### Comandos úteis
+
 ```bash
 # Criar nova feature branch (opcional)
 git checkout -b feat/v0.8-controle-documental
@@ -139,12 +145,12 @@ Após implementar cada feature, validar:
 
 ## 🚨 Riscos & Mitigação
 
-| Risco | Probabilidade | Mitigação |
-|-------|---------------|-----------|
-| Migration falha em prod | Baixa | Testar em dev, backup antes, rollback plan |
-| Paginação quebra filtros | Média | Testar combinações de filtros |
-| Soft-delete com RLS | Baixa | RLS automático (protege por project_id) |
-| Performance queries | Baixa | Usar `limit`, evitar N+1, índices criados |
+| Risco                    | Probabilidade | Mitigação                                  |
+| ------------------------ | ------------- | ------------------------------------------ |
+| Migration falha em prod  | Baixa         | Testar em dev, backup antes, rollback plan |
+| Paginação quebra filtros | Média         | Testar combinações de filtros              |
+| Soft-delete com RLS      | Baixa         | RLS automático (protege por project_id)    |
+| Performance queries      | Baixa         | Usar `limit`, evitar N+1, índices criados  |
 
 ---
 
@@ -173,11 +179,13 @@ Refinamentos          Testes & Produção     Roadmap Longo
 ## 📞 Support & Questions
 
 **Se tiver dúvidas sobre alguma feature:**
+
 1. Verificar seção correspondente em `sprint-v0.8-controle-documental.md`
 2. Checar snippets de código em `implementacao-v0.8-snippets.md`
 3. Consultar backlog-pendencias.md para contexto histórico
 
 **Se encontrar bloqueador:**
+
 - Comunicar via commit message (com `[BLOCKER]` prefix)
 - Ou marcar como issue no GitHub
 

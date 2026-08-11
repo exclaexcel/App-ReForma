@@ -8,11 +8,13 @@
 ## 📍 Onde os Arquivos são Armazenados
 
 ### Storage Principal
+
 **Serviço:** Supabase Storage (Amazon S3 por baixo)  
 **Bucket:** `receipts`  
 **Acesso:** Seguro (RLS policies) — cada usuário vê apenas seus arquivos
 
 ### Estrutura de Pastas
+
 ```
 receipts/
 └── {user_id}/
@@ -28,36 +30,42 @@ receipts/
 ## 🔐 Segurança
 
 ### RLS Policy (Row Level Security)
+
 ```sql
 -- Apenas o proprietário (user_id) pode acessar seus arquivos
 -- Prefixo do path é a chave: user_id/{arquivo}
 ```
 
 ### Signed URLs
+
 - **TTL:** 1 hora
 - **Tipo:** Temporal (expiram automaticamente)
 - **Segurança:** Não são URLs públicas permanentes
 - **Geração:** Automática ao fazer download/visualizar
 
 ### Quem pode acessar?
-| Ator | Acesso |
-|---|---|
-| Proprietário do arquivo | ✅ Sim (via signed URL) |
-| Outro usuário | ❌ Não (RLS bloqueia) |
-| API externa | ❌ Não (requer autenticação) |
+
+| Ator                    | Acesso                       |
+| ----------------------- | ---------------------------- |
+| Proprietário do arquivo | ✅ Sim (via signed URL)      |
+| Outro usuário           | ❌ Não (RLS bloqueia)        |
+| API externa             | ❌ Não (requer autenticação) |
 
 ---
 
 ## 📂 Integração com Banco de Dados
 
 ### Tabela: `expenses`
+
 Coluna que armazena a URL:
+
 - `receipt_url` — URL assinada do comprovante de pagamento
 - `invoice_url` — URL assinada da nota fiscal
 - `invoice_number` — texto (número da NF, ex: "2024-123456")
 - `invoice_value` — numeric (valor da NF, ex: 1500.50)
 
 ### Fluxo de Salvamento
+
 ```
 1. Usuário seleciona arquivo no formulário
 2. App faz upload → Supabase Storage
@@ -71,22 +79,22 @@ Coluna que armazena a URL:
 
 ## 🗂️ Tipos de Documentos
 
-| Tipo | Campo | Obrigatório | Exemplo |
-|---|---|---|---|
-| **Comprovante** | `receipt_url` | Depende do tipo de despesa | Recibo de pagamento |
-| **Nota Fiscal** | `invoice_url` | Para material/loja/serviço | NF-e XML ou PDF |
-| **Número NF** | `invoice_number` | Quando tem NF | "2024.123.456/0001-98" |
-| **Valor NF** | `invoice_value` | Quando tem NF | 1500.50 |
+| Tipo            | Campo            | Obrigatório                | Exemplo                |
+| --------------- | ---------------- | -------------------------- | ---------------------- |
+| **Comprovante** | `receipt_url`    | Depende do tipo de despesa | Recibo de pagamento    |
+| **Nota Fiscal** | `invoice_url`    | Para material/loja/serviço | NF-e XML ou PDF        |
+| **Número NF**   | `invoice_number` | Quando tem NF              | "2024.123.456/0001-98" |
+| **Valor NF**    | `invoice_value`  | Quando tem NF              | 1500.50                |
 
 ### Requisitos por Tipo de Despesa
 
-| Tipo | Comprovante | NF | NF obrigatória? |
-|---|---|---|---|
-| **Mão de obra** | ✅ Obrigatório | ❌ N/A | Não |
-| **Material** | ✅ Obrigatório | ✅ Obrigatório | Sim |
-| **Loja** | ✅ Obrigatório | ✅ Obrigatório | Sim |
-| **Serviço** | ✅ Obrigatório | ⚠️ Se PJ | Não |
-| **Outro** | ⚠️ Opcional | ⚠️ Opcional | Não |
+| Tipo            | Comprovante    | NF             | NF obrigatória? |
+| --------------- | -------------- | -------------- | --------------- |
+| **Mão de obra** | ✅ Obrigatório | ❌ N/A         | Não             |
+| **Material**    | ✅ Obrigatório | ✅ Obrigatório | Sim             |
+| **Loja**        | ✅ Obrigatório | ✅ Obrigatório | Sim             |
+| **Serviço**     | ✅ Obrigatório | ⚠️ Se PJ       | Não             |
+| **Outro**       | ⚠️ Opcional    | ⚠️ Opcional    | Não             |
 
 ---
 
@@ -140,8 +148,12 @@ Coluna que armazena a URL:
 ## 💻 Implementação no Código
 
 ### Upload (expense-form.tsx)
+
 ```tsx
-const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: "receipt" | "invoice") => {
+const handleFileChange = async (
+  e: React.ChangeEvent<HTMLInputElement>,
+  field: "receipt" | "invoice"
+) => {
   const file = e.target.files?.[0];
   if (!file || !user) {
     setError("Sessão expirada. Faça login novamente.");
@@ -149,7 +161,7 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: "
   }
 
   const fileName = `${user.id}/${Date.now()}-${file.name}`;
-  
+
   const { data, error } = await supabase.storage
     .from("receipts")
     .upload(fileName, file, { upsert: true });
@@ -160,9 +172,7 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: "
   }
 
   // Gera signed URL (1 hora de validade)
-  const { data: url } = await supabase.storage
-    .from("receipts")
-    .createSignedUrl(data.path, 3600); // 3600 = 1 hora
+  const { data: url } = await supabase.storage.from("receipts").createSignedUrl(data.path, 3600); // 3600 = 1 hora
 
   if (field === "receipt") {
     setReceiptPreview(url?.signedUrl);
@@ -175,6 +185,7 @@ const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, field: "
 ```
 
 ### Validação (lib/utils.ts)
+
 ```tsx
 export function getDocStatus(expense: Expense): DocStatus {
   const { expense_type, is_paid, receipt_url, invoice_url, invoice_value, amount } = expense;
@@ -203,6 +214,7 @@ export function getDocStatus(expense: Expense): DocStatus {
 ```
 
 ### Exibição de Status (expense-list-item.tsx)
+
 ```tsx
 const docStatus = getDocStatus(expense);
 
@@ -224,7 +236,7 @@ const docStatus = getDocStatus(expense);
       Divergência
     </span>
   )}
-</div>
+</div>;
 ```
 
 ---
@@ -232,12 +244,14 @@ const docStatus = getDocStatus(expense);
 ## ⚙️ Configuração do Projeto
 
 ### Environment Variables
+
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://bhsvvpvfbszrcitjwxxl.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### RLS Policies (SQL)
+
 ```sql
 -- Criar bucket (se não existir)
 INSERT INTO storage.buckets (id, name, public)
@@ -267,21 +281,25 @@ CREATE POLICY "Users can upload their own files"
 ## 🚨 Limitações & Considerações
 
 ### Signed URLs Expiram
+
 - **Problema:** URL expira após 1 hora
 - **Solução:** App regenera automaticamente ao acessar
 - **Impacto:** Sem impacto para usuário (transparente)
 
 ### Tamanho de Arquivo
+
 - **Limite:** 50 MB (padrão Supabase)
 - **Recomendado:** Comprovantes/NFs geralmente < 10 MB
 - **Se ultrapassar:** Adicionar validação no cliente
 
 ### Tipos de Arquivo
+
 - **Aceitos:** PDF, JPG, PNG, GIF, WEBP
 - **Recomendado:** PDF para NF, JPG/PNG para comprovantes
 - **Validação:** Feita no componente `expense-form.tsx`
 
 ### Backup & Retenção
+
 - **Tempo:** Indefinido (enquanto despesa existir no banco)
 - **Backup:** Supabase faz backup automático
 - **Deleção:** Quando despesa é deletada (soft delete pode ser implementado)
@@ -291,6 +309,7 @@ CREATE POLICY "Users can upload their own files"
 ## 📊 Monitoramento
 
 ### Ver Uso de Storage
+
 ```bash
 # Via Supabase Dashboard
 Settings → Storage → Metrics
@@ -300,6 +319,7 @@ supabase storage list receipts
 ```
 
 ### Ver Signed URLs Ativos
+
 ```bash
 # Logs de acesso
 supabase logs storage
@@ -310,16 +330,19 @@ supabase logs storage
 ## 🔧 Troubleshooting
 
 ### "Erro ao fazer upload"
+
 - ✅ Verificar se usuário está autenticado
 - ✅ Verificar permissões RLS
 - ✅ Verificar tamanho do arquivo
 - ✅ Verificar internet connection
 
 ### "URL expirada"
+
 - ✅ App regenera automaticamente — problema resolvido
 - ✅ Se persistir: limpar cache do browser
 
 ### "Arquivo não aparece na listagem"
+
 - ✅ Verificar se `receipt_url` ou `invoice_url` foi salvo no banco
 - ✅ Verificar se o arquivo realmente foi uploadado
 - ✅ Verificar RLS policies

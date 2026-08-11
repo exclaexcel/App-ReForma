@@ -1,5 +1,5 @@
 import { Supplier } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, toWhatsAppLink } from "@/lib/utils";
 import { HardHat, Star } from "lucide-react";
 import Link from "next/link";
 
@@ -9,10 +9,12 @@ type SupplierListItemProps = {
 };
 
 export function SupplierListItem({ supplier, href }: SupplierListItemProps) {
-  const sharedClass =
+  const rowClass =
     "w-full flex items-center gap-3 py-3 text-left rounded-xl px-2 transition-all duration-200 active:scale-95 border-b dark:border-zinc-800/40 border-stone-200/40 dark:hover:bg-zinc-800/50 hover:bg-stone-100/30 dark:active:bg-zinc-800 active:bg-stone-100";
 
-  const content = (
+  const waLink = supplier.whatsapp ? toWhatsAppLink(supplier.whatsapp) : null;
+
+  const main = (
     <>
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-700/10 border border-orange-700/20">
         <HardHat className="h-4 w-4 text-orange-500" />
@@ -43,22 +45,35 @@ export function SupplierListItem({ supplier, href }: SupplierListItemProps) {
         ) : (
           <span className="text-xs dark:text-zinc-600 text-stone-400">Sem avaliação</span>
         )}
-        {supplier.whatsapp && (
-          <span className="text-xs dark:text-zinc-500 text-stone-500 truncate max-w-[100px]">
-            {supplier.whatsapp}
-          </span>
-        )}
       </div>
     </>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={sharedClass}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <div className={sharedClass}>{content}</div>;
+  return (
+    <div className={cn(rowClass, "gap-2")}>
+      {href ? (
+        <Link href={href} className="flex flex-1 items-center gap-3 min-w-0">
+          {main}
+        </Link>
+      ) : (
+        <div className="flex flex-1 items-center gap-3 min-w-0">{main}</div>
+      )}
+      {supplier.whatsapp &&
+        (waLink ? (
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline px-1"
+            aria-label={`WhatsApp de ${supplier.name}`}
+          >
+            WhatsApp
+          </a>
+        ) : (
+          <span className="shrink-0 text-xs dark:text-zinc-500 text-stone-500 truncate max-w-[88px]">
+            {supplier.whatsapp}
+          </span>
+        ))}
+    </div>
+  );
 }

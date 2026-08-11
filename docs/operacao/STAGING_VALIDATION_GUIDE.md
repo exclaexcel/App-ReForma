@@ -29,7 +29,7 @@ npx supabase db push --linked  # or your staging method
 
 **Location:** Supabase Console → SQL Editor
 
-Run all tests from `docs/VALIDATION_TESTS.sql`:
+Run all tests from `docs/operacao/VALIDATION_TESTS.sql`:
 
 1. ✅ Table structure verification
 2. ✅ View columns validation

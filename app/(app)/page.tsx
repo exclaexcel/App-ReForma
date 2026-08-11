@@ -4,7 +4,7 @@ import { CreateFirstProject } from "@/components/create-first-project";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { PlusCircle, Settings, AlertCircle, HardHat as HatIcon } from "lucide-react";
+import { PlusCircle, Settings, AlertCircle, HardHat as HatIcon, FolderOpen } from "lucide-react";
 import Link from "next/link";
 import { ExpenseInstallmentRow } from "@/lib/types";
 import { formatCurrency, getDocStatus } from "@/lib/utils";
@@ -63,7 +63,7 @@ export default async function HomePage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
-  // Fetch installments via view
+  // KPIs need the full installment set (aggregates). List pages use server-side range.
   const { data: allInstallmentsData } = await supabase
     .from("expense_installments_view")
     .select("*, categories(id, name, color_hex)")
@@ -264,12 +264,20 @@ export default async function HomePage() {
                   </li>
                 )}
               </ul>
-              <Link
-                href="/despesas"
-                className="inline-block text-amber-400 text-xs font-medium mt-2 hover:text-amber-300 transition-colors"
-              >
-                Ver despesas →
-              </Link>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <Link
+                  href="/comprovantes"
+                  className="inline-block text-amber-400 text-xs font-medium hover:text-amber-300 transition-colors"
+                >
+                  Ver comprovantes →
+                </Link>
+                <Link
+                  href="/despesas"
+                  className="inline-block text-amber-400 text-xs font-medium hover:text-amber-300 transition-colors"
+                >
+                  Ver despesas →
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -282,6 +290,14 @@ export default async function HomePage() {
       >
         <PlusCircle className="h-5 w-5" />
         Lançar Nova Despesa
+      </Link>
+
+      <Link
+        href="/comprovantes"
+        className="flex items-center justify-center gap-2 w-full rounded-xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-3 text-sm font-semibold text-stone-700 dark:text-zinc-200 hover:bg-stone-100 dark:hover:bg-zinc-700 active:scale-95 transition-all duration-200"
+      >
+        <FolderOpen className="h-5 w-5 text-orange-600 dark:text-orange-500" />
+        Pasta Digital de Comprovantes
       </Link>
 
       {/* Recent expenses */}

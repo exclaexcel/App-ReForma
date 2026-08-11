@@ -72,12 +72,12 @@
 
 ## Resumo
 
-| Prioridade | Qtd |
-|---|---|
-| 🔴 Crítico | 4 |
-| 🟠 Alto | 7 |
-| 🟡 Médio | 8 |
-| 🔵 Baixo | 6 |
-| ⚪ Future | 7 |
-| ❌ Cancelado | 1 |
+| Prioridade      | Qtd    |
+| --------------- | ------ |
+| 🔴 Crítico      | 4      |
+| 🟠 Alto         | 7      |
+| 🟡 Médio        | 8      |
+| 🔵 Baixo        | 6      |
+| ⚪ Future       | 7      |
+| ❌ Cancelado    | 1      |
 | **Total ativo** | **33** |

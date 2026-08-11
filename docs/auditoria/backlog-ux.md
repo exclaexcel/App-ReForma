@@ -47,13 +47,13 @@
 
 ## Resumo
 
-| Prioridade | Qtd |
-|---|---|
-| 🔴 Crítico | 3 |
-| 🟠 Alto | 5 |
-| 🟡 Médio | 8 |
-| 🔵 Baixo | 3 |
-| **Total** | **19** |
+| Prioridade | Qtd    |
+| ---------- | ------ |
+| 🔴 Crítico | 3      |
+| 🟠 Alto    | 5      |
+| 🟡 Médio   | 8      |
+| 🔵 Baixo   | 3      |
+| **Total**  | **19** |
 
 ---
 

@@ -1,4 +1,5 @@
 # Análise do Núcleo Funcional — App Reforma
+
 **Data:** 2026-06-22  
 **Foco:** comprovantes · notas fiscais · valor investido · tempo de obra · conciliação financeira  
 **Evidência:** leitura direta do código — sem suposições
@@ -10,6 +11,7 @@
 **O app hoje atende parcialmente o objetivo principal.**
 
 O que está funcional de verdade:
+
 - Cadastrar despesas com upload de arquivo (imagem ou PDF)
 - Visualizar os arquivos anexados, agrupados por mês
 - Ver total comprometido, total pago e total a pagar no dashboard
@@ -17,6 +19,7 @@ O que está funcional de verdade:
 - Countdown de dias até o fim da obra
 
 O que ainda impede o app de cumprir sua função central:
+
 - **Não existe campo separado para nota fiscal** — NF e comprovante de pagamento são o mesmo campo (`receipt_url`). O sistema não distingue os dois documentos.
 - **Não existe conciliação** entre valor declarado, valor da NF e valor do comprovante — nenhuma lógica compara ou alerta divergências.
 - **Pagamentos sem comprovante não são identificados** — o usuário pode lançar qualquer valor sem anexar nada, e o sistema registra normalmente.
@@ -34,21 +37,25 @@ O que ainda impede o app de cumprir sua função central:
 **Status: PARCIALMENTE PRONTO**
 
 **Evidência no código:**
+
 - `expense-form.tsx` linhas 85–96: upload funciona — bucket `receipts`, path `{uid}/{timestamp}-{filename}`, limite 5MB, aceita imagem e PDF.
 - `receipt_url: string | null` (`lib/types.ts` linha 47) — campo opcional, comprovante não é obrigatório.
 - `comprovantes/page.tsx` linhas 122–136: signed URL gerado com TTL de 1 hora para visualização.
 - `expense-list-item.tsx` linhas 1–69: a lista de despesas **não mostra nenhum indicador** se a despesa tem ou não comprovante.
 
 **Problema encontrado:**
+
 - Comprovante é opcional e não há alerta para despesas pagas sem comprovante.
 - A listagem de comprovantes mostra apenas valor, descrição e data — não mostra fornecedor, cômodo, categoria nem forma de pagamento.
 - Não é possível filtrar "despesas pagas sem comprovante".
 
 **Impacto prático:**
+
 - Usuário pode marcar 10 despesas como pagas sem anexar nenhum comprovante. O total investido vai crescer normalmente, sem nenhum alerta.
 - Na hora de conferir, não há como saber rapidamente quais pagamentos estão documentados e quais não estão.
 
 **Como resolver:**
+
 1. Adicionar badge visual "sem comprovante" na `expense-list-item.tsx` quando `receipt_url` é null e `is_paid` é true.
 2. Adicionar filtro "Pagos sem comprovante" na listagem de despesas.
 3. Adicionar contador no dashboard: "X pagamentos sem comprovante".
@@ -60,6 +67,7 @@ O que ainda impede o app de cumprir sua função central:
 **Status: CRÍTICO — não existe como conceito no sistema**
 
 **Evidência no código:**
+
 - `lib/types.ts` linha 47: único campo de arquivo = `receipt_url: string | null`
 - `expense-form.tsx` linha 339: label do campo = `"Comprovante (opcional)"`
 - `supabase/migrations/` (001, 002, 003): nenhuma migration adiciona coluna para NF.
@@ -67,6 +75,7 @@ O que ainda impede o app de cumprir sua função central:
 
 **Problema encontrado:**
 NF não existe como entidade no sistema. Não há:
+
 - Campo `invoice_url` ou `nf_url` separado do comprovante de pagamento
 - Campo `invoice_number` (número da NF)
 - Campo `invoice_value` (valor da NF, que pode diferir do valor pago)
@@ -74,6 +83,7 @@ NF não existe como entidade no sistema. Não há:
 - CNPJ do emissor vinculado à NF
 
 **Impacto prático:**
+
 - É impossível saber se uma despesa tem NF ou não.
 - É impossível conferir se o valor da NF bate com o valor pago.
 - O arquivo `receipt_url` pode ser uma foto do recibo, uma NF, um orçamento ou qualquer coisa — o sistema não sabe e não diferencia.
@@ -81,12 +91,14 @@ NF não existe como entidade no sistema. Não há:
 
 **Como resolver:**
 Adicionar à tabela `expenses`:
+
 ```sql
 invoice_url       text          -- arquivo da NF (separado do comprovante)
 invoice_number    text          -- número da NF
 invoice_value     numeric       -- valor da NF (pode diferir do valor pago)
 has_invoice       boolean DEFAULT false
 ```
+
 E na UI: campo separado de upload para NF, com label claro.
 
 ---
@@ -97,14 +109,17 @@ E na UI: campo separado de upload para NF, com label claro.
 
 **Evidência no código:**
 `dashboard/page.tsx` linhas 41–43:
+
 ```ts
-totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0)
-totalPaid      = allExpenses.filter(e => e.is_paid).reduce((sum, e) => sum + e.amount, 0)
-toPay          = totalCommitted - totalPaid
+totalCommitted = allExpenses.reduce((sum, e) => sum + e.amount, 0);
+totalPaid = allExpenses.filter((e) => e.is_paid).reduce((sum, e) => sum + e.amount, 0);
+toPay = totalCommitted - totalPaid;
 ```
+
 `graficos/page.tsx` linhas 45–83: total por categoria calculado e exibido. Total por semana calculado e exibido.
 
 **O que existe e funciona:**
+
 - Total comprometido (todos os lançamentos)
 - Total efetivamente pago (`is_paid = true`)
 - Total a pagar (`comprometido - pago`)
@@ -112,6 +127,7 @@ toPay          = totalCommitted - totalPaid
 - Evolução semanal dos gastos
 
 **O que não existe:**
+
 - Saldo restante explícito (`orçamento - comprometido`) — o dashboard mostra orçamento e comprometido separados, mas não calcula a subtração
 - Total por fornecedor — nenhuma tela soma despesas por `supplier_id`
 - Total por cômodo — `room_id` existe nas despesas mas nunca é agregado
@@ -126,6 +142,7 @@ O `totalCommitted` inclui despesas sem comprovante, sem NF e não confirmadas. U
 O número "total investido" não é auditável — mistura registros documentados com lançamentos sem nenhuma comprovação.
 
 **Como resolver:**
+
 1. Calcular e exibir `saldo = total_budget - totalCommitted` diretamente no dashboard.
 2. Adicionar visão "por cômodo" e "por fornecedor" nos gráficos.
 3. Separar no dashboard: "confirmados com comprovante" vs "lançados sem documento".
@@ -140,17 +157,21 @@ O número "total investido" não é auditável — mistura registros documentado
 `lib/types.ts` linhas 1–9: campos `start_date: string | null` e `end_date: string | null` existem no modelo.
 
 `dashboard/page.tsx` linhas 46–50:
+
 ```ts
 daysUntilEnd = Math.ceil(
   (new Date(project.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-)
+);
 ```
+
 Exibido via `CountdownBanner` — mostra "Faltam X dias", "Hoje é o prazo" ou "Prazo encerrado".
 
 **O que existe:**
+
 - Countdown até a data de fim da obra (se `end_date` estiver preenchido)
 
 **O que não existe:**
+
 - `start_date` existe no banco mas **não é lido nem exibido em nenhuma tela**
 - Dias corridos desde o início: não calculado
 - Progresso temporal (% do tempo decorrido): não existe
@@ -163,6 +184,7 @@ Exibido via `CountdownBanner` — mostra "Faltam X dias", "Hoje é o prazo" ou "
 O usuário sabe quantos dias faltam para o prazo. Não sabe há quantos dias a obra está em andamento, em que fase está, nem se está adiantada ou atrasada em relação ao planejado.
 
 **Como resolver:**
+
 1. Ler e exibir `start_date` no dashboard: "Obra iniciada em X — Y dias em andamento".
 2. Calcular e exibir `% do tempo decorrido` entre `start_date` e `end_date`.
 3. Adicionar campo `current_phase` ou `current_stage` ao projeto (texto livre ou enum).
@@ -174,12 +196,14 @@ O usuário sabe quantos dias faltam para o prazo. Não sabe há quantos dias a o
 **Status: CRÍTICO — não existe nenhuma conciliação**
 
 **Evidência no código:**
+
 - Não há nenhuma função, query ou componente que compare `amount` com qualquer valor de NF.
 - `receipt_url` é armazenado mas nunca lido para validação — é apenas uma URL de exibição.
 - O modelo não tem campo para valor da NF (`invoice_value`), portanto a comparação é estruturalmente impossível.
 - Não há lógica de alerta para: pagamento sem comprovante, despesa sem NF, NF com valor divergente, registros duplicados.
 
 **Impacto prático:**
+
 - Um usuário pode lançar R$ 50.000 em despesas pagas, sem nenhum comprovante e sem nenhuma NF.
 - O dashboard vai mostrar "R$ 50.000 efetivamente pagos" com a mesma confiança de um projeto 100% documentado.
 - Não há como distinguir os dois cenários pela UI ou pelos dados.
@@ -191,18 +215,18 @@ Ver seção "Inconsistências financeiras" abaixo — requer mudança estrutural
 
 # 3. Inconsistências financeiras e riscos
 
-| Risco | Evidência | Severidade |
-|---|---|---|
-| `amount` único — sem separação NF/pagamento | `lib/types.ts:46` — um campo só | CRÍTICO |
-| `receipt_url` não é validado — pode ser qualquer arquivo | `expense-form.tsx:342` — aceita `image/*,application/pdf` sem mais checks | CRÍTICO |
-| Despesa paga sem comprovante não é identificada | `expense-list-item.tsx` — sem badge, sem filtro, sem alerta | CRÍTICO |
-| NF não existe como conceito | Nenhum campo `invoice_*` em nenhum arquivo | CRÍTICO |
-| `totalCommitted` inclui lançamentos sem documento | `dashboard/page.tsx:41` — soma todos sem filtro | ALTO |
-| `is_paid` é booleano sem data do pagamento | `lib/types.ts:46` — sem `paid_at: timestamp` | ALTO |
-| Cancelamento apaga histórico | Não existe estado `cancelado` — só delete | ALTO |
-| Sem `CHECK amount > 0` no banco | Migrations 001–003 não têm constraint | MÉDIO |
-| `start_date` existe mas não é usado | `lib/types.ts:4` — campo ignorado no código | MÉDIO |
-| Agenda sem vínculo financeiro | `ScheduleEvent` sem `expense_id` | MÉDIO |
+| Risco                                                    | Evidência                                                                 | Severidade |
+| -------------------------------------------------------- | ------------------------------------------------------------------------- | ---------- |
+| `amount` único — sem separação NF/pagamento              | `lib/types.ts:46` — um campo só                                           | CRÍTICO    |
+| `receipt_url` não é validado — pode ser qualquer arquivo | `expense-form.tsx:342` — aceita `image/*,application/pdf` sem mais checks | CRÍTICO    |
+| Despesa paga sem comprovante não é identificada          | `expense-list-item.tsx` — sem badge, sem filtro, sem alerta               | CRÍTICO    |
+| NF não existe como conceito                              | Nenhum campo `invoice_*` em nenhum arquivo                                | CRÍTICO    |
+| `totalCommitted` inclui lançamentos sem documento        | `dashboard/page.tsx:41` — soma todos sem filtro                           | ALTO       |
+| `is_paid` é booleano sem data do pagamento               | `lib/types.ts:46` — sem `paid_at: timestamp`                              | ALTO       |
+| Cancelamento apaga histórico                             | Não existe estado `cancelado` — só delete                                 | ALTO       |
+| Sem `CHECK amount > 0` no banco                          | Migrations 001–003 não têm constraint                                     | MÉDIO      |
+| `start_date` existe mas não é usado                      | `lib/types.ts:4` — campo ignorado no código                               | MÉDIO      |
+| Agenda sem vínculo financeiro                            | `ScheduleEvent` sem `expense_id`                                          | MÉDIO      |
 
 ---
 
@@ -246,21 +270,25 @@ Ver seção "Inconsistências financeiras" abaixo — requer mudança estrutural
 **Escopo:**
 
 ### Banco de dados (migrations)
+
 - Adicionar `invoice_url text`, `invoice_number text`, `invoice_value numeric`, `has_invoice boolean default false` à tabela `expenses`
 - Adicionar `paid_at timestamp` à tabela `expenses`
 - Adicionar `CHECK (amount > 0)` à tabela `expenses`
 
 ### UI — Formulário de despesa
+
 - Separar campo de upload em dois: "Comprovante de pagamento" e "Nota fiscal"
 - Exibir `paid_at` (data do pagamento) quando `is_paid = true`
 
 ### Dashboard
+
 - Exibir saldo: `orçamento - comprometido`
 - Exibir `start_date`: "Obra iniciada há X dias"
 - Adicionar contador: "X pagamentos sem comprovante"
 - Adicionar contador: "X despesas sem NF"
 
 ### Listagem de despesas
+
 - Badge "sem comprovante" quando `is_paid = true` e `receipt_url = null`
 - Filtro: "Pagos sem comprovante"
 

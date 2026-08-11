@@ -3,17 +3,20 @@
 ## Context
 
 O ReForma está em produção estável (v0.8). Três tarefas de engenharia pura:
+
 - **#6** Schema inicial versionado: tabelas base criadas via Supabase UI, nunca via código. Nenhum `000_initial_schema.sql` existe.
 - **#7** Migration history sincronizada: 3 migrations antigas (`001_`, `002_`, `003_`) não foram rastreadas pelo Supabase CLI. CLI não está inicializado no projeto (sem `config.toml`). Solução: usar `supabase migration repair` nativo — sem renomear arquivos, sem tabela customizada.
 - **#8** Tipos automáticos: `lib/database.types.ts` não existe. Tipos em `lib/types.ts` são manuais.
 
 **Restrições aprovadas:**
+
 - NÃO renomear migrations históricas
 - NÃO criar `_schema_migrations` customizada — usar tracking nativo do Supabase CLI
 - Schema inicial derivado de auditoria real do BD remoto, não de suposições
 - Branch: `sprint-v0.9-infra` com 3 commits lógicos
 
 **Restrições de produção:**
+
 - Sem downtime. Migrations só aplicadas via SQL Editor com `NOT VALID` onde aplicável.
 - Supabase CLI sem Docker para este projeto. Operações de BD são contra o remoto `bhsvvpvfbszrcitjwxxl`.
 
@@ -37,6 +40,7 @@ git checkout -b sprint-v0.9-infra
 Rodar cada bloco no SQL Editor do Supabase (UI → SQL Editor → projeto `bhsvvpvfbszrcitjwxxl`):
 
 **Bloco 1 — Colunas de todas as tabelas:**
+
 ```sql
 SELECT
   table_name,
@@ -51,6 +55,7 @@ ORDER BY table_name, ordinal_position;
 ```
 
 **Bloco 2 — Constraints (CHECK, FK, UNIQUE):**
+
 ```sql
 SELECT
   tc.table_name,
@@ -66,6 +71,7 @@ ORDER BY tc.table_name, tc.constraint_type;
 ```
 
 **Bloco 3 — Índices:**
+
 ```sql
 SELECT
   tablename,
@@ -78,6 +84,7 @@ ORDER BY tablename, indexname;
 ```
 
 **Bloco 4 — RLS ativo:**
+
 ```sql
 SELECT relname, relrowsecurity
 FROM pg_class
@@ -86,6 +93,7 @@ ORDER BY relname;
 ```
 
 **Bloco 5 — Policies RLS:**
+
 ```sql
 SELECT tablename, policyname, cmd, qual, with_check
 FROM pg_policies
@@ -94,6 +102,7 @@ ORDER BY tablename, policyname;
 ```
 
 **Bloco 6 — FK entre tabelas:**
+
 ```sql
 SELECT
   tc.table_name,
@@ -116,10 +125,10 @@ ORDER BY tc.table_name;
 
 ### Arquivos a criar
 
-| Arquivo | Descrição |
-|---|---|
+| Arquivo                                                 | Descrição                          |
+| ------------------------------------------------------- | ---------------------------------- |
 | `supabase/migrations/20260501000000_initial_schema.sql` | DDL consolidado das 7 tabelas base |
-| `supabase/seed.sql` | Seed mínimo para testes |
+| `supabase/seed.sql`                                     | Seed mínimo para testes            |
 
 ### Estrutura do `20260501000000_initial_schema.sql`
 
@@ -172,8 +181,8 @@ O Supabase CLI rastreia migrations via tabela interna `supabase_migrations.schem
 
 ### Arquivos a criar
 
-| Arquivo | Descrição |
-|---|---|
+| Arquivo                | Descrição                              |
+| ---------------------- | -------------------------------------- |
 | `supabase/config.toml` | Inicializa Supabase CLI para o projeto |
 
 ### Conteúdo de `supabase/config.toml`
@@ -247,11 +256,11 @@ supabase migration list
 
 ### Riscos
 
-| Risco | Mitigação |
-|---|---|
-| `supabase migration list` retornar erro de autenticação | Verificar token e reautenticar com `supabase login` |
-| CLI tentar re-aplicar migration já aplicada | `repair --status applied` apenas registra, não executa SQL |
-| config.toml com porta conflitante | Parâmetros de porta ignorados ao operar `--remote` sem Docker |
+| Risco                                                   | Mitigação                                                     |
+| ------------------------------------------------------- | ------------------------------------------------------------- |
+| `supabase migration list` retornar erro de autenticação | Verificar token e reautenticar com `supabase login`           |
+| CLI tentar re-aplicar migration já aplicada             | `repair --status applied` apenas registra, não executa SQL    |
+| config.toml com porta conflitante                       | Parâmetros de porta ignorados ao operar `--remote` sem Docker |
 
 ### Commit #2
 
@@ -266,17 +275,17 @@ git commit -m "chore(infra): initialize supabase cli and repair migration histor
 
 ### Arquivos a criar
 
-| Arquivo | Como |
-|---|---|
-| `lib/database.types.ts` | Gerado por `supabase gen types typescript` — commitar o resultado |
-| `.github/workflows/generate-types.yml` | Manual |
+| Arquivo                                | Como                                                              |
+| -------------------------------------- | ----------------------------------------------------------------- |
+| `lib/database.types.ts`                | Gerado por `supabase gen types typescript` — commitar o resultado |
+| `.github/workflows/generate-types.yml` | Manual                                                            |
 
 ### Arquivos a modificar
 
-| Arquivo | Mudança |
-|---|---|
+| Arquivo        | Mudança                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
 | `lib/types.ts` | Importar de `database.types.ts`; manter somente custom types e constants |
-| `package.json` | Adicionar script `"types:gen"` |
+| `package.json` | Adicionar script `"types:gen"`                                           |
 
 ### Comando de geração
 
@@ -287,65 +296,91 @@ supabase gen types typescript --project-id bhsvvpvfbszrcitjwxxl > lib/database.t
 ### Estrutura final de `lib/types.ts`
 
 ```typescript
-import type { Database } from './database.types';
+import type { Database } from "./database.types";
 
 // Re-exports de tabelas — fonte: database.types.ts (não editar lá)
-export type Project       = Database['public']['Tables']['projects']['Row'];
-export type Category      = Database['public']['Tables']['categories']['Row'];
-export type Room          = Database['public']['Tables']['rooms']['Row'];
-export type Expense       = Database['public']['Tables']['expenses']['Row'];
-export type Supplier      = Database['public']['Tables']['suppliers']['Row'];
-export type Task          = Database['public']['Tables']['tasks']['Row'];
-export type ScheduleEvent = Database['public']['Tables']['schedule_events']['Row'];
+export type Project = Database["public"]["Tables"]["projects"]["Row"];
+export type Category = Database["public"]["Tables"]["categories"]["Row"];
+export type Room = Database["public"]["Tables"]["rooms"]["Row"];
+export type Expense = Database["public"]["Tables"]["expenses"]["Row"];
+export type Supplier = Database["public"]["Tables"]["suppliers"]["Row"];
+export type Task = Database["public"]["Tables"]["tasks"]["Row"];
+export type ScheduleEvent = Database["public"]["Tables"]["schedule_events"]["Row"];
 
 // Tipos de mutação (úteis em forms)
-export type ExpenseInsert = Database['public']['Tables']['expenses']['Insert'];
-export type ExpenseUpdate = Database['public']['Tables']['expenses']['Update'];
+export type ExpenseInsert = Database["public"]["Tables"]["expenses"]["Insert"];
+export type ExpenseUpdate = Database["public"]["Tables"]["expenses"]["Update"];
 
 // Tipo com joins — para queries .select('*, categories(*), rooms(*), suppliers(id,name)')
 export type ExpenseWithRelations = Expense & {
   categories: Category | null;
   rooms: Room | null;
-  suppliers: Pick<Supplier, 'id' | 'name'> | null;
+  suppliers: Pick<Supplier, "id" | "name"> | null;
 };
 
 // Tipos derivados — não geráveis automaticamente (manter aqui)
-export type PaymentMethod    = 'pix' | 'cartao_credito' | 'cartao_debito' | 'dinheiro' | 'boleto';
-export type ExpenseType      = 'mao_obra' | 'material' | 'loja' | 'servico' | 'outro';
-export type DocStatus        = 'completo' | 'pendente' | 'sem_comprovante' | 'divergencia' | 'sem_regra';
-export type TaskStatus       = 'pendente' | 'em_andamento' | 'concluido';
-export type EventType        = 'entrega_material' | 'servico_mao_obra' | 'pagamento' | 'visita_tecnica';
-export type SupplierSpecialty = 'Elétrica' | 'Hidráulica' | 'Pintura' | 'Marcenaria' | 'Gesso' | 'Piso' | 'Outros';
+export type PaymentMethod = "pix" | "cartao_credito" | "cartao_debito" | "dinheiro" | "boleto";
+export type ExpenseType = "mao_obra" | "material" | "loja" | "servico" | "outro";
+export type DocStatus = "completo" | "pendente" | "sem_comprovante" | "divergencia" | "sem_regra";
+export type TaskStatus = "pendente" | "em_andamento" | "concluido";
+export type EventType = "entrega_material" | "servico_mao_obra" | "pagamento" | "visita_tecnica";
+export type SupplierSpecialty =
+  | "Elétrica"
+  | "Hidráulica"
+  | "Pintura"
+  | "Marcenaria"
+  | "Gesso"
+  | "Piso"
+  | "Outros";
 
 // Constantes e labels (manter aqui)
-export const EXPENSE_TYPES: ExpenseType[] = ['mao_obra', 'material', 'loja', 'servico', 'outro'];
+export const EXPENSE_TYPES: ExpenseType[] = ["mao_obra", "material", "loja", "servico", "outro"];
 export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
-  mao_obra: 'Mão de Obra', material: 'Material', loja: 'Loja / Acabamento',
-  servico: 'Serviço', outro: 'Outro',
+  mao_obra: "Mão de Obra",
+  material: "Material",
+  loja: "Loja / Acabamento",
+  servico: "Serviço",
+  outro: "Outro",
 };
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  pix: 'PIX', cartao_credito: 'Cartão de Crédito', cartao_debito: 'Cartão de Débito',
-  dinheiro: 'Dinheiro', boleto: 'Boleto',
+  pix: "PIX",
+  cartao_credito: "Cartão de Crédito",
+  cartao_debito: "Cartão de Débito",
+  dinheiro: "Dinheiro",
+  boleto: "Boleto",
 };
 export const DOC_STATUS_LABELS: Record<DocStatus, string> = {
-  completo: 'Documentado', pendente: 'Doc. incompleta',
-  sem_comprovante: 'Sem comprovante', divergencia: 'Divergência', sem_regra: '—',
+  completo: "Documentado",
+  pendente: "Doc. incompleta",
+  sem_comprovante: "Sem comprovante",
+  divergencia: "Divergência",
+  sem_regra: "—",
 };
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  pendente: 'Pendente', em_andamento: 'Em Andamento', concluido: 'Concluído',
+  pendente: "Pendente",
+  em_andamento: "Em Andamento",
+  concluido: "Concluído",
 };
 export const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  entrega_material: 'Entrega de Material', servico_mao_obra: 'Serviço / Mão de Obra',
-  pagamento: 'Pagamento', visita_tecnica: 'Visita Técnica',
+  entrega_material: "Entrega de Material",
+  servico_mao_obra: "Serviço / Mão de Obra",
+  pagamento: "Pagamento",
+  visita_tecnica: "Visita Técnica",
 };
 export const SUPPLIER_SPECIALTIES: SupplierSpecialty[] = [
-  'Elétrica', 'Hidráulica', 'Pintura', 'Marcenaria', 'Gesso', 'Piso', 'Outros',
+  "Elétrica",
+  "Hidráulica",
+  "Pintura",
+  "Marcenaria",
+  "Gesso",
+  "Piso",
+  "Outros",
 ];
 export const DEFAULT_CATEGORIES = [
-  { name: 'Mão de Obra', color_hex: '#C84B31' },
-  { name: 'Materiais Brutos', color_hex: '#5C3A21' },
-  { name: 'Acabamentos', color_hex: '#D97757' },
-  { name: 'Móveis e Decoração', color_hex: '#92400e' },
+  { name: "Mão de Obra", color_hex: "#C84B31" },
+  { name: "Materiais Brutos", color_hex: "#5C3A21" },
+  { name: "Acabamentos", color_hex: "#D97757" },
+  { name: "Móveis e Decoração", color_hex: "#92400e" },
 ];
 ```
 
@@ -364,7 +399,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'supabase/migrations/**'
+      - "supabase/migrations/**"
   workflow_dispatch:
 
 jobs:
@@ -377,7 +412,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Install Supabase CLI
         run: npm install -g supabase
@@ -393,7 +428,7 @@ jobs:
       - name: Commit updated types
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: 'chore: regenerate database types [skip ci]'
+          commit_message: "chore: regenerate database types [skip ci]"
           file_pattern: lib/database.types.ts
 ```
 
@@ -411,6 +446,7 @@ git commit -m "feat(infra): add auto-generated database types and ci workflow"
 ## Resumo: Arquivos Criados / Modificados
 
 ### Criar (5 arquivos)
+
 1. `supabase/migrations/20260501000000_initial_schema.sql`
 2. `supabase/seed.sql`
 3. `supabase/config.toml`
@@ -418,10 +454,12 @@ git commit -m "feat(infra): add auto-generated database types and ci workflow"
 5. `.github/workflows/generate-types.yml`
 
 ### Modificar (2 arquivos)
+
 6. `lib/types.ts` — refatorar para importar de `database.types.ts`
 7. `package.json` — adicionar script `types:gen`
 
 ### NÃO tocar
+
 - Migrations existentes (nenhum rename)
 - `app/`, `components/`
 - `lib/supabase/client.ts`, `lib/supabase/server.ts`
@@ -493,11 +531,11 @@ git commit -m "feat(infra): add auto-generated database types and ci workflow"
 
 ## Estimativa de Tempo
 
-| Bloco | Tempo |
-|---|---|
-| Setup (S1–S3) | 15min |
-| Bloco A (auditoria + schema) | 2h |
-| Bloco B (CLI init + repair) | 45min |
-| Bloco C (tipos + CI) | 2h |
-| QA Final | 30min |
-| **Total** | **~5.5h** |
+| Bloco                        | Tempo     |
+| ---------------------------- | --------- |
+| Setup (S1–S3)                | 15min     |
+| Bloco A (auditoria + schema) | 2h        |
+| Bloco B (CLI init + repair)  | 45min     |
+| Bloco C (tipos + CI)         | 2h        |
+| QA Final                     | 30min     |
+| **Total**                    | **~5.5h** |

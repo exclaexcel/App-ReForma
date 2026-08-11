@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+/** Digits-only WhatsApp number for wa.me (BR: prepend 55 when missing). */
+export function toWhatsAppLink(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 10) return null;
+  const withCountry = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${withCountry}`;
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",

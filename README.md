@@ -80,10 +80,13 @@ app_reforma/
 │   ├── supabase/    # Supabase clients
 │   ├── queries/     # Data fetching
 │   └── types.ts     # Domain types
+├── docs/            # Documentação (produto, operação, auditoria)
 ├── supabase/        # Database
 │   └── migrations/  # SQL migrations
 └── public/          # Static assets
 ```
+
+Índice da documentação: [docs/README.md](./docs/README.md).
 
 ## Autenticação
 
@@ -128,7 +131,7 @@ No Vercel Dashboard:
 
 ## Roadmap
 
-Veja [SPRINT-ROADMAP.md](./SPRINT-ROADMAP.md) para features planejadas.
+Veja [docs/produto/SPRINT-ROADMAP.md](./docs/produto/SPRINT-ROADMAP.md) para features planejadas.
 
 ## Troubleshooting
 

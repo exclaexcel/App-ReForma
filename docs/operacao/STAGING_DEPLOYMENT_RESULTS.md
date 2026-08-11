@@ -74,7 +74,7 @@ Build output:
 
 **Tests to run in Supabase SQL Editor (after migrations):**
 
-All 10 tests from `docs/VALIDATION_TESTS.sql`:
+All 10 tests from `docs/operacao/VALIDATION_TESTS.sql`:
 
 ```
 Phase 1: Verify schema
@@ -171,7 +171,7 @@ Go to Supabase console and execute the 3 migration files in SQL Editor:
 
 ### Step 2: Run SQL Validation Tests
 
-In Supabase SQL Editor, copy & run each test from `docs/VALIDATION_TESTS.sql`:
+In Supabase SQL Editor, copy & run each test from `docs/operacao/VALIDATION_TESTS.sql`:
 
 ```sql
 -- Test 1: Verify table structure
@@ -240,8 +240,8 @@ After completing tests, please share:
 
 ### Validation Scripts
 
-- ✅ `docs/VALIDATION_TESTS.sql` (10 SQL tests)
-- ✅ `docs/STAGING_VALIDATION_GUIDE.md` (step-by-step)
+- ✅ `docs/operacao/VALIDATION_TESTS.sql` (10 SQL tests)
+- ✅ `docs/operacao/STAGING_VALIDATION_GUIDE.md` (step-by-step)
 
 ---
 
