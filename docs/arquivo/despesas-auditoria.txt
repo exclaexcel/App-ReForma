@@ -1,0 +1,34 @@
+Analise a página de Despesas do ReForma.
+
+Contexto:
+
+A página atualmente possui:
+
+- Filtro inteligente horizontal por categorias
+- Barra horizontal de rolagem
+- CTAs e componentes auxiliares
+
+Recentemente a página de Gráficos foi removida porque gerava muitos problemas e pouco valor.
+
+Objetivo:
+
+Quero simplificar a página de Despesas.
+
+Analise o layout atual.
+
+Perguntas:
+
+1. Quais CTAs ou elementos devem ser removidos?
+2. O filtro inteligente por categorias deve permanecer?
+3. O excesso de elementos reduz a clareza?
+4. Quais informações são realmente importantes para o usuário?
+5. Como transformar essa página em uma tela focada apenas em:
+   - busca
+   - filtro
+   - lançamento
+   - análise rápida
+
+Gere um wireframe textual da nova versão.
+
+Prioridade:
+simplicidade > beleza.

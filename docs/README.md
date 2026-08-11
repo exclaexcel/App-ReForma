@@ -16,9 +16,13 @@
 
 - Começar a desenvolver: [produto/DEV-QUICK-START.md](./produto/DEV-QUICK-START.md)
 - Roadmap: [produto/SPRINT-ROADMAP.md](./produto/SPRINT-ROADMAP.md)
+- Continuidade (hoje→amanhã): [operacao/CONTINUIDADE_2026-08-10.md](./operacao/CONTINUIDADE_2026-08-10.md)
 - Verificação banco (pós-restore): [operacao/VERIFICACAO_BANCO_2026-08-10.md](./operacao/VERIFICACAO_BANCO_2026-08-10.md)
+- Backlog UX (incl. nav mobile): [auditoria/backlog-ux.md](./auditoria/backlog-ux.md)
 - Incidentes: [incidentes/](./incidentes/)
 
 ## Nota
 
 Docs em `auditoria/` e `arquivo/` são **históricos**. O estado atual do produto está no código + migrations em `supabase/migrations/`.
+
+Lixo local (`.claude/`, `.codex/`, `supabase/.temp/`) fica no `.gitignore` — não versionar.

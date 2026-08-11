@@ -6,6 +6,15 @@
 
 ---
 
+## 📌 Anotado 2026-08-11 (próxima sessão)
+
+- [ ] **#U-MOBILE-NAV Fornecedores + Bottom Nav no celular** — `components/bottom-nav.tsx`  
+      Com 6 itens (Início, Despesas, FAB Novo, Agenda, Gráficos, Fornecedores) a barra inferior **não fica certa no mobile**: labels apertados / layout quebrado.  
+      Pedido da Dany: ajustar os botões de baixo (provável: enxugar para 5 abas, ícone sem label longo, ou tirar Fornecedores da nav e deixar no hub).  
+      **Não feito hoje** — só anotado.
+
+---
+
 ## 🔴 CRÍTICO — Quebra de fluxo ou dado perdido
 
 - [ ] **#U1 Delete de cômodo sem confirmação e sem aria-label** — `room-manager.tsx:44` — toque acidental destrói cômodo com tarefas/despesas vinculadas instantaneamente; sem `window.confirm` e sem `aria-label` no botão

@@ -40,6 +40,12 @@ next-env.d.ts
 # editor
 .vscode/
 bagunça.md
+bagunca.md
+
+# local agent / CLI junk (não versionar)
+.claude/
+.codex/
+supabase/.temp/
 
 # e2e tests
 e2e/.auth/
