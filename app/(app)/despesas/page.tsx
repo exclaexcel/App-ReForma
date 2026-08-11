@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { ExpenseListItem } from "@/components/expense-list-item";
 import { Input } from "@/components/ui/input";
@@ -11,9 +12,11 @@ import { ExpenseInstallmentRow, ExpenseType } from "@/lib/types";
 import { Search, SlidersHorizontal, ClipboardList, RotateCcw } from "lucide-react";
 import { PAYMENT_METHOD_LABELS } from "@/lib/types";
 import { AdvancedFiltersModal } from "@/components/advanced-filters-modal";
-import { getLocalDateString } from "@/lib/utils";
+import { cn, getLocalDateString, getMonthBounds } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
+
+type QuickFilter = "este_mes" | "atrasadas" | null;
 
 type AdvancedFilters = {
   dateFrom?: string;
@@ -70,8 +73,9 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
   URL.revokeObjectURL(url);
 }
 
-function hasActiveFilters(search: string, filters: AdvancedFilters) {
+function hasActiveFilters(search: string, filters: AdvancedFilters, quick: QuickFilter) {
   return (
+    !!quick ||
     search.trim().length > 0 ||
     !!filters.dateFrom ||
     !!filters.dateTo ||
@@ -84,10 +88,17 @@ function hasActiveFilters(search: string, filters: AdvancedFilters) {
   );
 }
 
+function parseQuickFilter(value: string | null): QuickFilter {
+  if (value === "este_mes" || value === "atrasadas") return value;
+  return null;
+}
+
 export default function DespesasPage() {
+  const router = useRouter();
   const [expenses, setExpenses] = useState<ExpenseInstallmentRow[]>([]);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>(null);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
   const [loading, setLoading] = useState(true);
@@ -98,9 +109,23 @@ export default function DespesasPage() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setQuickFilter(parseQuickFilter(params.get("filtro")));
+  }, []);
+
+  useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 300);
     return () => clearTimeout(t);
   }, [search]);
+
+  const applyQuickFilter = useCallback(
+    (next: QuickFilter) => {
+      setQuickFilter(next);
+      const url = next ? `/despesas?filtro=${next}` : "/despesas";
+      router.replace(url, { scroll: false });
+    },
+    [router]
+  );
 
   const fetchPage = useCallback(
     async (pageIndex: number, replace: boolean) => {
@@ -128,14 +153,26 @@ export default function DespesasPage() {
         const from = pageIndex * PAGE_SIZE;
         const to = from + PAGE_SIZE - 1;
 
+        const sortAsc = quickFilter === "este_mes" || quickFilter === "atrasadas";
+
         let query = supabase
           .from("expense_installments_view")
           .select("*, categories(id, name, color_hex), suppliers(id, name)", {
             count: "exact",
           })
           .eq("project_id", project.id)
-          .order("due_date", { ascending: false })
+          .order("due_date", { ascending: sortAsc })
           .order("created_at", { ascending: false });
+
+        if (quickFilter === "atrasadas") {
+          query = query.eq("is_overdue", true);
+        } else if (quickFilter === "este_mes") {
+          const { from: monthFrom, to: monthTo } = getMonthBounds();
+          query = query
+            .neq("installment_status", "paid")
+            .gte("due_date", monthFrom)
+            .lte("due_date", monthTo);
+        }
 
         const q = debouncedSearch.trim();
         if (q) {
@@ -186,7 +223,7 @@ export default function DespesasPage() {
         setLoadingMore(false);
       }
     },
-    [debouncedSearch, advancedFilters]
+    [debouncedSearch, advancedFilters, quickFilter]
   );
 
   useEffect(() => {
@@ -196,12 +233,20 @@ export default function DespesasPage() {
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-  const filtersActive = hasActiveFilters(search, advancedFilters);
+  const filtersActive = hasActiveFilters(search, advancedFilters, quickFilter);
   const unpaidTotal = expenses
     .filter((e) => e.installment_status !== "paid")
     .reduce((s, e) => s + e.amount, 0);
   const unpaidCount = expenses.filter((e) => e.installment_status !== "paid").length;
   const pageTotal = expenses.reduce((s, e) => s + e.amount, 0);
+
+  const chipClass = (active: boolean) =>
+    cn(
+      "rounded-full px-3 py-1.5 text-xs font-semibold transition-colors border",
+      active
+        ? "bg-orange-700 text-white border-orange-700"
+        : "bg-white dark:bg-zinc-800 text-stone-600 dark:text-zinc-300 border-stone-200 dark:border-zinc-700 hover:border-orange-700/50"
+    );
 
   return (
     <div className="px-4 pt-6 space-y-4">
@@ -216,6 +261,7 @@ export default function DespesasPage() {
           />
         </div>
         <button
+          type="button"
           onClick={() => setShowAdvancedFilters(true)}
           title="Filtros avançados"
           className={`relative p-2 rounded-lg text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100 hover:bg-stone-200 dark:hover:bg-zinc-700 transition-colors ${
@@ -229,9 +275,11 @@ export default function DespesasPage() {
         </button>
         {filtersActive && (
           <button
+            type="button"
             onClick={() => {
               setSearch("");
               setAdvancedFilters({});
+              applyQuickFilter(null);
             }}
             title="Limpar filtros"
             className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors p-2"
@@ -239,6 +287,23 @@ export default function DespesasPage() {
             <RotateCcw className="h-5 w-5" />
           </button>
         )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          className={chipClass(quickFilter === "este_mes")}
+          onClick={() => applyQuickFilter(quickFilter === "este_mes" ? null : "este_mes")}
+        >
+          Este mês
+        </button>
+        <button
+          type="button"
+          className={chipClass(quickFilter === "atrasadas")}
+          onClick={() => applyQuickFilter(quickFilter === "atrasadas" ? null : "atrasadas")}
+        >
+          Atrasadas
+        </button>
       </div>
 
       <div className="space-y-1 text-sm text-stone-600 dark:text-zinc-400">
@@ -297,6 +362,7 @@ export default function DespesasPage() {
           </div>
           {hasMore && (
             <button
+              type="button"
               onClick={() => void fetchPage(page + 1, false)}
               disabled={loadingMore}
               className="w-full py-3 text-sm text-zinc-400 hover:text-zinc-200 transition-colors disabled:opacity-50"

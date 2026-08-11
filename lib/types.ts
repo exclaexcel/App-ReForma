@@ -5,6 +5,8 @@ export type Project = {
   total_budget: number;
   start_date: string | null;
   end_date: string | null;
+  /** Dia do mês do vencimento da fatura do cartão (1–28). */
+  card_due_day: number | null;
   created_at: string;
 };
 

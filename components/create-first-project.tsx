@@ -15,6 +15,7 @@ export function CreateFirstProject({ userId }: { userId: string }) {
   const [budget, setBudget] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [cardDueDay, setCardDueDay] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +27,16 @@ export function CreateFirstProject({ userId }: { userId: string }) {
     const supabase = createClient();
     const parsedBudget = parseFloat(budget.replace(",", ".")) || 0;
 
+    let parsedCardDueDay: number | null = null;
+    if (cardDueDay.trim() !== "") {
+      parsedCardDueDay = parseInt(cardDueDay, 10);
+      if (isNaN(parsedCardDueDay) || parsedCardDueDay < 1 || parsedCardDueDay > 28) {
+        setError("Dia do cartão deve ser entre 1 e 28.");
+        setLoading(false);
+        return;
+      }
+    }
+
     const { data: project, error: projectError } = await supabase
       .from("projects")
       .insert({
@@ -34,6 +45,7 @@ export function CreateFirstProject({ userId }: { userId: string }) {
         total_budget: parsedBudget,
         start_date: startDate || null,
         end_date: endDate || null,
+        card_due_day: parsedCardDueDay,
       })
       .select()
       .maybeSingle();
@@ -44,9 +56,9 @@ export function CreateFirstProject({ userId }: { userId: string }) {
       return;
     }
 
-    const { error: categoriesError } = await supabase.from("categories").insert(
-      DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id }))
-    );
+    const { error: categoriesError } = await supabase
+      .from("categories")
+      .insert(DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id })));
 
     if (categoriesError) {
       setError("Obra criada, mas erro ao adicionar categorias.");
@@ -64,7 +76,9 @@ export function CreateFirstProject({ userId }: { userId: string }) {
       </div>
       <div>
         <h2 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Configure sua obra</h2>
-        <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">Crie sua primeira obra para começar</p>
+        <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">
+          Crie sua primeira obra para começar
+        </p>
       </div>
 
       <form onSubmit={handleCreate} className="w-full max-w-sm space-y-4 text-left">
@@ -109,9 +123,20 @@ export function CreateFirstProject({ userId }: { userId: string }) {
             />
           </div>
         </div>
-        {error && (
-          <p className="text-sm text-red-400">{error}</p>
-        )}
+        <div className="space-y-2">
+          <Label htmlFor="cardDueDay">Dia do vencimento do cartão (opcional)</Label>
+          <Input
+            id="cardDueDay"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={28}
+            placeholder="Ex: 10"
+            value={cardDueDay}
+            onChange={(e) => setCardDueDay(e.target.value)}
+          />
+        </div>
+        {error && <p className="text-sm text-red-400">{error}</p>}
         <Button type="submit" className="w-full h-12" disabled={loading}>
           {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Criar obra e começar"}
         </Button>

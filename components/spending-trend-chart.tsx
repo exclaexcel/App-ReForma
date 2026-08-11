@@ -33,6 +33,8 @@ type DailyPoint = { date: string; total: number };
 
 type SpendingTrendChartProps = {
   dailyData: DailyPoint[];
+  /** Texto do destaque do pico (ex.: "Maior gasto" | "Maior saída"). */
+  peakLabel?: string;
 };
 
 type ChartPoint = { key: string; label: string; total: number };
@@ -76,7 +78,10 @@ function CustomTooltip({
   );
 }
 
-export function SpendingTrendChart({ dailyData }: SpendingTrendChartProps) {
+export function SpendingTrendChart({
+  dailyData,
+  peakLabel = "Maior gasto",
+}: SpendingTrendChartProps) {
   const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
 
   const monthlyPoints = useMemo<ChartPoint[]>(() => {
@@ -107,8 +112,8 @@ export function SpendingTrendChart({ dailyData }: SpendingTrendChartProps) {
         <p className="text-xs text-stone-600 dark:text-zinc-500">
           {peak &&
             (selectedMonth
-              ? `Maior gasto do mês: ${formatDateBR(peak.key)} — ${formatCurrency(peak.total)}`
-              : `Maior gasto: ${peak.label} — ${formatCurrency(peak.total)}`)}
+              ? `${peakLabel} do mês: ${formatDateBR(peak.key)} — ${formatCurrency(peak.total)}`
+              : `${peakLabel}: ${peak.label} — ${formatCurrency(peak.total)}`)}
         </p>
         {selectedMonth && (
           <button

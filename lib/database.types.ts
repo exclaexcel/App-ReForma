@@ -225,6 +225,7 @@ export type Database = {
       };
       projects: {
         Row: {
+          card_due_day: number | null;
           created_at: string | null;
           end_date: string | null;
           id: string;
@@ -234,6 +235,7 @@ export type Database = {
           user_id: string;
         };
         Insert: {
+          card_due_day?: number | null;
           created_at?: string | null;
           end_date?: string | null;
           id?: string;
@@ -243,6 +245,7 @@ export type Database = {
           user_id: string;
         };
         Update: {
+          card_due_day?: number | null;
           created_at?: string | null;
           end_date?: string | null;
           id?: string;

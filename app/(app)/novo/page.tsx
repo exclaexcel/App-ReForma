@@ -25,6 +25,11 @@ export default async function NovoPage() {
   if (supError) throw supError;
 
   return (
-    <ExpenseForm projectId={project.id} categories={categories ?? []} suppliers={suppliers ?? []} />
+    <ExpenseForm
+      projectId={project.id}
+      categories={categories ?? []}
+      suppliers={suppliers ?? []}
+      cardDueDay={project.card_due_day}
+    />
   );
 }

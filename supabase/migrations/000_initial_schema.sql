@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS public.projects (
   total_budget numeric NOT NULL DEFAULT 0,
   start_date   date,
   end_date     date,
+  card_due_day smallint CHECK (card_due_day IS NULL OR (card_due_day >= 1 AND card_due_day <= 28)),
   created_at   timestamptz DEFAULT now()
 );
 

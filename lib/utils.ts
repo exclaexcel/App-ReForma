@@ -73,6 +73,54 @@ export function addMonths(dateStr: string, months: number): string {
   return date.toISOString().split("T")[0];
 }
 
+/** YYYY-MM-DD no fuso local, com dia limitado ao último do mês. */
+export function dateWithDayOfMonth(year: number, monthIndex: number, day: number): string {
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+  const safeDay = Math.min(Math.max(1, day), lastDay);
+  return getLocalDateString(new Date(year, monthIndex, safeDay));
+}
+
+/**
+ * 1º vencimento da fatura do cartão: sempre no mês seguinte à compra
+ * (ex.: compra 15/08, dia 25 → 25/09). Parcelas seguintes repetem o dia.
+ */
+export function nextCardDueDate(fromDateStr: string, dueDay: number): string {
+  const from = new Date(fromDateStr + "T00:00:00");
+  return dateWithDayOfMonth(from.getFullYear(), from.getMonth() + 1, dueDay);
+}
+
+/** Parcela N (0-based) no dia fixo da fatura. */
+export function cardInstallmentDueDate(
+  expenseDate: string,
+  dueDay: number,
+  installmentIndex: number
+): string {
+  const first = nextCardDueDate(expenseDate, dueDay);
+  const d = new Date(first + "T00:00:00");
+  return dateWithDayOfMonth(d.getFullYear(), d.getMonth() + installmentIndex, dueDay);
+}
+
+/**
+ * Cartão de crédito + dia configurado → vencimento da fatura.
+ * Demais métodos → data da compra + N meses (comportamento atual).
+ */
+export function computeInstallmentDueDate(
+  expenseDate: string,
+  installmentIndex: number,
+  paymentMethod: string,
+  cardDueDay: number | null | undefined
+): string {
+  if (
+    paymentMethod === "cartao_credito" &&
+    typeof cardDueDay === "number" &&
+    cardDueDay >= 1 &&
+    cardDueDay <= 28
+  ) {
+    return cardInstallmentDueDate(expenseDate, cardDueDay, installmentIndex);
+  }
+  return addMonths(expenseDate, installmentIndex);
+}
+
 export function splitAmountCentavos(totalReais: number, n: number): number[] {
   if (n <= 0) throw new Error("n must be >= 1");
   const totalCents = Math.round(totalReais * 100);
@@ -89,6 +137,16 @@ export function getLocalDateString(date?: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Primeiro e último dia do mês (YYYY-MM-DD), no fuso local. */
+export function getMonthBounds(date: Date = new Date()): { from: string; to: string } {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  return {
+    from: getLocalDateString(new Date(y, m, 1)),
+    to: getLocalDateString(new Date(y, m + 1, 0)),
+  };
+}
+
 export function formatDateBR(dateStr: string): string {
   const date = new Date(dateStr + "T00:00:00");
   return new Intl.DateTimeFormat("pt-BR", {
@@ -96,4 +154,9 @@ export function formatDateBR(dateStr: string): string {
     month: "2-digit",
     year: "numeric",
   }).format(date);
+}
+
+/** Remove sufixo legado "(n/m)" do título — a parcela real vai no badge. */
+export function stripInstallmentSuffix(description: string): string {
+  return description.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/u, "").trimEnd();
 }

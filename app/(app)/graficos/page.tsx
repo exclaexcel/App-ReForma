@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getLatestProject } from "@/lib/queries/getProject";
 import { HorizontalBarChart } from "@/components/horizontal-bar-chart";
 import { SpendingTrendChart } from "@/components/spending-trend-chart";
+import { CashFlowTrendSection } from "@/components/cash-flow-trend-section";
 import { formatCurrency } from "@/lib/utils";
 import { ExpenseInstallmentRow, Category } from "@/lib/types";
 
@@ -72,12 +73,29 @@ export default async function GraficosPage() {
         project.total_budget > 0 ? Math.round((cat.total / project.total_budget) * 100) : 0,
     }));
 
-  const dailyMap = new Map<string, number>();
+  const purchaseByDay = new Map<string, number>();
+  const cashFlowByDay = new Map<string, number>();
+  const cashFlowUnpaidByDay = new Map<string, number>();
   for (const inst of allInstallments) {
-    dailyMap.set(inst.expense_date, (dailyMap.get(inst.expense_date) ?? 0) + inst.amount);
+    purchaseByDay.set(inst.expense_date, (purchaseByDay.get(inst.expense_date) ?? 0) + inst.amount);
+    cashFlowByDay.set(inst.due_date, (cashFlowByDay.get(inst.due_date) ?? 0) + inst.amount);
+    if (inst.installment_status !== "paid") {
+      cashFlowUnpaidByDay.set(
+        inst.due_date,
+        (cashFlowUnpaidByDay.get(inst.due_date) ?? 0) + inst.amount
+      );
+    }
   }
 
-  const dailySums: DailySum[] = Array.from(dailyMap.entries())
+  const purchaseSums: DailySum[] = Array.from(purchaseByDay.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, total]) => ({ date, total }));
+
+  const cashFlowSums: DailySum[] = Array.from(cashFlowByDay.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, total]) => ({ date, total }));
+
+  const cashFlowUnpaidSums: DailySum[] = Array.from(cashFlowUnpaidByDay.entries())
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([date, total]) => ({ date, total }));
 
@@ -198,18 +216,22 @@ export default async function GraficosPage() {
             </div>
           )}
 
-          {dailySums.length > 0 && (
+          {purchaseSums.length > 0 && (
             <div className="rounded-2xl border border-stone-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-4 space-y-4">
               <div>
                 <h2 className="text-sm font-semibold text-stone-900 dark:text-zinc-100">
-                  Maior Dia de Despesas
+                  Gastos por data da compra
                 </h2>
                 <p className="text-xs text-stone-600 dark:text-zinc-500 mt-0.5">
-                  Por mês · toque num ponto para ver os dias
+                  Quando a despesa foi lançada · toque num ponto para ver os dias
                 </p>
               </div>
-              <SpendingTrendChart dailyData={dailySums} />
+              <SpendingTrendChart dailyData={purchaseSums} peakLabel="Maior gasto" />
             </div>
+          )}
+
+          {(cashFlowSums.length > 0 || cashFlowUnpaidSums.length > 0) && (
+            <CashFlowTrendSection allData={cashFlowSums} unpaidData={cashFlowUnpaidSums} />
           )}
         </>
       )}

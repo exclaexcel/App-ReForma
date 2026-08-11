@@ -25,7 +25,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
   // Verify ownership: ensure the expense's project belongs to the logged-in user
   const { data: ownerProject } = await supabase
     .from("projects")
-    .select("id")
+    .select("id, card_due_day")
     .eq("id", expense.project_id)
     .eq("user_id", user.id)
     .maybeSingle();
@@ -65,6 +65,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
       projectId={expense.project_id}
       categories={categories ?? []}
       suppliers={suppliers ?? []}
+      cardDueDay={ownerProject.card_due_day}
       initialExpense={expense}
       initialSignedUrl={initialSignedUrl}
       initialInstallments={installments ?? []}

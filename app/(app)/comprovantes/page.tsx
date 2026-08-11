@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Expense } from "@/lib/types";
-import { formatCurrency, getStoragePath } from "@/lib/utils";
+import { formatCurrency, getStoragePath, stripInstallmentSuffix } from "@/lib/utils";
 import { FolderOpen, FileText, Download } from "lucide-react";
 
 const SIGNED_URL_TTL = 60 * 60 * 24 * 7; // 7 days in seconds
@@ -56,7 +56,7 @@ function ReceiptCard({ expense, signedUrl }: { expense: Expense; signedUrl: stri
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={signedUrl}
-            alt={expense.description}
+            alt={stripInstallmentSuffix(expense.description)}
             className="w-full h-full object-cover"
           />
         )}
@@ -70,7 +70,7 @@ function ReceiptCard({ expense, signedUrl }: { expense: Expense; signedUrl: stri
           {formatCurrency(expense.amount)}
         </p>
         <p className="text-xs font-medium text-stone-800 dark:text-zinc-200 truncate">
-          {expense.description}
+          {stripInstallmentSuffix(expense.description)}
         </p>
         <p className="text-xs text-stone-400 dark:text-zinc-500">
           {new Intl.DateTimeFormat("pt-BR", {
@@ -145,7 +145,10 @@ export default function ComprovantesPage() {
       setLoading(false);
     } catch (error) {
       console.error("Error loading comprovantes:", error);
-      const message = error instanceof Error ? error.message : "Erro ao carregar comprovantes. Verifique sua conexão.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Erro ao carregar comprovantes. Verifique sua conexão.";
       setError(message);
       setLoading(false);
     }
@@ -185,7 +188,10 @@ export default function ComprovantesPage() {
           <p className="text-xs text-stone-400 dark:text-zinc-600">
             Adicione fotos ou PDFs ao lançar uma despesa.
           </p>
-          <Link href="/novo" className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium">
+          <Link
+            href="/novo"
+            className="mt-2 text-sm text-orange-600 hover:text-orange-500 underline font-medium"
+          >
             Ir para Novo Lançamento
           </Link>
         </div>

@@ -30,11 +30,12 @@ import Link from "next/link";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { InstallmentRow } from "@/components/installment-row";
 import {
-  addMonths,
+  computeInstallmentDueDate,
   formatCurrency,
   splitAmountCentavos,
   getLocalDateString,
   formatDateBR,
+  stripInstallmentSuffix,
   cn,
 } from "@/lib/utils";
 
@@ -53,6 +54,8 @@ type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
   suppliers?: Supplier[];
+  /** Dia do vencimento da fatura do cartão (projeto). */
+  cardDueDay?: number | null;
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
   initialInstallments?: InstallmentSummary[];
@@ -62,6 +65,7 @@ export function ExpenseForm({
   projectId,
   categories,
   suppliers = [],
+  cardDueDay = null,
   initialExpense,
   initialSignedUrl,
   initialInstallments = [],
@@ -77,7 +81,11 @@ export function ExpenseForm({
     initialExpense ? String(initialExpense.amount).replace(".", ",") : ""
   );
   const [date, setDate] = useState(initialExpense?.expense_date ?? today);
-  const [description, setDescription] = useState(initialExpense?.description ?? "");
+  const [description, setDescription] = useState(() => {
+    const raw = initialExpense?.description ?? "";
+    if (initialInstallments.length > 1) return stripInstallmentSuffix(raw);
+    return raw;
+  });
   const [categoryId, setCategoryId] = useState(initialExpense?.category_id ?? "");
   const [expenseType, setExpenseType] = useState<ExpenseType>(
     initialExpense?.expense_type ?? "outro"
@@ -162,6 +170,15 @@ export function ExpenseForm({
       if (isNaN(parsedAmount) || parsedAmount <= 0) {
         setError("Informe um valor válido.");
         toast.dismiss(toastId);
+        return;
+      }
+
+      if (paymentMethod === "cartao_credito" && !cardDueDay) {
+        setError(
+          "Defina o dia de vencimento do cartão em Obra → Editar antes de lançar no crédito."
+        );
+        toast.error("Configure o dia do cartão em Editar obra", { id: toastId });
+        setLoading(false);
         return;
       }
 
@@ -288,7 +305,7 @@ export function ExpenseForm({
           installment_number: i + 1,
           total_installments: installmentCount,
           amount: amt,
-          due_date: addMonths(date, i),
+          due_date: computeInstallmentDueDate(date, i, paymentMethod, cardDueDay),
           status: i === 0 && isPaid ? "paid" : "pending",
           payment_method: paymentMethod,
           paid_at: i === 0 && isPaid ? paidAt : null,
@@ -332,7 +349,7 @@ export function ExpenseForm({
           installment_number: 1,
           total_installments: 1,
           amount: parsedAmount,
-          due_date: date,
+          due_date: computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay),
           status: isPaid ? "paid" : "pending",
           payment_method: paymentMethod,
           paid_at: isPaid ? paidAt : null,
@@ -490,20 +507,66 @@ export function ExpenseForm({
               <span className="text-stone-500 dark:text-zinc-400 font-medium">x</span>
             </div>
             {installmentCount > 1 && amount && (
-              <div className="text-sm text-stone-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-3">
+              <div className="text-sm text-stone-600 dark:text-zinc-400 bg-blue-50 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg p-3 space-y-1">
                 {(() => {
                   const parsedAmount = Math.round(parseFloat(amount.replace(",", ".")) * 100) / 100;
                   const amounts = splitAmountCentavos(parsedAmount, installmentCount);
                   const allSame = amounts.every((a) => a === amounts[0]);
 
-                  if (allSame) {
-                    return `${installmentCount}x de ${formatCurrency(amounts[0])}`;
-                  } else {
-                    return `${installmentCount - 1}x de ${formatCurrency(amounts[0])} + última ${formatCurrency(amounts[installmentCount - 1])}`;
+                  const amountText = allSame
+                    ? `${installmentCount}x de ${formatCurrency(amounts[0])}`
+                    : `${installmentCount - 1}x de ${formatCurrency(amounts[0])} + última ${formatCurrency(amounts[installmentCount - 1])}`;
+
+                  const canPreviewCard =
+                    paymentMethod === "cartao_credito" &&
+                    typeof cardDueDay === "number" &&
+                    cardDueDay >= 1;
+
+                  if (!canPreviewCard && paymentMethod !== "cartao_credito") {
+                    return amountText;
                   }
+
+                  if (paymentMethod === "cartao_credito" && !canPreviewCard) {
+                    return (
+                      <>
+                        <p>{amountText}</p>
+                        <p className="text-amber-800 dark:text-amber-300 text-xs">
+                          Configure o dia do cartão em Editar obra para calcular vencimentos.
+                        </p>
+                      </>
+                    );
+                  }
+
+                  const firstDue = computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay);
+                  const lastDue = computeInstallmentDueDate(
+                    date,
+                    installmentCount - 1,
+                    paymentMethod,
+                    cardDueDay
+                  );
+
+                  return (
+                    <>
+                      <p>{amountText}</p>
+                      <p className="text-xs">
+                        Vencimentos (dia {cardDueDay}): {formatDateBR(firstDue)}
+                        {installmentCount > 1 ? ` → ${formatDateBR(lastDue)}` : ""}
+                      </p>
+                    </>
+                  );
                 })()}
               </div>
             )}
+            {!isEditing &&
+              installmentCount === 1 &&
+              paymentMethod === "cartao_credito" &&
+              typeof cardDueDay === "number" &&
+              cardDueDay >= 1 && (
+                <p className="text-xs text-stone-500 dark:text-zinc-400">
+                  Vencimento da fatura:{" "}
+                  {formatDateBR(computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay))}
+                </p>
+              )}
           </div>
         )}
 

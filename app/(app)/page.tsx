@@ -3,10 +3,24 @@ import { getLatestProject } from "@/lib/queries/getProject";
 import { CreateFirstProject } from "@/components/create-first-project";
 import { LogoutButton } from "@/components/logout-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { PlusCircle, Settings, AlertCircle, HardHat as HatIcon, FolderOpen } from "lucide-react";
+import {
+  PlusCircle,
+  Settings,
+  AlertCircle,
+  HardHat as HatIcon,
+  FolderOpen,
+  CalendarDays,
+  DollarSign,
+} from "lucide-react";
 import Link from "next/link";
 import { ExpenseInstallmentRow } from "@/lib/types";
-import { formatCurrency, getDocStatus } from "@/lib/utils";
+import {
+  formatCurrency,
+  formatDateBR,
+  getDocStatus,
+  getLocalDateString,
+  getMonthBounds,
+} from "@/lib/utils";
 
 function LandingPage() {
   return (
@@ -82,6 +96,25 @@ export default async function HomePage() {
   const pctUsado = Math.min((totalCommitted / project.total_budget) * 100, 100);
   const barColor =
     pctUsado >= 100 ? "bg-red-500" : pctUsado >= 80 ? "bg-amber-500" : "bg-emerald-500";
+
+  const today = getLocalDateString();
+  const { from: monthFrom, to: monthTo } = getMonthBounds();
+  const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "long" })
+    .format(new Date())
+    .replace(/^./, (c) => c.toUpperCase());
+
+  const pendingInstallments = allInstallments.filter((i) => i.installment_status !== "paid");
+  const overdueInstallments = pendingInstallments.filter((i) => i.is_overdue);
+  const overdueTotal = overdueInstallments.reduce((s, i) => s + i.amount, 0);
+
+  const dueThisMonth = pendingInstallments.filter(
+    (i) => i.due_date >= monthFrom && i.due_date <= monthTo
+  );
+  const dueThisMonthTotal = dueThisMonth.reduce((s, i) => s + i.amount, 0);
+
+  const nextDue = [...pendingInstallments]
+    .filter((i) => i.due_date >= today)
+    .sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
 
   // Timeline
   const daysUntilEnd = project.end_date
@@ -232,8 +265,87 @@ export default async function HomePage() {
             {formatCurrency(toPay)}
           </p>
           <p className="text-xs text-stone-500 dark:text-zinc-500">
-            {toPayCount} despesa{toPayCount !== 1 ? "s" : ""}
+            {toPayCount} parcela{toPayCount !== 1 ? "s" : ""}
           </p>
+        </div>
+      </div>
+
+      {/* Fluxo de caixa / próxima fatura */}
+      <div className="rounded-2xl border border-stone-200 dark:border-zinc-800 bg-white dark:bg-zinc-800 p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-700/15 border border-orange-700/25">
+            <DollarSign className="h-4 w-4 text-orange-700 dark:text-orange-500" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-stone-900 dark:text-zinc-100">
+              Fluxo de caixa
+            </p>
+            <p className="text-xs text-stone-500 dark:text-zinc-400">
+              Vencimentos · {monthLabel}
+              {project.card_due_day != null ? ` · cartão dia ${project.card_due_day}` : ""}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-stone-50 dark:bg-zinc-900/60 px-3 py-2.5">
+            <p className="text-xs text-stone-500 dark:text-zinc-500">Este mês a pagar</p>
+            <p className="text-base font-bold text-stone-900 dark:text-zinc-100 tabular-nums mt-0.5">
+              {formatCurrency(dueThisMonthTotal)}
+            </p>
+            <p className="text-xs text-stone-500 dark:text-zinc-500 mt-0.5">
+              {dueThisMonth.length} parcela{dueThisMonth.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+          <div className="rounded-xl bg-stone-50 dark:bg-zinc-900/60 px-3 py-2.5">
+            <p className="text-xs text-stone-500 dark:text-zinc-500">Atrasadas</p>
+            <p
+              className={`text-base font-bold tabular-nums mt-0.5 ${
+                overdueInstallments.length > 0
+                  ? "text-red-600 dark:text-red-400"
+                  : "text-stone-900 dark:text-zinc-100"
+              }`}
+            >
+              {formatCurrency(overdueTotal)}
+            </p>
+            <p className="text-xs text-stone-500 dark:text-zinc-500 mt-0.5">
+              {overdueInstallments.length} parcela
+              {overdueInstallments.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+
+        {nextDue && (
+          <p className="text-xs text-stone-600 dark:text-zinc-400 flex items-center gap-1.5">
+            <CalendarDays className="h-3.5 w-3.5 shrink-0 text-orange-600 dark:text-orange-500" />
+            Próximo: {formatDateBR(nextDue.due_date)} · {formatCurrency(nextDue.amount)}
+          </p>
+        )}
+
+        {project.card_due_day == null && (
+          <Link
+            href="/projeto/editar"
+            className="block text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline"
+          >
+            Configure o dia do cartão para o fluxo bater →
+          </Link>
+        )}
+
+        <div className="flex flex-wrap gap-2 pt-0.5">
+          <Link
+            href="/despesas?filtro=este_mes"
+            className="inline-flex items-center rounded-lg bg-orange-700/10 px-3 py-1.5 text-xs font-semibold text-orange-800 dark:text-orange-400 hover:bg-orange-700/20 transition-colors"
+          >
+            Ver este mês
+          </Link>
+          {overdueInstallments.length > 0 && (
+            <Link
+              href="/despesas?filtro=atrasadas"
+              className="inline-flex items-center rounded-lg bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-500/20 transition-colors"
+            >
+              Ver atrasadas
+            </Link>
+          )}
         </div>
       </div>
 

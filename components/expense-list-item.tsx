@@ -1,5 +1,5 @@
 import { ExpenseInstallmentRow, DOC_STATUS_LABELS } from "@/lib/types";
-import { formatCurrency, formatDate, getDocStatus } from "@/lib/utils";
+import { formatCurrency, formatDate, getDocStatus, stripInstallmentSuffix } from "@/lib/utils";
 import { Hammer, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -12,6 +12,11 @@ type ExpenseListItemProps = {
 
 export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
   const categoryColor = expense.categories?.color_hex ?? "#C84B31";
+  const isMultiInstallment =
+    Boolean(expense.total_installments) && (expense.total_installments ?? 0) > 1;
+  const title = isMultiInstallment
+    ? stripInstallmentSuffix(expense.description)
+    : expense.description;
   const docStatus = getDocStatus({
     ...expense,
     id: expense.expense_id,
@@ -34,12 +39,10 @@ export function ExpenseListItem({ expense, href }: ExpenseListItemProps) {
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">
-            {expense.description}
-          </p>
-          {expense.total_installments && expense.total_installments > 1 && (
+          <p className="text-sm font-medium dark:text-zinc-100 text-stone-900 truncate">{title}</p>
+          {isMultiInstallment && (
             <span className="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium">
-              {expense.installment_number}/{expense.total_installments}
+              parc. {expense.installment_number}/{expense.total_installments}
             </span>
           )}
         </div>
