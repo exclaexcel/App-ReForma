@@ -93,7 +93,8 @@ export default async function HomePage() {
   const toPay = totalCommitted - totalPaid;
   const toPayCount = allInstallments.filter((i) => i.installment_status !== "paid").length;
   const saldoDisponivel = project.total_budget - totalCommitted;
-  const pctUsado = Math.min((totalCommitted / project.total_budget) * 100, 100);
+  const pctUsado =
+    project.total_budget > 0 ? Math.min((totalCommitted / project.total_budget) * 100, 100) : 0;
   const barColor =
     pctUsado >= 100 ? "bg-red-500" : pctUsado >= 80 ? "bg-amber-500" : "bg-emerald-500";
 

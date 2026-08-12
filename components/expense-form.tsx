@@ -36,6 +36,7 @@ import {
   getLocalDateString,
   formatDateBR,
   stripInstallmentSuffix,
+  sanitizeFileName,
   cn,
 } from "@/lib/utils";
 
@@ -196,29 +197,27 @@ export function ExpenseForm({
         }
 
         if (receiptFile) {
-          // Delete old receipt if replacing
-          if (initialExpense?.receipt_url) {
-            await supabase.storage.from("receipts").remove([initialExpense.receipt_url]);
-          }
-          const fileName = `${user.id}/${Date.now()}-receipt-${receiptFile.name}`;
+          const fileName = `${user.id}/${Date.now()}-receipt-${sanitizeFileName(receiptFile.name)}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from("receipts")
             .upload(fileName, receiptFile);
           if (uploadError) throw uploadError;
           receiptUrl = uploadData.path;
+          if (initialExpense?.receipt_url) {
+            await supabase.storage.from("receipts").remove([initialExpense.receipt_url]);
+          }
         }
 
         if (invoiceFile) {
-          // Delete old invoice if replacing
-          if (initialExpense?.invoice_url) {
-            await supabase.storage.from("receipts").remove([initialExpense.invoice_url]);
-          }
-          const fileName = `${user.id}/${Date.now()}-invoice-${invoiceFile.name}`;
+          const fileName = `${user.id}/${Date.now()}-invoice-${sanitizeFileName(invoiceFile.name)}`;
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from("receipts")
             .upload(fileName, invoiceFile);
           if (uploadError) throw uploadError;
           invoiceUrl = uploadData.path;
+          if (initialExpense?.invoice_url) {
+            await supabase.storage.from("receipts").remove([initialExpense.invoice_url]);
+          }
         }
       }
 
@@ -425,7 +424,7 @@ export function ExpenseForm({
 
       <form onSubmit={handleSubmit} className="px-4 pt-6 space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="amount">Valor (R$)</Label>
+          <Label htmlFor="amount">Valor (R$) *</Label>
           <Input
             id="amount"
             type="text"
@@ -446,7 +445,7 @@ export function ExpenseForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Descrição</Label>
+          <Label htmlFor="description">Descrição *</Label>
           <Input
             id="description"
             type="text"
@@ -459,7 +458,7 @@ export function ExpenseForm({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
-            <Label htmlFor="date">Data</Label>
+            <Label htmlFor="date">Data *</Label>
             <Input
               id="date"
               type="date"
@@ -781,6 +780,7 @@ export function ExpenseForm({
               <div className="space-y-2">
                 <Input
                   type="text"
+                  inputMode="numeric"
                   placeholder="Número da NF"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
@@ -857,9 +857,9 @@ export function ExpenseForm({
 
       <ConfirmDialog
         open={showDeleteDialog}
-        title="Excluir despesa?"
-        description="Esta ação não pode ser desfeita."
-        actionLabel="Excluir"
+        title="Cancelar despesa?"
+        description="A despesa some da lista e do fluxo. O registro fica cancelado no histórico."
+        actionLabel="Cancelar"
         onConfirm={handleDelete}
         onCancel={() => setShowDeleteDialog(false)}
         isLoading={deleting}

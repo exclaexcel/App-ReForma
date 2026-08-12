@@ -97,7 +97,10 @@ export default function ComprovantesPage() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const { data: project } = await supabase
         .from("projects")
@@ -107,7 +110,10 @@ export default function ComprovantesPage() {
         .limit(1)
         .maybeSingle();
 
-      if (!project) return;
+      if (!project) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from("expenses")

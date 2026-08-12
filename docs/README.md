@@ -18,6 +18,7 @@
 - Roadmap: [produto/SPRINT-ROADMAP.md](./produto/SPRINT-ROADMAP.md)
 - Continuidade (hoje→amanhã): [operacao/CONTINUIDADE_2026-08-10.md](./operacao/CONTINUIDADE_2026-08-10.md)
 - Verificação banco (pós-restore): [operacao/VERIFICACAO_BANCO_2026-08-10.md](./operacao/VERIFICACAO_BANCO_2026-08-10.md)
+- Auditoria 2026-08-11: [auditoria/2026-08-11-auditoria-completa.md](./auditoria/2026-08-11-auditoria-completa.md)
 - Backlog UX (incl. nav mobile): [auditoria/backlog-ux.md](./auditoria/backlog-ux.md)
 - Incidentes: [incidentes/](./incidentes/)
 

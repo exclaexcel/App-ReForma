@@ -21,11 +21,27 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
+/** Safe Storage object name (basename only; no accents/spaces/#/?). */
+export function sanitizeFileName(raw: string): string {
+  const base = raw.replace(/\\/g, "/").split("/").pop() ?? "file";
+  const normalized = base.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const cleaned = normalized.replace(/[^a-zA-Z0-9._-]+/g, "_").replace(/_+/g, "_");
+  const trimmed = cleaned.replace(/^[._-]+|[._-]+$/g, "").slice(0, 120);
+  return trimmed || "file";
+}
+
 export function getStoragePath(receiptUrl: string): string {
-  const marker = "/object/public/receipts/";
-  const idx = receiptUrl.indexOf(marker);
-  if (idx !== -1) return receiptUrl.slice(idx + marker.length);
-  return receiptUrl;
+  const withoutQuery = receiptUrl.split("?")[0] ?? receiptUrl;
+  const markers = [
+    "/object/public/receipts/",
+    "/object/sign/receipts/",
+    "/object/authenticated/receipts/",
+  ];
+  for (const marker of markers) {
+    const idx = withoutQuery.indexOf(marker);
+    if (idx !== -1) return withoutQuery.slice(idx + marker.length);
+  }
+  return withoutQuery;
 }
 
 export function formatDate(dateStr: string): string {

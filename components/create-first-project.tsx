@@ -25,7 +25,12 @@ export function CreateFirstProject({ userId }: { userId: string }) {
     setError(null);
 
     const supabase = createClient();
-    const parsedBudget = parseFloat(budget.replace(",", ".")) || 0;
+    const parsedBudget = parseFloat(budget.replace(",", "."));
+    if (isNaN(parsedBudget) || parsedBudget < 0) {
+      setError("Informe um orçamento válido.");
+      setLoading(false);
+      return;
+    }
 
     let parsedCardDueDay: number | null = null;
     if (cardDueDay.trim() !== "") {

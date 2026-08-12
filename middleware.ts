@@ -19,9 +19,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -38,18 +36,18 @@ export async function middleware(request: NextRequest) {
       data: { user: authUser },
     } = await supabase.auth.getUser();
     user = authUser;
-  } catch (error) {
+  } catch {
     authError = true;
   }
 
   const isLoginOrSignup =
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/signup");
+    request.nextUrl.pathname.startsWith("/login") || request.nextUrl.pathname.startsWith("/signup");
 
   const isPublicPage =
     request.nextUrl.pathname === "/" ||
     request.nextUrl.pathname.startsWith("/recuperar-senha") ||
-    request.nextUrl.pathname.startsWith("/atualizar-senha");
+    request.nextUrl.pathname.startsWith("/atualizar-senha") ||
+    request.nextUrl.pathname.startsWith("/api/auth/");
 
   if ((authError || !user) && !isLoginOrSignup && !isPublicPage) {
     const url = request.nextUrl.clone();
@@ -67,7 +65,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 };

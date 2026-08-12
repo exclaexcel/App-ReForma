@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Project } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { computeInstallmentDueDate } from "@/lib/utils";
 
 export function ProjectEditForm({ project }: { project: Project }) {
+  const router = useRouter();
   const supabase = createClient();
 
   const [name, setName] = useState(project.name);
@@ -20,7 +23,6 @@ export function ProjectEditForm({ project }: { project: Project }) {
     project.card_due_day != null ? String(project.card_due_day) : ""
   );
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function recalculatePendingCardInstallments(dueDay: number) {
@@ -70,7 +72,6 @@ export function ProjectEditForm({ project }: { project: Project }) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setSuccess(false);
     setError(null);
 
     const parsedBudget = parseFloat(budget.replace(",", "."));
@@ -111,11 +112,13 @@ export function ProjectEditForm({ project }: { project: Project }) {
       if (parsedCardDueDay != null) {
         await recalculatePendingCardInstallments(parsedCardDueDay);
       }
-      setSuccess(true);
+      toast.success("Obra atualizada");
+      router.push("/");
+      router.refresh();
     } catch {
       setError("Obra salva, mas falhou ao recalcular vencimentos do cartão. Tente salvar de novo.");
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -185,13 +188,6 @@ export function ProjectEditForm({ project }: { project: Project }) {
       {error && (
         <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
           {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="rounded-xl bg-emerald-900/30 border border-emerald-800 px-4 py-3 text-sm text-emerald-400 flex items-center gap-2">
-          <CheckCircle2 className="h-4 w-4 shrink-0" />
-          Obra atualizada com sucesso!
         </div>
       )}
 

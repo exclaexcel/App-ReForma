@@ -263,7 +263,7 @@ export default function DespesasPage() {
         <button
           type="button"
           onClick={() => setShowAdvancedFilters(true)}
-          title="Filtros avançados"
+          aria-label="Filtros avançados"
           className={`relative p-2 rounded-lg text-stone-600 dark:text-zinc-400 hover:text-stone-900 dark:hover:text-zinc-100 hover:bg-stone-200 dark:hover:bg-zinc-700 transition-colors ${
             filtersActive ? "bg-orange-900/30 text-orange-600 dark:text-orange-400" : ""
           }`}
@@ -281,7 +281,7 @@ export default function DespesasPage() {
               setAdvancedFilters({});
               applyQuickFilter(null);
             }}
-            title="Limpar filtros"
+            aria-label="Limpar filtros"
             className="text-stone-500 dark:text-zinc-500 hover:text-stone-700 dark:hover:text-zinc-300 transition-colors p-2"
           >
             <RotateCcw className="h-5 w-5" />

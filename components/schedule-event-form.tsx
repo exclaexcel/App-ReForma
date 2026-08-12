@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createClient } from "@/lib/supabase/client";
+import { sanitizeFileName } from "@/lib/utils";
 import {
   EventType,
   EVENT_TYPE_LABELS,
@@ -111,16 +112,15 @@ export function ScheduleEventForm({
           return;
         }
 
-        if (initialEvent?.photo_url) {
-          await supabase.storage.from("receipts").remove([initialEvent.photo_url]);
-        }
-
-        const fileName = `${user.id}/${Date.now()}-photo-${photoFile.name}`;
+        const fileName = `${user.id}/${Date.now()}-photo-${sanitizeFileName(photoFile.name)}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("receipts")
           .upload(fileName, photoFile);
         if (uploadError) throw uploadError;
         photoUrl = uploadData.path;
+        if (initialEvent?.photo_url) {
+          await supabase.storage.from("receipts").remove([initialEvent.photo_url]);
+        }
       }
 
       const payload = {
@@ -169,15 +169,19 @@ export function ScheduleEventForm({
               <button
                 type="button"
                 onClick={onClose}
-                className="p-1 hover:bg-stone-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
+                aria-label="Fechar"
+                className="p-2 hover:bg-stone-100 dark:hover:bg-zinc-700 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5 text-stone-600 dark:text-zinc-400" />
               </button>
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">Título</Label>
+              <Label htmlFor="event-title" className="text-sm dark:text-zinc-300 text-stone-700">
+                Título
+              </Label>
               <Input
+                id="event-title"
                 type="text"
                 placeholder="Ex: Entrega de Pisos"
                 value={title}
@@ -209,8 +213,11 @@ export function ScheduleEventForm({
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">Data</Label>
+              <Label htmlFor="event-date" className="text-sm dark:text-zinc-300 text-stone-700">
+                Data
+              </Label>
               <Input
+                id="event-date"
                 type="date"
                 value={eventDate}
                 onChange={(e) => setEventDate(e.target.value)}
@@ -326,10 +333,11 @@ export function ScheduleEventForm({
             </div>
 
             <div>
-              <Label className="text-sm dark:text-zinc-300 text-stone-700">
+              <Label htmlFor="event-notes" className="text-sm dark:text-zinc-300 text-stone-700">
                 Observações (opcional)
               </Label>
               <textarea
+                id="event-notes"
                 placeholder="Adicione detalhes do evento..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

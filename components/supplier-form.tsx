@@ -228,15 +228,16 @@ export function SupplierForm({ projectId, initialSupplier }: SupplierFormProps) 
                 <button
                   key={value}
                   type="button"
+                  aria-label={`${value} estrela${value !== 1 ? "s" : ""}`}
                   onClick={() => setRating(rating === value ? null : value)}
-                  className="p-1 transition-transform active:scale-90"
+                  className="p-2 transition-transform active:scale-90"
                 >
                   <Star
                     className={cn(
                       "h-7 w-7 transition-colors",
                       rating != null && value <= rating
                         ? "fill-orange-400 text-orange-400"
-                        : "text-zinc-600 dark:text-zinc-600 text-stone-300"
+                        : "text-stone-300 dark:text-zinc-600"
                     )}
                   />
                 </button>

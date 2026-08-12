@@ -1,73 +1,58 @@
 # Backlog de UX/Usabilidade — App ReForma
 
 **Gerado em:** 2026-06-24  
-**Base:** varredura real do código — sem suposições  
-**Evidência:** arquivo + linha citados em cada item
+**Revalidado em:** 2026-08-11 — ver [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)
 
 ---
 
-## 📌 Anotado 2026-08-11 (próxima sessão)
+## 📌 Anotado 2026-08-11
 
 - [x] **#U-MOBILE-NAV Fornecedores + Bottom Nav no celular** — `components/bottom-nav.tsx`  
-       Feito 2026-08-11 (opção 4, após rejeitar “Forn.”): aba **Mais**; sheet com Fornecedores e Comprovantes. Sheet acima da barra (`bottom-24`), nav/FAB visíveis.
+       Aba **Mais**; sheet com Fornecedores e Comprovantes acima da barra (`bottom-24`).
 
 ---
 
 ## 🔴 CRÍTICO — Quebra de fluxo ou dado perdido
 
-- [ ] **#U1 Delete de cômodo sem confirmação e sem aria-label** — `room-manager.tsx:44` — toque acidental destrói cômodo com tarefas/despesas vinculadas instantaneamente; sem `window.confirm` e sem `aria-label` no botão
-- [ ] **#U2 Ausência total de toast/feedback de sucesso** — não existe `sonner`, `useToast` nem nenhum sistema de notificação; criar/editar fornecedor, tarefa ou agenda redireciona em silêncio total
-- [ ] **#U3 `schedule-event-form.tsx` — Labels sem `htmlFor` conectado** — `<Label>` presentes nas linhas 116, 130, 153, 166 mas os `<Input>` não têm `id`; leitores de tela e clique no label não funcionam
+- [x] **#U1 Delete de cômodo** — **morto**. `room-manager.tsx` e UI de cômodos removidos. Tabelas `rooms`/`tasks` só no banco.
+
+- [x] **#U2 Ausência total de toast** — **stale**. `sonner` + `Toaster` no root. Falta toast só em editar obra (U19).
+
+- [x] **#U3 `schedule-event-form.tsx` — Labels sem `htmlFor`** — feito 2026-08-11.
 
 ---
 
 ## 🟠 ALTO — Frustração frequente no uso diário
 
-- [x] **#U4 Criar despesa redireciona para home, não para `/despesas`** — já em `expense-form.tsx` (criar/editar/cancelar → `router.push("/despesas")`). Backlog antigo apontava linha 167 / `"/"`; conferido 2026-08-11.
-- [ ] **#U5 Empty state de despesas sem CTA** — `despesas/page.tsx:222` — exibe texto e ícone mas sem botão/link "Lançar primeira despesa"; fluxo quebrado em tela vazia
-- [ ] **#U6 Empty state de comprovantes sem link** — `comprovantes/page.tsx:165` — instrui "Adicione fotos ao lançar uma despesa" mas sem `<Link>` para `/novo`
-- [ ] **#U7 Botões Trash2 com área de toque insuficiente (~28px)** — `expense-form.tsx:211`, `task-form.tsx:117`, `supplier-form.tsx:118` — `className="p-1"` abaixo do mínimo recomendado de 44px; crítico em mobile
-- [ ] **#U8 Botões ícone-only sem `aria-label`** — 6 locais afetados: Plus em `diario-obras/page.tsx:98`, Plus em `fornecedores/page.tsx:65`, Trash2 nos 3 formulários, Plus em `schedule-view.tsx:95`, Trash2 em `room-manager.tsx:87`; leitores de tela silenciosos
+- [x] **#U4 Criar despesa redireciona para `/despesas`** — conferido 2026-08-11.
+- [x] **#U5 Empty state de despesas com CTA** — `despesas/page.tsx` (sem filtro ativo).
+- [x] **#U6 Empty state de comprovantes com link `/novo`**.
+- [x] **#U7 Trash ~44px** — `p-3` em expense/supplier; task-form morto.
+- [x] **#U8 Ícone-only com `aria-label`** nos Plus/Trash vivos; diário/cômodos mortos. Residual: estrelas, X da agenda, filtros com `title`.
 
 ---
 
-## 🟡 MÉDIO — Inconsistência e polimento
+## 🟡 MÉDIO
 
-- [ ] **#U9 Diário de Obras e Fornecedores fora da BottomNav e do Hub** — `bottom-nav.tsx` cobre só: `/`, `/despesas`, `/novo`, `/agenda`, `/graficos`; `/diario-obras` e `/fornecedores` não têm acesso direto; Hub (`page.tsx`) também não os lista
-- [ ] **#U10 `/dashboard` sem botão de voltar** — `app/(app)/dashboard/page.tsx` — nenhum `ArrowLeft` ou elemento de navegação de retorno no topo; usuário usa botão do sistema
-- [ ] **#U11 Formulário de despesa longo sem seções** — `expense-form.tsx` — ~11 campos em sequência linear (valor, descrição, data, categoria, fornecedor, tipo, cômodo, pagamento, comprovante, NF) sem separador ou agrupamento visual
-- [ ] **#U12 Conflito de classes de cor nas estrelas de avaliação** — `supplier-form.tsx:201` — `text-zinc-600` e `text-stone-300` aplicados juntos no mesmo elemento sem prefixo dark; estrelas sem avaliação ficam com cor incorreta no modo claro
-- [ ] **#U13 Campos obrigatórios sem marcação visual consistente** — apenas `Tipo de Despesa` tem `*` explícito em `expense-form.tsx:309`; `Valor`, `Descrição`, `Data` têm `required` no HTML mas sem indicador visual no `<Label>`
-- [ ] **#U14 `window.confirm` nativo nos deletes** — `expense-form.tsx:180`, `task-form.tsx:83`, `supplier-form.tsx:85` — dialog do browser não respeita dark mode, visual inconsistente especialmente em iOS
-- [ ] **#U15 `invoiceNumber` sem `inputMode`** — `expense-form.tsx:452` — `type="text"` abre teclado completo; `inputMode="numeric"` abriria teclado numérico mais adequado para número de NF
-- [ ] **#U16 `project-edit-form.tsx` não redireciona após salvar** — mensagem de sucesso estática, sem redirect; usuário fica parado na tela de edição (confirmado também no backlog técnico como #14)
-
----
-
-## 🔵 BAIXO — Polimento fino
-
-- [ ] **#U17 Empty state do dashboard com CTA não clicável** — `dashboard/page.tsx:135` — texto menciona "clique no botão +" mas sem `<Link>` para `/novo`
-- [ ] **#U18 Botões SlidersHorizontal, Download, RotateCcw usam `title` em vez de `aria-label`** — `despesas/page.tsx:136-176` — `title` não funciona em touch devices
-- [ ] **#U19 Feedback de sucesso na edição de projeto é estático** — `project-edit-form.tsx:106` — bloco verde inline não desaparece automaticamente; sem auto-dismiss
+- [x] **#U9 Fornecedores na nav** — via Mais. Diário **morto**. Hub não lista Fornecedores (atalho só no Mais).
+- [x] **#U10 `/dashboard`** — stub `redirect("/")`.
+- [ ] **#U11 Formulário de despesa sem seções** — ainda válido; **não mudar sem ok** (UX aprovada).
+- [x] **#U12 Estrelas** — feito 2026-08-11 (`text-stone-300 dark:text-zinc-600` + `aria-label`).
+- [x] **#U13 `*` em Valor/Descrição/Data** — feito 2026-08-11.
+- [x] **#U14 `window.confirm`** — zero matches; `ConfirmDialog`.
+- [x] **#U15 `invoiceNumber` `inputMode="numeric"`** — feito 2026-08-11.
+- [x] **#U16 Editar obra redireciona para `/` com toast** — feito 2026-08-11.
+- [x] **#U18 Filtros: `aria-label`** — feito 2026-08-11.
+- [x] **#U19 Toast no salvar obra** — feito 2026-08-11 (junto com U16).
 
 ---
 
-## Resumo
+## 🔵 BAIXO
 
-| Prioridade | Qtd    |
-| ---------- | ------ |
-| 🔴 Crítico | 3      |
-| 🟠 Alto    | 5      |
-| 🟡 Médio   | 8      |
-| 🔵 Baixo   | 3      |
-| **Total**  | **19** |
+- [x] **#U17 Empty dashboard CTA** — Hub tem Link `/novo`.
 
 ---
 
-## Referência cruzada com backlog técnico
+## Resumo 2026-08-11 (abertos)
 
-Os seguintes itens do [backlog-pendencias.md](backlog-pendencias.md) têm sobreposição com UX:
-
-- **#13** (delete Cômodos sem confirmação) = **#U1** aqui
-- **#12** (BottomNav não cobre 4 módulos) = **#U9** aqui
-- **#14** (Projeto/Editar sem redirect) = **#U16** aqui
+U11 (seções do form — espera ok).

@@ -1,83 +1,71 @@
 # Backlog de Pendências — App ReForma
 
 **Gerado em:** 2026-06-24  
-**Base:** documentos em `auditoria/` + inspeção de código (`2026-06-22-tech-lead-day1.md`, `2026-06-22-analise-nucleo-funcional.md`, `2026-06-23-relatorio-dia.md`)  
-**Último marco entregue:** v0.5 — conciliação documental (commit `7e4f74f`, 2026-06-22)
+**Revalidado em:** 2026-08-11 — [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)
 
 ---
 
-## 🔴 CRÍTICO — Bloqueadores funcionais
+## 🔴 CRÍTICO
 
-- [ ] **#1 Agenda: editar e deletar eventos** — `schedule-view.tsx` é read-only; lógica já existe em `schedule-event-form.tsx` mas sem ponto de entrada na UI
-- [ ] **#2 Telas brancas em falha de rede** — 4 módulos com `console.error` silencioso: `despesas/page.tsx:85`, `comprovantes/page.tsx:141`, `fornecedores/page.tsx:46`, `diario-obras/page.tsx:62`
-- [ ] **#3 Middleware libera rotas protegidas em falha de rede** — `middleware.ts` tem fallback inseguro no `try/catch` do `getUser()`
-- [ ] **#4 `catch {}` silencioso no server client** — `lib/supabase/server.ts` mascara falhas de sessão em Server Components
-
----
-
-## 🟠 ALTO — Qualidade e confiabilidade
-
-- [ ] **#5 Paginação ausente** — queries carregam todos os registros sem `limit`; degrada com >100 despesas
-- [ ] **#6 Schema base não versionado** — não existe `000_initial_schema.sql`; impossível recriar banco do zero pelo repositório
-- [ ] **#7 Migration 004 aplicada manualmente** — histórico local desincronizado; fix: `supabase migration repair --status applied 20260622120000`
-- [ ] **#8 Tipos Supabase manuais** — `lib/types.ts` com casts forçados; mudança de schema quebra em runtime silenciosamente (setup: `supabase gen types typescript`)
-- [ ] **#9 `start_date` não exibido** — campo existe no banco mas não aparece em nenhuma tela; "dias corridos de obra" é dado central
-- [ ] **#10 `paid_at` não popula automaticamente** — campo criado na migration 004 mas precisa de trigger ou default
-- [ ] **#11 Cancelamento apaga histórico** — não existe estado `cancelado`; delete destrói rastro contábil
+- [x] **#1 Agenda: editar e deletar** — CRUD + ConfirmDialog em `schedule-view.tsx`.
+- [x] **#2 Telas brancas / console.error** — despesas/fornecedores mostram erro; diário morto. Residual: comprovantes skeleton se `!user`/`!project` (A4).
+- [x] **#3 Middleware fail-open** — **stale como descrito**. Hoje fail-closed. Problema **novo**: bloqueia `/api/auth/callback` (C1).
+- [x] **#4 `catch {}` em `server.ts`** — **stale como empty catch**. Hoje log+throw (anti-padrão RSC) — A1.
 
 ---
 
-## 🟡 MÉDIO — UX e robustez
+## 🟠 ALTO
 
-- [ ] **#12 BottomNav não cobre 4 módulos** — Diário de Obras, Cômodos, Comprovantes e Fornecedores existem mas sem acesso direto pela nav inferior
-- [ ] **#13 Delete em Cômodos sem confirmação** — único módulo sem `window.confirm`
-- [ ] **#14 Projeto/Editar não redireciona após salvar** — exibe mensagem de sucesso estática sem navegar
-- [ ] **#15 WhatsApp em Fornecedores sem validação** — sem máscara nem regex de formato
-- [ ] **#16 `<img>` no lugar de `next/image`** — com `eslint-disable` em `expense-form.tsx:351` e `comprovantes/page.tsx:54`
-- [ ] **#17 Budget inválido cria projeto com `total_budget = 0` sem aviso** — `create-first-project.tsx` usa `|| 0` silenciosamente
-- [ ] **#18 Badge "sem comprovante" ausente na listagem** — `is_paid = true` com `receipt_url = null` não tem indicador visual em `expense-list-item.tsx`
-- [ ] **#19 Filtro "pagos sem comprovante" não existe** — não há como listar rapidamente despesas pagas sem documento
-- [ ] **#20 `sequence_order` em Tarefas sem UI** — campo existe no tipo e no banco, nunca populado no insert; ordenação manual não funciona
+- [x] **#5 Paginação** — PAGE_SIZE 20 + carregar mais.
+- [x] **#6 Schema `000_initial_schema.sql`** existe.
+- [ ] **#7 Migration 004 repair** — não revalidado no CLI local nesta auditoria.
+- [ ] **#8 Tipos** — `lib/types.ts` + `database.types.ts` ainda em paralelo; clientes nem sempre usam o genérico `Database`.
+- [ ] **#9 `start_date`** — aparece no form e no Hub só se houver também `end_date`. Sem “dias corridos”.
+- [x] **#10 `paid_at` nas parcelas** — preenchido no create/RPC/baixa. Sem trigger em `expenses.paid_at` (legado).
+- [x] **#11 Cancelamento** — `status = cancelado`; view filtra ativos.
 
 ---
 
-## 🔵 BAIXO — Dashboard e analytics
+## 🟡 MÉDIO
 
-- [ ] **#21 Saldo explícito ausente no dashboard** — `orçamento - comprometido` não é calculado nem exibido como KPI
-- [ ] **#22 Total por cômodo não existe** — `room_id` nas despesas nunca é agregado nos gráficos
-- [ ] **#23 Total por fornecedor não existe** — nenhuma tela soma despesas por `supplier_id`
-- [ ] **#24 Curva de investimento acumulado ausente** — gráfico mostra gasto por semana, não acumulado
-- [ ] **#25 Export CSV desatualizado** — `expense_type`, `invoice_number` e demais campos da migration 004 fora do export
-- [ ] **#26 Dashboard sem % de documentação completa**
+- [x] **#12 BottomNav** — Mais cobre Fornecedores e Comprovantes. Diário/Cômodos mortos.
+- [x] **#13 Delete cômodos** — UI morta.
+- [x] **#14 Projeto/Editar sem redirect** — feito 2026-08-11 (toast + `/`).
+- [x] **#15 WhatsApp** — `type="tel"` + `pattern` HTML (sem máscara JS).
+- [ ] **#16 `<img>` vs `next/image`** — ainda válido.
+- [x] **#17 Budget `|| 0` na criação** — feito 2026-08-11 (validação igual à edição).
+- [x] **#18 Badge sem comprovante** — `expense-list-item.tsx`.
+- [x] **#19 Filtro pagos sem comprovante** — filtros avançados.
+- [x] **#20 `sequence_order`** — UI de tarefas morta.
 
 ---
 
-## ⚪ FUTURE — Roadmap (sem data)
+## 🔵 BAIXO
 
-- [ ] **#27 Testes automatizados E2E** — Playwright instalado mas sem nenhum arquivo `e2e/`; fluxos mínimos: login, criar despesa, visualizar gráfico
-- [ ] **#28 Agenda vinculada financeiramente** — `ScheduleEvent` sem `expense_id`, `category_id`, `room_id`
-- [ ] **#29 OCR para leitura de NF** — extrair número e valor automaticamente da foto do cupom
-- [ ] **#30 Relatório/exportação de tarefas por cômodo**
-- [ ] **#31 Validação de CNPJ do fornecedor**
-- [ ] **#32 Ativar Leaked Password Protection no Supabase Auth**
-- [ ] **#33 Agrupamento mensal nos gráficos** (hoje apenas semanal)
+- [x] **#21 Saldo no Hub**.
+- [x] **#22 Total por cômodo** — cômodos fora do produto; N/A.
+- [ ] **#23 Total por fornecedor** — ainda sem agregação nos gráficos.
+- [ ] **#24 Curva acumulada** — linha mensal existe; acumulado explícito não.
+- [x] **#25 CSV tipo/NF** — colunas presentes. Residual: só página carregada; sem CSV-mês.
+- [ ] **#26 % documentação no Hub** — não conferido como KPI dedicado.
+
+---
+
+## ⚪ FUTURE
+
+- [ ] **#27 E2E** — **stale**: specs existem. Falta `e2e/.auth` versionado (certo: gitignore).
+- [ ] **#28 Agenda × financeiro** — `expense_id` existe no schema; vínculo na UI limitado.
+- [ ] **#29 OCR de NF**
+- [x] **#30 Relatório tarefas por cômodo** — N/A (UI morta).
+- [ ] **#31 CNPJ fornecedor**
+- [ ] **#32 Leaked Password Protection** — advisor live: **desligada**.
+- [x] **#33 Agrupamento mensal nos gráficos** — line chart mensal.
+
+**Novo (continuidade, só plano):** fechamento de fatura; multi-cartão; CSV do mês.
 
 ---
 
 ## ❌ CANCELADO
 
-- ~~Galeria Antes e Depois~~ — fora da proposta (decisão 2026-06-24)
-
----
-
-## Resumo
-
-| Prioridade      | Qtd    |
-| --------------- | ------ |
-| 🔴 Crítico      | 4      |
-| 🟠 Alto         | 7      |
-| 🟡 Médio        | 8      |
-| 🔵 Baixo        | 6      |
-| ⚪ Future       | 7      |
-| ❌ Cancelado    | 1      |
-| **Total ativo** | **33** |
+- ~~Galeria Antes e Depois~~ — fora da proposta (2026-06-24)
+- ~~UI Cômodos / Diário de Obras~~ — removida do produto; tabelas órfãs no banco

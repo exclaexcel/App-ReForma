@@ -42,7 +42,9 @@ export default function SignupPage() {
     }
 
     if (!data.user) {
-      setError("Verifique seu e-mail para confirmar o cadastro. Se já tiver conta, acesse o login.");
+      setError(
+        "Verifique seu e-mail para confirmar o cadastro. Se já tiver conta, acesse o login."
+      );
       setLoading(false);
       return;
     }
@@ -55,7 +57,12 @@ export default function SignupPage() {
       return;
     }
 
-    const parsedBudget = parseFloat(budget.replace(",", ".")) || 0;
+    const parsedBudget = parseFloat(budget.replace(",", "."));
+    if (isNaN(parsedBudget) || parsedBudget < 0) {
+      setError("Informe um orçamento válido.");
+      setLoading(false);
+      return;
+    }
 
     const { data: project, error: projectError } = await supabase
       .from("projects")
@@ -75,9 +82,9 @@ export default function SignupPage() {
       return;
     }
 
-    const { error: categoriesError } = await supabase.from("categories").insert(
-      DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id }))
-    );
+    const { error: categoriesError } = await supabase
+      .from("categories")
+      .insert(DEFAULT_CATEGORIES.map((cat) => ({ ...cat, project_id: project.id })));
 
     if (categoriesError) {
       setError("Conta criada, mas erro ao configurar categorias. Tente novamente.");
@@ -98,7 +105,9 @@ export default function SignupPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">Criar conta</h1>
-            <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">Configure sua primeira reforma</p>
+            <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">
+              Configure sua primeira reforma
+            </p>
           </div>
         </div>
 

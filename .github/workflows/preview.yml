@@ -11,7 +11,6 @@ on:
   push:
     branches:
       - main
-      - claude/fix-deployment-url-HnX8f
 
 jobs:
   lint:
@@ -31,6 +30,9 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
 
   audit:
     name: deployment-audit

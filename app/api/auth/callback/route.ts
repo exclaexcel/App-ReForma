@@ -6,7 +6,8 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (code) {
-    const next = searchParams.get("next") ?? "/";
+    const rawNext = searchParams.get("next") ?? "/";
+    const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
     const response = NextResponse.redirect(`${origin}${next}`);
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,7 +26,10 @@ export async function GET(request: NextRequest) {
       }
     );
     try {
-      await supabase.auth.exchangeCodeForSession(code);
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        return NextResponse.redirect(`${origin}/login`);
+      }
     } catch {
       return NextResponse.redirect(`${origin}/login`);
     }
