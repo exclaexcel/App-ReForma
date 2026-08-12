@@ -8,10 +8,8 @@
 
 ## 📌 Anotado 2026-08-11 (próxima sessão)
 
-- [ ] **#U-MOBILE-NAV Fornecedores + Bottom Nav no celular** — `components/bottom-nav.tsx`  
-      Com 6 itens (Início, Despesas, FAB Novo, Agenda, Gráficos, Fornecedores) a barra inferior **não fica certa no mobile**: labels apertados / layout quebrado.  
-      Pedido da Dany: ajustar os botões de baixo (provável: enxugar para 5 abas, ícone sem label longo, ou tirar Fornecedores da nav e deixar no hub).  
-      **Não feito hoje** — só anotado.
+- [x] **#U-MOBILE-NAV Fornecedores + Bottom Nav no celular** — `components/bottom-nav.tsx`  
+       Feito 2026-08-11 (opção 4, após rejeitar “Forn.”): aba **Mais**; sheet com Fornecedores e Comprovantes. Sheet acima da barra (`bottom-24`), nav/FAB visíveis.
 
 ---
 
@@ -25,7 +23,7 @@
 
 ## 🟠 ALTO — Frustração frequente no uso diário
 
-- [ ] **#U4 Criar despesa redireciona para home, não para `/despesas`** — `expense-form.tsx:167` — `router.push("/")` após criar; usuário que quer confirmar o lançamento na lista precisa navegar manualmente
+- [x] **#U4 Criar despesa redireciona para home, não para `/despesas`** — já em `expense-form.tsx` (criar/editar/cancelar → `router.push("/despesas")`). Backlog antigo apontava linha 167 / `"/"`; conferido 2026-08-11.
 - [ ] **#U5 Empty state de despesas sem CTA** — `despesas/page.tsx:222` — exibe texto e ícone mas sem botão/link "Lançar primeira despesa"; fluxo quebrado em tela vazia
 - [ ] **#U6 Empty state de comprovantes sem link** — `comprovantes/page.tsx:165` — instrui "Adicione fotos ao lançar uma despesa" mas sem `<Link>` para `/novo`
 - [ ] **#U7 Botões Trash2 com área de toque insuficiente (~28px)** — `expense-form.tsx:211`, `task-form.tsx:117`, `supplier-form.tsx:118` — `className="p-1"` abaixo do mínimo recomendado de 44px; crítico em mobile
