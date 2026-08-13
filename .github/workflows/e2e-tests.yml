@@ -48,14 +48,8 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: npx playwright test --grep "@smoke"
 
-      - name: Run E2E tests (Critical)
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
-          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
-          PLAYWRIGHT_BASE_URL: ${{ secrets.PLAYWRIGHT_BASE_URL || 'https://appreforma.vercel.app' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: npx playwright test --grep "@smoke|@critical"
+      # @critical altera dados — não rodar contra produção.
+      # Em push na main, só @smoke (já rodou acima) contra PLAYWRIGHT_BASE_URL/prod.
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
