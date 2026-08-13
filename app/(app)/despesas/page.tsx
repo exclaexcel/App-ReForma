@@ -358,6 +358,7 @@ export default function DespesasPage() {
 
   return (
     <div className="px-4 pt-6 space-y-4">
+      <h1 className="text-xl font-bold text-stone-900 dark:text-zinc-100">Despesas</h1>
       <div className="flex gap-2 items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-stone-500 dark:text-zinc-500 pointer-events-none" />
