@@ -25,7 +25,8 @@ export default defineConfig({
     },
     {
       name: "mobile",
-      use: { ...devices["iPhone 13"] },
+      // Chromium com viewport de iPhone — evita instalar WebKit no CI
+      use: { ...devices["iPhone 13"], browserName: "chromium" },
     },
   ],
 
