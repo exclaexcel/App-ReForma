@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -9,12 +9,35 @@ import { Label } from "@/components/ui/label";
 import { HardHat, Loader2 } from "lucide-react";
 import Link from "next/link";
 
+function messageFromAuthHash(): string | null {
+  if (typeof window === "undefined") return null;
+  const hash = window.location.hash.replace(/^#/, "");
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+  const code = params.get("error_code");
+  const description = params.get("error_description")?.replace(/\+/g, " ");
+  if (code === "otp_expired" || description?.toLowerCase().includes("expired")) {
+    return "Este link de e-mail já foi usado ou expirou. Peça um novo em Esqueci minha senha e abra só o e-mail mais recente.";
+  }
+  if (params.get("error")) {
+    return "Não foi possível validar o link do e-mail. Peça um novo em Esqueci minha senha.";
+  }
+  return null;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromHash = messageFromAuthHash();
+    if (!fromHash) return;
+    setError(fromHash);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -43,7 +66,9 @@ export default function LoginPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold text-stone-900 dark:text-zinc-100">ReForma</h1>
-            <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">Gestão financeira da sua obra</p>
+            <p className="text-sm text-stone-500 dark:text-zinc-500 mt-1">
+              Gestão financeira da sua obra
+            </p>
           </div>
         </div>
 
@@ -75,7 +100,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
+            <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-400">
               {error}
             </div>
           )}
@@ -86,7 +111,10 @@ export default function LoginPage() {
         </form>
 
         <p className="text-center text-sm">
-          <Link href="/recuperar-senha" className="text-zinc-500 hover:text-orange-700 transition-colors">
+          <Link
+            href="/recuperar-senha"
+            className="text-zinc-500 hover:text-orange-700 transition-colors"
+          >
             Esqueci minha senha
           </Link>
         </p>
