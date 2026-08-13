@@ -6,8 +6,15 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
 
   if (code) {
-    const rawNext = searchParams.get("next") ?? "/";
-    const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+    const type = searchParams.get("type");
+    const rawNext = searchParams.get("next");
+    const safeNext =
+      rawNext && rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : null;
+    // Recovery must land on Nova senha even if Site URL fallback dropped `next`.
+    const next =
+      type === "recovery" || safeNext === "/atualizar-senha"
+        ? "/atualizar-senha"
+        : (safeNext ?? "/");
     const response = NextResponse.redirect(`${origin}${next}`);
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,

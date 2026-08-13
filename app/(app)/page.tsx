@@ -352,14 +352,14 @@ export default async function HomePage() {
 
       {/* Document alerts (conditional) */}
       {totalAlertas > 0 && (
-        <div className="rounded-xl border border-amber-800/40 bg-amber-900/20 px-4 py-3 space-y-2">
+        <div className="rounded-xl border border-amber-200/60 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 space-y-2 shadow-sm shadow-amber-900/10">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <AlertCircle className="h-5 w-5 text-amber-700 dark:text-amber-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-amber-200">
+              <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
                 {totalAlertas} iten{totalAlertas !== 1 ? "s" : ""} precisam de atenção
               </p>
-              <ul className="text-sm text-amber-300/80 mt-2 space-y-1">
+              <ul className="text-sm text-amber-800 dark:text-amber-300/80 mt-2 space-y-1">
                 {semComprovanteDocs > 0 && (
                   <li>
                     · {semComprovanteDocs} pago{semComprovanteDocs !== 1 ? "s" : ""} sem comprovante
@@ -376,13 +376,13 @@ export default async function HomePage() {
               <div className="flex flex-wrap gap-3 mt-2">
                 <Link
                   href="/comprovantes"
-                  className="inline-block text-amber-400 text-xs font-medium hover:text-amber-300 transition-colors"
+                  className="inline-block text-amber-800 dark:text-amber-400 text-xs font-medium hover:text-amber-950 dark:hover:text-amber-300 transition-colors"
                 >
                   Ver comprovantes →
                 </Link>
                 <Link
                   href="/despesas"
-                  className="inline-block text-amber-400 text-xs font-medium hover:text-amber-300 transition-colors"
+                  className="inline-block text-amber-800 dark:text-amber-400 text-xs font-medium hover:text-amber-950 dark:hover:text-amber-300 transition-colors"
                 >
                   Ver despesas →
                 </Link>
