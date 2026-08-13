@@ -22,6 +22,8 @@ type AdvancedFiltersModalProps = {
   };
   onFiltersChange: (filters: AdvancedFiltersModalProps["filters"]) => void;
   onExport?: () => void;
+  onExportMonth?: () => void;
+  exporting?: boolean;
 };
 
 export function AdvancedFiltersModal({
@@ -30,6 +32,8 @@ export function AdvancedFiltersModal({
   filters,
   onFiltersChange,
   onExport,
+  onExportMonth,
+  exporting = false,
 }: AdvancedFiltersModalProps) {
   const [local, setLocal] = useState(filters);
 
@@ -233,13 +237,28 @@ export function AdvancedFiltersModal({
         </div>
         {onExport && (
           <button
+            type="button"
+            disabled={exporting}
             onClick={() => {
               onExport();
               onClose();
             }}
-            className="w-full text-xs text-amber-400 hover:text-amber-300 underline text-center py-2"
+            className="w-full text-xs text-amber-800 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-300 underline text-center py-2 disabled:opacity-50"
           >
-            ↓ Exportar resultado atual como CSV
+            {exporting ? "Exportando…" : "↓ Exportar resultado filtrado (CSV)"}
+          </button>
+        )}
+        {onExportMonth && (
+          <button
+            type="button"
+            disabled={exporting}
+            onClick={() => {
+              onExportMonth();
+              onClose();
+            }}
+            className="w-full text-xs text-amber-800 dark:text-amber-400 hover:text-amber-950 dark:hover:text-amber-300 underline text-center py-1 disabled:opacity-50"
+          >
+            {exporting ? "Exportando…" : "↓ Exportar mês atual completo (CSV)"}
           </button>
         )}
       </div>

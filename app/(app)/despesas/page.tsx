@@ -28,7 +28,9 @@ type AdvancedFilters = {
   semComprovante?: boolean;
 };
 
-function exportToCsv(expenses: ExpenseInstallmentRow[]) {
+const CSV_EXPORT_LIMIT = 5000;
+
+function exportToCsv(expenses: ExpenseInstallmentRow[], filename: string) {
   const headers = [
     "Data",
     "Descrição",
@@ -39,6 +41,7 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
     "Forma de Pagamento",
     "Status",
     "Data de Vencimento",
+    "Pago em",
     "Comprovante",
     "Tipo de Despesa",
     "Nº da Nota",
@@ -54,6 +57,7 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
     PAYMENT_METHOD_LABELS[e.payment_method] ?? e.payment_method,
     e.installment_status === "paid" ? "Pago" : e.is_overdue ? "Atrasado" : "A Pagar",
     e.due_date,
+    e.paid_at ? e.paid_at.slice(0, 10) : "",
     e.receipt_url ?? "",
     e.expense_type,
     e.invoice_number ?? "",
@@ -68,7 +72,7 @@ function exportToCsv(expenses: ExpenseInstallmentRow[]) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `despesas_${getLocalDateString()}.csv`;
+  link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -107,6 +111,7 @@ export default function DespesasPage() {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -229,6 +234,109 @@ export default function DespesasPage() {
   useEffect(() => {
     void fetchPage(0, true);
   }, [fetchPage]);
+
+  const getActiveProjectId = useCallback(async () => {
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    const { data: project } = await supabase
+      .from("projects")
+      .select("id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    return project?.id ?? null;
+  }, []);
+
+  const handleExportFiltered = useCallback(async () => {
+    try {
+      setExporting(true);
+      const projectId = await getActiveProjectId();
+      if (!projectId) throw new Error("Projeto não encontrado.");
+
+      const supabase = createClient();
+      const sortAsc = quickFilter === "este_mes" || quickFilter === "atrasadas";
+      let query = supabase
+        .from("expense_installments_view")
+        .select("*, categories(id, name, color_hex), suppliers(id, name)")
+        .eq("project_id", projectId)
+        .order("due_date", { ascending: sortAsc })
+        .order("created_at", { ascending: false })
+        .range(0, CSV_EXPORT_LIMIT - 1);
+
+      if (quickFilter === "atrasadas") {
+        query = query.eq("is_overdue", true);
+      } else if (quickFilter === "este_mes") {
+        const { from: monthFrom, to: monthTo } = getMonthBounds();
+        query = query
+          .neq("installment_status", "paid")
+          .gte("due_date", monthFrom)
+          .lte("due_date", monthTo);
+      }
+
+      const q = debouncedSearch.trim();
+      if (q) query = query.ilike("description", `%${q}%`);
+      if (advancedFilters.dateFrom) query = query.gte("expense_date", advancedFilters.dateFrom);
+      if (advancedFilters.dateTo) query = query.lte("expense_date", advancedFilters.dateTo);
+      if (advancedFilters.amountMin !== undefined)
+        query = query.gte("amount", advancedFilters.amountMin);
+      if (advancedFilters.amountMax !== undefined)
+        query = query.lte("amount", advancedFilters.amountMax);
+      if (advancedFilters.expenseType)
+        query = query.eq("expense_type", advancedFilters.expenseType);
+      if (advancedFilters.isPaid === true) query = query.eq("installment_status", "paid");
+      else if (advancedFilters.isPaid === false) query = query.neq("installment_status", "paid");
+      if (advancedFilters.semComprovante) {
+        query = query.eq("installment_status", "paid").is("receipt_url", null);
+      }
+
+      const { data, error: exportError } = await query;
+      if (exportError) throw exportError;
+
+      exportToCsv(
+        (data ?? []) as ExpenseInstallmentRow[],
+        `despesas_filtro_${getLocalDateString()}.csv`
+      );
+    } catch (err) {
+      console.error("CSV export failed:", err);
+      setError(err instanceof Error ? err.message : "Erro ao exportar CSV.");
+    } finally {
+      setExporting(false);
+    }
+  }, [getActiveProjectId, quickFilter, debouncedSearch, advancedFilters]);
+
+  const handleExportMonth = useCallback(async () => {
+    try {
+      setExporting(true);
+      const projectId = await getActiveProjectId();
+      if (!projectId) throw new Error("Projeto não encontrado.");
+
+      const { from: monthFrom, to: monthTo } = getMonthBounds();
+      const supabase = createClient();
+      const { data, error: exportError } = await supabase
+        .from("expense_installments_view")
+        .select("*, categories(id, name, color_hex), suppliers(id, name)")
+        .eq("project_id", projectId)
+        .gte("due_date", monthFrom)
+        .lte("due_date", monthTo)
+        .order("due_date", { ascending: true })
+        .order("created_at", { ascending: false })
+        .range(0, CSV_EXPORT_LIMIT - 1);
+
+      if (exportError) throw exportError;
+
+      const ym = monthFrom.slice(0, 7);
+      exportToCsv((data ?? []) as ExpenseInstallmentRow[], `despesas_${ym}.csv`);
+    } catch (err) {
+      console.error("CSV month export failed:", err);
+      setError(err instanceof Error ? err.message : "Erro ao exportar CSV do mês.");
+    } finally {
+      setExporting(false);
+    }
+  }, [getActiveProjectId]);
 
   const formatCurrency = (v: number) =>
     v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -380,7 +488,9 @@ export default function DespesasPage() {
         onClose={() => setShowAdvancedFilters(false)}
         filters={advancedFilters}
         onFiltersChange={setAdvancedFilters}
-        onExport={() => exportToCsv(expenses)}
+        onExport={() => void handleExportFiltered()}
+        onExportMonth={() => void handleExportMonth()}
+        exporting={exporting}
       />
     </div>
   );

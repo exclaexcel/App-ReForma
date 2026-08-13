@@ -1,9 +1,21 @@
-import { chromium } from "@playwright/test";
+import { chromium, type FullConfig } from "@playwright/test";
 
-async function globalSetup(config: { use?: { baseURL?: string } }) {
-  const baseURL = config.use?.baseURL || "http://localhost:3000";
-  const email = process.env.E2E_EMAIL || "test@example.com";
-  const password = process.env.E2E_PASSWORD || "password";
+async function globalSetup(config: FullConfig) {
+  const fromProject = config.projects[0]?.use?.baseURL;
+  const baseURL =
+    process.env.PLAYWRIGHT_BASE_URL ||
+    (typeof fromProject === "string" ? fromProject : undefined) ||
+    "http://localhost:3000";
+  const email = process.env.E2E_EMAIL;
+  const password = process.env.E2E_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error(
+      "E2E_EMAIL e E2E_PASSWORD são obrigatórios (defina nos secrets do GitHub Actions ou no .env local)."
+    );
+  }
+
+  console.log(`🔐 Setup: baseURL=${baseURL}`);
 
   const browser = await chromium.launch();
   const context = await browser.newContext();
