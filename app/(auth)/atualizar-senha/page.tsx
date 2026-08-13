@@ -1,19 +1,43 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { HardHat, Loader2 } from "lucide-react";
+import Link from "next/link";
 
 export default function AtualizarSenhaPage() {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (cancelled) return;
+      setHasSession(!!session);
+      setCheckingSession(false);
+      if (!session) {
+        setError(
+          "Sessão de recuperação ausente ou expirada. Peça um novo e-mail em Esqueci minha senha."
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -32,10 +56,36 @@ export default function AtualizarSenhaPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.updateUser({ password });
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      setError(
+        "Sessão de recuperação ausente ou expirada. Peça um novo e-mail em Esqueci minha senha."
+      );
+      setHasSession(false);
+      setLoading(false);
+      return;
+    }
 
-    if (error) {
-      setError("Não foi possível atualizar a senha. O link pode ter expirado.");
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+
+    if (updateError) {
+      const msg = updateError.message?.toLowerCase() ?? "";
+      if (msg.includes("session") || msg.includes("jwt") || updateError.status === 401) {
+        setError(
+          "Sessão de recuperação ausente ou expirada. Peça um novo e-mail em Esqueci minha senha."
+        );
+        setHasSession(false);
+      } else if (
+        msg.includes("same") ||
+        msg.includes("different") ||
+        msg.includes("should be different")
+      ) {
+        setError("Essa já é a senha atual. Escolha outra para continuar.");
+      } else {
+        setError("Não foi possível atualizar a senha. Tente de novo ou peça um novo e-mail.");
+      }
       setLoading(false);
       return;
     }
@@ -59,45 +109,71 @@ export default function AtualizarSenhaPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">Nova senha</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Mínimo 6 caracteres"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
+        {checkingSession ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-orange-700" />
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Repita a nova senha"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete="new-password"
-            />
+        ) : !hasSession ? (
+          <div className="space-y-4">
+            {error && (
+              <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-400">
+                {error}
+              </div>
+            )}
+            <Link
+              href="/recuperar-senha"
+              className="flex w-full items-center justify-center rounded-xl bg-orange-700 hover:bg-orange-800 px-4 py-3 text-sm font-semibold text-white"
+            >
+              Pedir novo e-mail
+            </Link>
+            <Link
+              href="/login"
+              className="block text-center text-sm text-stone-500 dark:text-zinc-500 hover:text-orange-700"
+            >
+              Voltar para o login
+            </Link>
           </div>
-
-          {error && (
-            <div className="rounded-xl bg-red-900/30 border border-red-800 px-4 py-3 text-sm text-red-400">
-              {error}
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="password">Nova senha</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
             </div>
-          )}
 
-          <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar nova senha"}
-          </Button>
-        </form>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Repita a nova senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete="new-password"
+              />
+            </div>
+
+            {error && (
+              <div className="rounded-xl bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-800 dark:text-red-400">
+                {error}
+              </div>
+            )}
+
+            <Button type="submit" className="w-full h-12 text-base" disabled={loading}>
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Salvar nova senha"}
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   );

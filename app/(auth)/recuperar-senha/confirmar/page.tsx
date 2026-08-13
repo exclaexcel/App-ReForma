@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { HardHat, Loader2 } from "lucide-react";
@@ -9,7 +9,6 @@ import Link from "next/link";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 function ConfirmarRecuperacaoForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tokenHash = searchParams.get("token_hash");
   const typeParam = searchParams.get("type") ?? "recovery";
@@ -26,12 +25,12 @@ function ConfirmarRecuperacaoForm() {
     setError(null);
 
     const supabase = createClient();
-    const { error: verifyError } = await supabase.auth.verifyOtp({
+    const { data, error: verifyError } = await supabase.auth.verifyOtp({
       token_hash: tokenHash,
       type: typeParam as EmailOtpType,
     });
 
-    if (verifyError) {
+    if (verifyError || !data.session) {
       setError(
         "Este link já foi usado ou expirou. Peça um novo em Esqueci minha senha e abra o e-mail mais recente."
       );
@@ -39,8 +38,8 @@ function ConfirmarRecuperacaoForm() {
       return;
     }
 
-    router.replace("/atualizar-senha");
-    router.refresh();
+    // Full navigation so auth cookies from verifyOtp are sent on the next page.
+    window.location.assign("/atualizar-senha");
   }
 
   return (
