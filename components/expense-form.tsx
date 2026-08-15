@@ -13,6 +13,7 @@ import {
   EXPENSE_TYPES,
   EXPENSE_TYPE_LABELS,
   Supplier,
+  Card,
 } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,8 +56,7 @@ type ExpenseFormProps = {
   projectId: string;
   categories: Category[];
   suppliers?: Supplier[];
-  /** Dia do vencimento da fatura do cartão (projeto). */
-  cardDueDay?: number | null;
+  cards?: Card[];
   initialExpense?: Expense;
   initialSignedUrl?: string | null;
   initialInstallments?: InstallmentSummary[];
@@ -66,7 +66,7 @@ export function ExpenseForm({
   projectId,
   categories,
   suppliers = [],
-  cardDueDay = null,
+  cards = [],
   initialExpense,
   initialSignedUrl,
   initialInstallments = [],
@@ -94,6 +94,7 @@ export function ExpenseForm({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
     initialExpense?.payment_method ?? "pix"
   );
+  const [cardId, setCardId] = useState(initialExpense?.card_id ?? "");
   const [supplierId, setSupplierId] = useState(initialExpense?.supplier_id ?? "");
   const [isPaid, setIsPaid] = useState(initialExpense?.is_paid ?? false);
   const [paidAt, setPaidAt] = useState(initialExpense?.paid_at ?? today);
@@ -112,6 +113,10 @@ export function ExpenseForm({
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const selectedCard = cards.find((c) => c.id === cardId) ?? null;
+  const cardDueDay = selectedCard?.due_day ?? null;
+  const cardClosingDay = selectedCard?.closing_day ?? null;
 
   // Valores derivados para o card "Situação do pagamento"
   const totalInstallments = initialInstallments.length;
@@ -174,11 +179,16 @@ export function ExpenseForm({
         return;
       }
 
-      if (paymentMethod === "cartao_credito" && !cardDueDay) {
+      if (paymentMethod === "cartao_credito" && !selectedCard) {
         setError(
-          "Defina o dia de vencimento do cartão em Obra → Editar antes de lançar no crédito."
+          cards.length === 0
+            ? "Cadastre um cartão em Obra → Editar antes de lançar no crédito."
+            : "Selecione o cartão usado na compra."
         );
-        toast.error("Configure o dia do cartão em Editar obra", { id: toastId });
+        toast.error(
+          cards.length === 0 ? "Configure um cartão em Editar obra" : "Selecione o cartão",
+          { id: toastId }
+        );
         setLoading(false);
         return;
       }
@@ -272,6 +282,39 @@ export function ExpenseForm({
         });
         if (rpcError) throw rpcError;
 
+        const nextCardId = paymentMethod === "cartao_credito" ? cardId || null : null;
+        if (nextCardId !== (initialExpense.card_id ?? null)) {
+          const { error: cardUpdateError } = await supabase
+            .from("expenses")
+            .update({ card_id: nextCardId })
+            .eq("id", initialExpense.id);
+          if (cardUpdateError) throw cardUpdateError;
+        }
+
+        if (
+          nextCardId &&
+          selectedCard &&
+          !hasPaidInstallment &&
+          (nextCardId !== initialExpense.card_id || date !== initialExpense.expense_date)
+        ) {
+          for (const inst of initialInstallments) {
+            if (inst.status !== "pending" || inst.payment_method !== "cartao_credito") continue;
+            const due_date = computeInstallmentDueDate(
+              date,
+              inst.installment_number - 1,
+              "cartao_credito",
+              selectedCard.due_day,
+              selectedCard.closing_day
+            );
+            const { error: dueErr } = await supabase
+              .from("installments")
+              .update({ due_date })
+              .eq("id", inst.id)
+              .eq("status", "pending");
+            if (dueErr) throw dueErr;
+          }
+        }
+
         toast.success("Despesa atualizada", { id: toastId });
         router.push("/despesas");
         router.refresh();
@@ -282,6 +325,7 @@ export function ExpenseForm({
             project_id: projectId,
             category_id: categoryId || null,
             supplier_id: supplierId || null,
+            card_id: paymentMethod === "cartao_credito" ? cardId || null : null,
             expense_type: expenseType,
             description,
             amount: parsedAmount,
@@ -304,7 +348,7 @@ export function ExpenseForm({
           installment_number: i + 1,
           total_installments: installmentCount,
           amount: amt,
-          due_date: computeInstallmentDueDate(date, i, paymentMethod, cardDueDay),
+          due_date: computeInstallmentDueDate(date, i, paymentMethod, cardDueDay, cardClosingDay),
           status: i === 0 && isPaid ? "paid" : "pending",
           payment_method: paymentMethod,
           paid_at: i === 0 && isPaid ? paidAt : null,
@@ -327,6 +371,7 @@ export function ExpenseForm({
             project_id: projectId,
             category_id: categoryId || null,
             supplier_id: supplierId || null,
+            card_id: paymentMethod === "cartao_credito" ? cardId || null : null,
             expense_type: expenseType,
             description,
             amount: parsedAmount,
@@ -348,7 +393,7 @@ export function ExpenseForm({
           installment_number: 1,
           total_installments: 1,
           amount: parsedAmount,
-          due_date: computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay),
+          due_date: computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay, cardClosingDay),
           status: isPaid ? "paid" : "pending",
           payment_method: paymentMethod,
           paid_at: isPaid ? paidAt : null,
@@ -516,10 +561,7 @@ export function ExpenseForm({
                     ? `${installmentCount}x de ${formatCurrency(amounts[0])}`
                     : `${installmentCount - 1}x de ${formatCurrency(amounts[0])} + última ${formatCurrency(amounts[installmentCount - 1])}`;
 
-                  const canPreviewCard =
-                    paymentMethod === "cartao_credito" &&
-                    typeof cardDueDay === "number" &&
-                    cardDueDay >= 1;
+                  const canPreviewCard = paymentMethod === "cartao_credito" && selectedCard != null;
 
                   if (!canPreviewCard && paymentMethod !== "cartao_credito") {
                     return amountText;
@@ -530,25 +572,35 @@ export function ExpenseForm({
                       <>
                         <p>{amountText}</p>
                         <p className="text-amber-800 dark:text-amber-300 text-xs">
-                          Configure o dia do cartão em Editar obra para calcular vencimentos.
+                          {cards.length === 0
+                            ? "Cadastre um cartão em Editar obra para calcular vencimentos."
+                            : "Selecione o cartão para calcular vencimentos."}
                         </p>
                       </>
                     );
                   }
 
-                  const firstDue = computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay);
+                  const firstDue = computeInstallmentDueDate(
+                    date,
+                    0,
+                    paymentMethod,
+                    cardDueDay,
+                    cardClosingDay
+                  );
                   const lastDue = computeInstallmentDueDate(
                     date,
                     installmentCount - 1,
                     paymentMethod,
-                    cardDueDay
+                    cardDueDay,
+                    cardClosingDay
                   );
 
                   return (
                     <>
                       <p>{amountText}</p>
                       <p className="text-xs">
-                        Vencimentos (dia {cardDueDay}): {formatDateBR(firstDue)}
+                        Vencimentos ({selectedCard!.name}, dia {cardDueDay}):{" "}
+                        {formatDateBR(firstDue)}
                         {installmentCount > 1 ? ` → ${formatDateBR(lastDue)}` : ""}
                       </p>
                     </>
@@ -559,11 +611,12 @@ export function ExpenseForm({
             {!isEditing &&
               installmentCount === 1 &&
               paymentMethod === "cartao_credito" &&
-              typeof cardDueDay === "number" &&
-              cardDueDay >= 1 && (
+              selectedCard && (
                 <p className="text-xs text-stone-500 dark:text-zinc-400">
                   Vencimento da fatura:{" "}
-                  {formatDateBR(computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay))}
+                  {formatDateBR(
+                    computeInstallmentDueDate(date, 0, paymentMethod, cardDueDay, cardClosingDay)
+                  )}
                 </p>
               )}
           </div>
@@ -633,6 +686,33 @@ export function ExpenseForm({
             )}
           </div>
         </div>
+
+        {paymentMethod === "cartao_credito" && (
+          <div className="space-y-2">
+            <Label>Cartão *</Label>
+            {cards.length === 0 ? (
+              <p className="text-sm text-amber-800 dark:text-amber-300">
+                Nenhum cartão cadastrado.{" "}
+                <Link href="/projeto/editar" className="underline font-medium">
+                  Cadastre em Editar obra
+                </Link>
+              </p>
+            ) : (
+              <Select value={cardId} onValueChange={setCardId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar cartão" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cards.map((card) => (
+                    <SelectItem key={card.id} value={card.id}>
+                      {card.name} · fecha {card.closing_day} · paga {card.due_day}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
 
         {isEditing && (
           <div className="rounded-xl border border-stone-200/60 dark:border-zinc-700/60 bg-stone-100 dark:bg-zinc-800 p-4 space-y-1.5">

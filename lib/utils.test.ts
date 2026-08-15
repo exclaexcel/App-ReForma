@@ -28,6 +28,7 @@ function expense(partial: Partial<Expense>): Expense {
     invoice_value: null,
     paid_at: null,
     supplier_id: null,
+    card_id: null,
     status: "ativo",
     created_at: "2026-08-11T00:00:00Z",
     ...partial,
@@ -65,6 +66,26 @@ describe("card due dates", () => {
   it("crédito usa dia do cartão; pix usa addMonths", () => {
     expect(computeInstallmentDueDate("2026-08-15", 0, "cartao_credito", 25)).toBe("2026-09-25");
     expect(computeInstallmentDueDate("2026-08-15", 1, "pix", 25)).toBe("2026-09-15");
+  });
+
+  it("fechamento 12 / due 25: no dia do corte entra na fatura deste ciclo", () => {
+    expect(nextCardDueDate("2026-05-16", 25, 12)).toBe("2026-06-25");
+    expect(nextCardDueDate("2026-05-12", 25, 12)).toBe("2026-05-25");
+    expect(nextCardDueDate("2026-05-13", 25, 12)).toBe("2026-06-25");
+  });
+
+  it("fechamento 20 / due 25: compra antes e depois do corte", () => {
+    expect(nextCardDueDate("2026-08-15", 25, 20)).toBe("2026-08-25");
+    expect(nextCardDueDate("2026-08-21", 25, 20)).toBe("2026-09-25");
+  });
+
+  it("parcela N com closing parte da 1ª fatura correta", () => {
+    expect(cardInstallmentDueDate("2026-05-16", 25, 0, 12)).toBe("2026-06-25");
+    expect(cardInstallmentDueDate("2026-05-16", 25, 1, 12)).toBe("2026-07-25");
+  });
+
+  it("computeInstallmentDueDate passa closing", () => {
+    expect(computeInstallmentDueDate("2026-05-16", 0, "cartao_credito", 25, 12)).toBe("2026-06-25");
   });
 });
 

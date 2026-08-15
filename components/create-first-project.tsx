@@ -15,6 +15,8 @@ export function CreateFirstProject({ userId }: { userId: string }) {
   const [budget, setBudget] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [cardName, setCardName] = useState("");
+  const [cardClosingDay, setCardClosingDay] = useState("");
   const [cardDueDay, setCardDueDay] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,11 +34,28 @@ export function CreateFirstProject({ userId }: { userId: string }) {
       return;
     }
 
-    let parsedCardDueDay: number | null = null;
-    if (cardDueDay.trim() !== "") {
-      parsedCardDueDay = parseInt(cardDueDay, 10);
-      if (isNaN(parsedCardDueDay) || parsedCardDueDay < 1 || parsedCardDueDay > 28) {
-        setError("Dia do cartão deve ser entre 1 e 28.");
+    const hasCardFields =
+      cardName.trim() !== "" || cardClosingDay.trim() !== "" || cardDueDay.trim() !== "";
+
+    let parsedClosing: number | null = null;
+    let parsedDue: number | null = null;
+    if (hasCardFields) {
+      if (!cardName.trim()) {
+        setError("Informe o nome do cartão.");
+        setLoading(false);
+        return;
+      }
+      parsedClosing = parseInt(cardClosingDay, 10);
+      parsedDue = parseInt(cardDueDay, 10);
+      if (
+        isNaN(parsedClosing) ||
+        parsedClosing < 1 ||
+        parsedClosing > 28 ||
+        isNaN(parsedDue) ||
+        parsedDue < 1 ||
+        parsedDue > 28
+      ) {
+        setError("Fechamento e vencimento do cartão devem ser entre 1 e 28.");
         setLoading(false);
         return;
       }
@@ -50,7 +69,7 @@ export function CreateFirstProject({ userId }: { userId: string }) {
         total_budget: parsedBudget,
         start_date: startDate || null,
         end_date: endDate || null,
-        card_due_day: parsedCardDueDay,
+        card_due_day: parsedDue,
       })
       .select()
       .maybeSingle();
@@ -69,6 +88,20 @@ export function CreateFirstProject({ userId }: { userId: string }) {
       setError("Obra criada, mas erro ao adicionar categorias.");
       setLoading(false);
       return;
+    }
+
+    if (parsedClosing != null && parsedDue != null) {
+      const { error: cardError } = await supabase.from("cards").insert({
+        project_id: project.id,
+        name: cardName.trim(),
+        closing_day: parsedClosing,
+        due_day: parsedDue,
+      });
+      if (cardError) {
+        setError("Obra criada, mas erro ao adicionar o cartão. Configure em Editar obra.");
+        setLoading(false);
+        return;
+      }
     }
 
     router.refresh();
@@ -128,18 +161,45 @@ export function CreateFirstProject({ userId }: { userId: string }) {
             />
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="cardDueDay">Dia do vencimento do cartão (opcional)</Label>
-          <Input
-            id="cardDueDay"
-            type="number"
-            inputMode="numeric"
-            min={1}
-            max={28}
-            placeholder="Ex: 10"
-            value={cardDueDay}
-            onChange={(e) => setCardDueDay(e.target.value)}
-          />
+        <div className="rounded-xl border border-stone-200 dark:border-zinc-700 p-3 space-y-3">
+          <p className="text-xs font-medium text-stone-600 dark:text-zinc-400">Cartão (opcional)</p>
+          <div className="space-y-2">
+            <Label htmlFor="cardName">Nome</Label>
+            <Input
+              id="cardName"
+              placeholder="Ex: Nubank"
+              value={cardName}
+              onChange={(e) => setCardName(e.target.value)}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="cardClosingDay">Fechamento</Label>
+              <Input
+                id="cardClosingDay"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={28}
+                placeholder="Ex: 12"
+                value={cardClosingDay}
+                onChange={(e) => setCardClosingDay(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cardDueDay">Vencimento</Label>
+              <Input
+                id="cardDueDay"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={28}
+                placeholder="Ex: 25"
+                value={cardDueDay}
+                onChange={(e) => setCardDueDay(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
         {error && <p className="text-sm text-red-400">{error}</p>}
         <Button type="submit" className="w-full h-12" disabled={loading}>

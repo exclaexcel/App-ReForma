@@ -5,8 +5,19 @@ export type Project = {
   total_budget: number;
   start_date: string | null;
   end_date: string | null;
-  /** Dia do mês do vencimento da fatura do cartão (1–28). */
+  /** @deprecated use cards; kept for compat até dropar a coluna */
   card_due_day: number | null;
+  created_at: string;
+};
+
+export type Card = {
+  id: string;
+  project_id: string;
+  name: string;
+  /** Dia do vencimento da fatura (1–28). */
+  due_day: number;
+  /** Dia de fechamento/corte (1–28). */
+  closing_day: number;
   created_at: string;
 };
 
@@ -80,6 +91,7 @@ export type Expense = {
   /** @deprecated */
   paid_at: string | null;
   supplier_id: string | null;
+  card_id: string | null;
   status: "ativo" | "cancelado";
   created_at: string;
   categories?: Category | null;

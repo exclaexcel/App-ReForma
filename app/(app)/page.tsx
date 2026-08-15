@@ -76,6 +76,15 @@ export default async function HomePage() {
     return <CreateFirstProject userId={user.id} />;
   }
 
+  const { data: projectCards, error: cardsQueryError } = await supabase
+    .from("cards")
+    .select("id, name, due_day, closing_day")
+    .eq("project_id", project.id)
+    .order("name");
+
+  // Antes da migration live: tabela cards pode não existir ainda.
+  const cards = cardsQueryError ? [] : (projectCards ?? []);
+
   // KPIs need the full installment set (aggregates). List pages use server-side range.
   const { data: allInstallmentsData } = await supabase
     .from("expense_installments_view")
@@ -283,7 +292,11 @@ export default async function HomePage() {
             </p>
             <p className="text-xs text-stone-500 dark:text-zinc-400">
               Vencimentos · {monthLabel}
-              {project.card_due_day != null ? ` · cartão dia ${project.card_due_day}` : ""}
+              {cards.length === 1
+                ? ` · ${cards[0].name} dia ${cards[0].due_day}`
+                : cards.length > 1
+                  ? ` · ${cards.length} cartões`
+                  : ""}
             </p>
           </div>
         </div>
@@ -323,12 +336,12 @@ export default async function HomePage() {
           </p>
         )}
 
-        {project.card_due_day == null && (
+        {cards.length === 0 && (
           <Link
             href="/projeto/editar"
             className="block text-xs font-medium text-amber-700 dark:text-amber-400 hover:underline"
           >
-            Configure o dia do cartão para o fluxo bater →
+            Cadastre um cartão (fechamento + vencimento) para o fluxo bater →
           </Link>
         )}
 

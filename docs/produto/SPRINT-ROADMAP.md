@@ -1,7 +1,10 @@
 # Sprint Roadmap — App ReForma
 
-**Estado atual:** v0.7 (Confiabilidade Crítica) ✅ Completo  
-**Última atualização:** 2026-06-24
+> **Escopo atual de produto:** [V1.0.md](./V1.0.md) (decisão 2026-08-13).  
+> O restante deste arquivo é histórico de sprints v0.7/v0.8 (junho/2026).
+
+**Estado atual:** pós v0.9 em produção; próximo bloco = **v1.0**  
+**Última atualização:** 2026-08-13
 
 ---
 

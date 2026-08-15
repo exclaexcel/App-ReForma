@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ExpenseForm } from "@/components/expense-form";
 import { getStoragePath } from "@/lib/utils";
+import type { Card } from "@/lib/types";
 
 export default async function EditExpensePage({ params }: { params: { id: string } }) {
   const supabase = await createClient();
@@ -25,21 +26,30 @@ export default async function EditExpensePage({ params }: { params: { id: string
   // Verify ownership: ensure the expense's project belongs to the logged-in user
   const { data: ownerProject } = await supabase
     .from("projects")
-    .select("id, card_due_day")
+    .select("id")
     .eq("id", expense.project_id)
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (!ownerProject) redirect("/despesas");
 
-  const [{ data: categories, error: catError }, { data: suppliers, error: supError }] =
-    await Promise.all([
-      supabase.from("categories").select("*").eq("project_id", expense.project_id).order("name"),
-      supabase.from("suppliers").select("*").eq("project_id", expense.project_id).order("name"),
-    ]);
+  const [
+    { data: categories, error: catError },
+    { data: suppliers, error: supError },
+    { data: cards, error: cardsError },
+  ] = await Promise.all([
+    supabase.from("categories").select("*").eq("project_id", expense.project_id).order("name"),
+    supabase.from("suppliers").select("*").eq("project_id", expense.project_id).order("name"),
+    supabase
+      .from("cards")
+      .select("id, project_id, name, due_day, closing_day, created_at")
+      .eq("project_id", expense.project_id)
+      .order("name"),
+  ]);
 
   if (catError) throw catError;
   if (supError) throw supError;
+  const projectCards = (cardsError ? [] : (cards ?? [])) as Card[];
 
   const { data: installments, error: installmentsError } = await supabase
     .from("installments")
@@ -65,7 +75,7 @@ export default async function EditExpensePage({ params }: { params: { id: string
       projectId={expense.project_id}
       categories={categories ?? []}
       suppliers={suppliers ?? []}
-      cardDueDay={ownerProject.card_due_day}
+      cards={projectCards}
       initialExpense={expense}
       initialSignedUrl={initialSignedUrl}
       initialInstallments={installments ?? []}

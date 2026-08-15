@@ -1,7 +1,8 @@
 # Backlog de UX/Usabilidade — App ReForma
 
 **Gerado em:** 2026-06-24  
-**Revalidado em:** 2026-08-11 — ver [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)
+**Revalidado em:** 2026-08-11 — ver [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)  
+**Fechamento parcial:** 2026-08-12
 
 ---
 
@@ -53,6 +54,11 @@
 
 ---
 
-## Resumo 2026-08-11 (abertos)
+## Resumo — abertos
 
-U11 (seções do form — espera ok).
+| Data       | Aberto                                                                |
+| ---------- | --------------------------------------------------------------------- |
+| 2026-08-11 | U11 (seções do form — espera ok da Dany; **não mudar layout sem ok**) |
+| 2026-08-12 | U11 continua único item UX aberto → alvo **v1.0** (não bug).          |
+
+**Fechamento parcial 2026-08-12:** backlog UX **não** está 100% — falta só U11 (decisão de produto / v1.0).

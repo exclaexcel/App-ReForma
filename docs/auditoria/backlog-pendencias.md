@@ -1,7 +1,8 @@
 # Backlog de Pendências — App ReForma
 
 **Gerado em:** 2026-06-24  
-**Revalidado em:** 2026-08-11 — [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)
+**Revalidado em:** 2026-08-11 — [2026-08-11-auditoria-completa.md](./2026-08-11-auditoria-completa.md)  
+**Fechamento parcial:** 2026-08-12 (ver seção no fim + relatório vigente)
 
 ---
 
@@ -46,22 +47,40 @@
 - [x] **#22 Total por cômodo** — cômodos fora do produto; N/A.
 - [ ] **#23 Total por fornecedor** — ainda sem agregação nos gráficos.
 - [ ] **#24 Curva acumulada** — linha mensal existe; acumulado explícito não.
-- [x] **#25 CSV tipo/NF** — colunas presentes. Residual: só página carregada; sem CSV-mês.
+- [x] **#25 CSV tipo/NF** — colunas presentes. **CSV mês:** feito 2026-08-12 (`handleExportMonth` → `despesas_YYYY-MM.csv` via query no banco, limite 5000).
 - [ ] **#26 % documentação no Hub** — não conferido como KPI dedicado.
 
 ---
 
 ## ⚪ FUTURE
 
-- [ ] **#27 E2E** — **stale**: specs existem. Falta `e2e/.auth` versionado (certo: gitignore).
+- [ ] **#27 E2E** — specs + CI endurecidos (ago/12). Auth local continua em `e2e/.auth` (gitignore — certo). Prod smoke crítico não deve rodar em prod.
 - [ ] **#28 Agenda × financeiro** — `expense_id` existe no schema; vínculo na UI limitado.
 - [ ] **#29 OCR de NF**
 - [x] **#30 Relatório tarefas por cômodo** — N/A (UI morta).
 - [ ] **#31 CNPJ fornecedor**
-- [ ] **#32 Leaked Password Protection** — advisor live: **desligada**.
+- [ ] **#32 Leaked Password Protection** — advisor: desligada. **Obs 2026-08-12:** exige plano **Pro** no Supabase; Dany **não** faz upgrade agora. Anotado para quando houver Pro (não bloqueia o app no Free).
 - [x] **#33 Agrupamento mensal nos gráficos** — line chart mensal.
 
-**Novo (continuidade, só plano):** fechamento de fatura; multi-cartão; CSV do mês.
+**Continuidade → alvo [v1.0](../produto/V1.0.md):** fechamento de fatura; multi-cartão; U11 form em seções; agenda↔despesa; **total por fornecedor**; **CNPJ**; **% documentação no Hub**. CSV do mês → **feito** (#25).
+
+**SQLs Aug12 no repo (não aplicados no live — só com ok + backup):**
+
+| Arquivo                                               | Em português                                                                                                                                          |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260812000000_rls_update_with_check.sql`            | Deixa explícito na regra de UPDATE: “só altera o que é seu”. Hoje o Postgres já faz isso; o SQL só documenta no catálogo (higiene).                   |
+| `20260812000001_rpc_hardening.sql`                    | Ao editar despesa, a parcela só atualiza se for **daquela** despesa. Também fixa `search_path` da função.                                             |
+| `20260812000002_create_expense_with_installments.sql` | Cria despesa + parcelas **num único passo** (não fica pela metade se der erro). O formulário **ainda não usa** — aplicar SQL sozinho não muda a tela. |
+
+---
+
+## Fechamento parcial — 2026-08-12
+
+**Fechados neste ciclo (além de 08-11):** #25 residual CSV mês.
+
+**Ainda abertos (não dar OK geral):** #7–9, #16, #23–24, #26–29, #31; #32 adiado (Pro); closing/multi-cartão → v1.0; SQL Aug12 no repo **não aplicada** no live; `rooms`/`tasks` órfãs.
+
+**Prova SQL live (MCP 2026-08-12):** `create_expense_with_installments` **não** existe no banco; advisor: `search_path` mutável + leaked password off (Pro).
 
 ---
 

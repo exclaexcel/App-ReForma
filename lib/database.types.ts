@@ -62,10 +62,46 @@ export type Database = {
           },
         ];
       };
+      cards: {
+        Row: {
+          closing_day: number;
+          created_at: string;
+          due_day: number;
+          id: string;
+          name: string;
+          project_id: string;
+        };
+        Insert: {
+          closing_day: number;
+          created_at?: string;
+          due_day: number;
+          id?: string;
+          name: string;
+          project_id: string;
+        };
+        Update: {
+          closing_day?: number;
+          created_at?: string;
+          due_day?: number;
+          id?: string;
+          name?: string;
+          project_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "cards_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       expenses: {
         Row: {
           amount: number;
           category_id: string | null;
+          card_id: string | null;
           created_at: string | null;
           description: string;
           expense_date: string;
@@ -89,6 +125,7 @@ export type Database = {
         Insert: {
           amount: number;
           category_id?: string | null;
+          card_id?: string | null;
           created_at?: string | null;
           description: string;
           expense_date?: string;
@@ -112,6 +149,7 @@ export type Database = {
         Update: {
           amount?: number;
           category_id?: string | null;
+          card_id?: string | null;
           created_at?: string | null;
           description?: string;
           expense_date?: string;
@@ -133,6 +171,13 @@ export type Database = {
           supplier_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: "expenses_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "cards";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "expenses_category_id_fkey";
             columns: ["category_id"];

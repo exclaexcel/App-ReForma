@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProjectEditForm } from "@/components/project-edit-form";
 import { CategoryManager } from "@/components/category-manager";
+import { CardManager } from "@/components/card-manager";
 import { getLatestProject } from "@/lib/queries/getProject";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -31,6 +32,7 @@ export default async function EditProjectPage() {
       </div>
       <div className="px-4 pt-6 space-y-6">
         <ProjectEditForm project={project} />
+        <CardManager projectId={project.id} />
         <CategoryManager projectId={project.id} />
       </div>
     </div>

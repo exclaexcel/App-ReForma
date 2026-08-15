@@ -70,6 +70,9 @@ npm run types:gen
 
 ```
 app_reforma/
+├── AGENTS.md         # Regras locais para agentes (Cursor)
+├── .cursorrules      # Stack + identidade visual Reforma Chique
+├── README.md         # Este arquivo
 ├── app/              # Next.js App Router
 │   ├── (app)/        # Protected routes (require auth)
 │   ├── (auth)/       # Public auth routes
@@ -80,13 +83,14 @@ app_reforma/
 │   ├── supabase/    # Supabase clients
 │   ├── queries/     # Data fetching
 │   └── types.ts     # Domain types
-├── docs/            # Documentação (produto, operação, auditoria)
+├── docs/            # Documentação (produto, operação, auditoria…)
 ├── supabase/        # Database
 │   └── migrations/  # SQL migrations
 └── public/          # Static assets
 ```
 
-Índice da documentação: [docs/README.md](./docs/README.md).
+- Índice da documentação: [docs/README.md](./docs/README.md)
+- Regras do projeto para IA: [AGENTS.md](./AGENTS.md)
 
 ## Autenticação
 

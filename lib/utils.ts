@@ -97,34 +97,48 @@ export function dateWithDayOfMonth(year: number, monthIndex: number, day: number
 }
 
 /**
- * 1º vencimento da fatura do cartão: sempre no mês seguinte à compra
- * (ex.: compra 15/08, dia 25 → 25/09). Parcelas seguintes repetem o dia.
+ * 1º vencimento da fatura do cartão.
+ * Sem closing: sempre mês seguinte à compra (ex.: 15/08, due 25 → 25/09).
+ * Com closing (ciclo real do cartão):
+ *   dia da compra <= closing → vence no due_day do mesmo mês
+ *   dia da compra >  closing → vence no due_day do mês seguinte
+ * Ex.: fecha 12, paga 25 → compra 16/05 → 25/06; compra 10/05 → 25/05.
  */
-export function nextCardDueDate(fromDateStr: string, dueDay: number): string {
+export function nextCardDueDate(
+  fromDateStr: string,
+  dueDay: number,
+  closingDay?: number | null
+): string {
   const from = new Date(fromDateStr + "T00:00:00");
-  return dateWithDayOfMonth(from.getFullYear(), from.getMonth() + 1, dueDay);
+  let monthsAhead = 1;
+  if (typeof closingDay === "number" && closingDay >= 1 && closingDay <= 28) {
+    monthsAhead = from.getDate() <= closingDay ? 0 : 1;
+  }
+  return dateWithDayOfMonth(from.getFullYear(), from.getMonth() + monthsAhead, dueDay);
 }
 
 /** Parcela N (0-based) no dia fixo da fatura. */
 export function cardInstallmentDueDate(
   expenseDate: string,
   dueDay: number,
-  installmentIndex: number
+  installmentIndex: number,
+  closingDay?: number | null
 ): string {
-  const first = nextCardDueDate(expenseDate, dueDay);
+  const first = nextCardDueDate(expenseDate, dueDay, closingDay);
   const d = new Date(first + "T00:00:00");
   return dateWithDayOfMonth(d.getFullYear(), d.getMonth() + installmentIndex, dueDay);
 }
 
 /**
- * Cartão de crédito + dia configurado → vencimento da fatura.
+ * Cartão de crédito + dia(s) configurado(s) → vencimento da fatura.
  * Demais métodos → data da compra + N meses (comportamento atual).
  */
 export function computeInstallmentDueDate(
   expenseDate: string,
   installmentIndex: number,
   paymentMethod: string,
-  cardDueDay: number | null | undefined
+  cardDueDay: number | null | undefined,
+  cardClosingDay?: number | null
 ): string {
   if (
     paymentMethod === "cartao_credito" &&
@@ -132,7 +146,7 @@ export function computeInstallmentDueDate(
     cardDueDay >= 1 &&
     cardDueDay <= 28
   ) {
-    return cardInstallmentDueDate(expenseDate, cardDueDay, installmentIndex);
+    return cardInstallmentDueDate(expenseDate, cardDueDay, installmentIndex, cardClosingDay);
   }
   return addMonths(expenseDate, installmentIndex);
 }

@@ -193,7 +193,41 @@ Já feito no código: U4, U5, U6, toast em fluxos principais, paginação, cance
 
 Aplicado: C1 allowlist `/api/auth/`; C2 sanitizar `next`; C3 `{ error }` do exchange; A1 swallow cookie no RSC; A3 budget válido + barra sem divisão por zero; A4 loading comprovantes; A5 copy cancelar; A6 toast + redirect ao salvar obra; M1 htmlFor agenda; M2 `*`; M3 `inputMode` NF; M4 estrelas; M5 `aria-label` filtros.
 
-**Adiado (precisa ok ou é SQL/feature):** A2 redirect no layout (quebraria a landing em `/`); M6 next/image; M7 seções do form; M8 CSV mês; M9/M10 policies e Auth dashboard; fechamento/multi-cartão; dropar `rooms`/`tasks`.
+**Adiado na sessão 08-11:** A2 redirect no layout (quebraria a landing em `/`); M6 next/image; M7 seções do form; M8 CSV mês; M9/M10 policies e Auth dashboard; fechamento/multi-cartão; dropar `rooms`/`tasks`.
+
+---
+
+## Fechamento parcial — 2026-08-12
+
+**Veredito:** ciclo de correção de código da auditoria = **parcialmente concluído**. **Não** dar OK geral no app / no banco.
+
+### Fechado depois de 08-11 (prova no código / commits)
+
+| Item            | Prova                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| M8 / CSV do mês | `despesas/page.tsx` `handleExportMonth` + botão no modal; filename `despesas_YYYY-MM.csv`; query no banco (não só memória da página) |
+| Recovery UX     | commits pós-`ece1a78` (link Nova senha, erros, confirm page)                                                                         |
+| E2E / CI        | setup CI, smoke Chromium, heading Despesas a11y — ainda depende de credencial local/`e2e/.auth`                                      |
+
+### Continua aberto (não OK)
+
+| Item                                      | Estado 2026-08-12                                                                                                                                                                      |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A2 layout redirect                        | Layout ainda permite guest em `/`; páginas client (`/despesas`, `/comprovantes`, `/fornecedores`) sem `redirect("/login")` no server                                                   |
+| M6 next/image                             | Ainda `<img>` em expense/agenda forms                                                                                                                                                  |
+| M7 / U11 seções form                      | Espera ok da Dany                                                                                                                                                                      |
+| M9 WITH CHECK                             | SQL `20260812000000_…` no repo — **não aplicada** live                                                                                                                                 |
+| Claude A3 create RPC                      | `create_expense_with_installments` **não existe** no banco (MCP); form não usa                                                                                                         |
+| Claude M8 rpc_hardening                   | SQL `20260812000001_…` no repo — **não aplicada**                                                                                                                                      |
+| M10 / #32                                 | Advisor: leaked password **off**. **Obs:** exige Supabase **Pro**; Dany adiou upgrade (2026-08-12). Fica anotado; não bloqueia uso no Free. Também: `search_path` mutável em 1 função. |
+| Features → **[v1.0](../produto/V1.0.md)** | Fechamento fatura; multi-cartão; U11; agenda↔despesa; total fornecedor; CNPJ; % docs Hub. Dropar `rooms`/`tasks` = fora.                                                               |
+| Backlog técnico                           | #7–9, #16, #23–24, #26–29, #31                                                                                                                                                         |
+
+### Como usar estes arquivos daqui pra frente
+
+- Este relatório + `backlog-ux.md` + `backlog-pendencias.md` = mapa vigente.
+- Docs antigos em `docs/auditoria/` (junho) = histórico; não reabrir como checklist.
+- Próximo “OK total” só com: SQL Aug12 aplicada (com backup + ok) **ou** descarte documentado; Auth leaked password no dashboard; e decisão explícita sobre U11 / features.
 
 ---
 

@@ -48,8 +48,9 @@
 - /graficos → waterfall + barras horizontais + área
 - /agenda → cronograma semanal
 - /comprovantes → pasta digital de recibos
-- /comodos → gerenciamento de cômodos
+- /fornecedores → cadastro e edição de fornecedores
 - /projeto/editar → editar dados da obra
+- Auth: /login | /signup | /recuperar-senha | /atualizar-senha
 
 ## Design mobile-first
 - max-width: 430px centrado
