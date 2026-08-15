@@ -91,7 +91,8 @@ export type Expense = {
   /** @deprecated */
   paid_at: string | null;
   supplier_id: string | null;
-  card_id: string | null;
+  /** Presente após migration de multi-cartão; ausente em views/agregados legados. */
+  card_id?: string | null;
   status: "ativo" | "cancelado";
   created_at: string;
   categories?: Category | null;
